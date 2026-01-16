@@ -5,18 +5,24 @@
   "license": "MIT",
   "scripts": {
     "dev": "next dev --turbopack",
-    "build": "next build",
+    "build": "rm -rf .next && next build",
     "start": "next start",
     "preview": "next build && next start",
     "lint": "next lint",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "postinstall": "next telemetry disable"
   },
   "dependencies": {
+    "clsx": "^2.1.1",
+    "lenis": "^1.3.17",
+    "lucide-react": "^0.562.0",
+    "motion": "^12.26.2",
     "next": "^15.1.2",
+    "next-drupal": "^2.0.0-beta.2",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "next-drupal": "^2.0.0-beta.2"
+    "tailwind-merge": "^3.4.0"
   },
   "devDependencies": {
     "@tailwindcss/typography": "^0.5.12",
