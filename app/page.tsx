@@ -174,6 +174,26 @@ export default async function Home() {
           </StaggerChildren>
         </div>
       </section>
+
+      {/* Featured Courses */}
+      <section className="py-20 bg-gray-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <FadeIn direction="up">
+            <div className="text-center mb-12">
+              <h2 className="text-4xl font-black mb-4">Featured Courses</h2>
+              <p className="text-xl text-gray-600">
+                Explore our most popular courses and start learning today
+              </p>
+              <Link
+                href="/courses"
+                className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 mt-4 font-semibold"
+              >
+                View All Courses
+                <ArrowRight className="w-5 h-5" />
+              </Link>
+            </div>
+          </FadeIn>
+
           <StaggerChildren staggerDelay={0.15}>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {featuredCourses.length > 0 ? (
@@ -193,26 +213,6 @@ export default async function Home() {
                       API: {process.env.NEXT_PUBLIC_DRUPAL_BASE_URL}
                     </p>
                   )}
-                </div>
-              )}
-            </div>
-          </StaggerChildren>
-                <ArrowRight className="w-5 h-5" />
-              </Link>
-            </div>
-          </FadeIn>
-
-          <StaggerChildren staggerDelay={0.15}>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {featuredCourses.length > 0 ? (
-                featuredCourses.map((course) => (
-                  <StaggerItem key={course.id}>
-                    <CourseCard course={course} />
-                  </StaggerItem>
-                ))
-              ) : (
-                <div className="col-span-full text-center py-12">
-                  <p className="text-gray-600">No courses available yet. Check back soon!</p>
                 </div>
               )}
             </div>
