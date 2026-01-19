@@ -13,7 +13,8 @@ export const metadata: Metadata = {
 }
 
 export default async function Home() {
-  const courses = await drupal.getResourceCollection<DrupalNode[]>(
+  // Try to fetch courses first
+  let courses = await drupal.getResourceCollection<DrupalNode[]>(
     "node--course",
     {
       params: {
@@ -28,6 +29,25 @@ export default async function Home() {
       },
     }
   ).catch(() => [])
+
+  // If no courses, fallback to articles for testing
+  if (!courses || courses.length === 0) {
+    courses = await drupal.getResourceCollection<DrupalNode[]>(
+      "node--article",
+      {
+        params: {
+          "filter[status]": 1,
+          "fields[node--article]": "title,path,field_image,uid,created,body",
+          include: "field_image,uid",
+          sort: "-created",
+          "page[limit]": 3,
+        },
+        next: {
+          revalidate: 3600,
+        },
+      }
+    ).catch(() => [])
+  }
 
   const featuredCourses = courses || []
 
@@ -148,21 +168,29 @@ export default async function Home() {
           </StaggerChildren>
         </div>
       </section>
-
-      {/* Featured Courses */}
-      <section className="py-20 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <FadeIn direction="up">
-            <div className="flex justify-between items-center mb-12">
-              <div>
-                <h2 className="text-4xl font-black mb-2">Featured Courses</h2>
-                <p className="text-gray-600">Explore our most popular courses</p>
-              </div>
-              <Link
-                href="/courses"
-                className="text-blue-600 hover:text-blue-700 flex items-center gap-2 font-semibold"
-              >
-                View All
+          <StaggerChildren staggerDelay={0.15}>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {featuredCourses.length > 0 ? (
+                featuredCourses.map((course) => (
+                  <StaggerItem key={course.id}>
+                    <CourseCard course={course} />
+                  </StaggerItem>
+                ))
+              ) : (
+                <div className="col-span-full text-center py-12">
+                  <p className="text-gray-600 text-lg mb-4">No courses available yet. Check back soon!</p>
+                  <p className="text-sm text-gray-500">
+                    Connection Status: {process.env.NEXT_PUBLIC_DRUPAL_BASE_URL ? '✅ Connected' : '❌ Not Configured'}
+                  </p>
+                  {process.env.NEXT_PUBLIC_DRUPAL_BASE_URL && (
+                    <p className="text-xs text-gray-400 mt-2">
+                      API: {process.env.NEXT_PUBLIC_DRUPAL_BASE_URL}
+                    </p>
+                  )}
+                </div>
+              )}
+            </div>
+          </StaggerChildren>
                 <ArrowRight className="w-5 h-5" />
               </Link>
             </div>
