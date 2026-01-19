@@ -5,17 +5,15 @@
   "license": "MIT",
   "scripts": {
     "dev": "next dev --turbopack",
-    "build": "NODE_OPTIONS='--no-deprecation' next build",
+    "build": "next build",
     "start": "next start",
     "preview": "next build && next start",
     "lint": "next lint",
     "format": "prettier --write .",
-    "format:check": "prettier --check .",
-    "preinstall": "npx only-allow npm"
+    "format:check": "prettier --check ."
   },
   "engines": {
-    "node": ">=20.0.0",
-    "npm": ">=10.0.0"
+    "node": "20.x"
   },
   "dependencies": {
     "clsx": "^2.1.1",
