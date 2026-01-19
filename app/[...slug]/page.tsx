@@ -87,29 +87,39 @@ export async function generateMetadata(
 const RESOURCE_TYPES = ["node--page", "node--article"]
 
 export async function generateStaticParams(): Promise<NodePageParams[]> {
-  const resources = await drupal.getResourceCollectionPathSegments(
-    RESOURCE_TYPES,
-    {
-      // The pathPrefix will be removed from the returned path segments array.
-      // pathPrefix: "/blog",
-      // The list of locales to return.
-      // locales: ["en", "es"],
-      // The default locale.
-      // defaultLocale: "en",
-    }
-  )
+  // Skip static generation during build if Drupal is not available
+  if (!process.env.NEXT_PUBLIC_DRUPAL_BASE_URL) {
+    return []
+  }
 
-  return resources.map((resource) => {
-    // resources is an array containing objects like: {
-    //   path: "/blog/some-category/a-blog-post",
-    //   type: "node--article",
-    //   locale: "en", // or `undefined` if no `locales` requested.
-    //   segments: ["blog", "some-category", "a-blog-post"],
-    // }
-    return {
-      slug: resource.segments,
-    }
-  })
+  try {
+    const resources = await drupal.getResourceCollectionPathSegments(
+      RESOURCE_TYPES,
+      {
+        // The pathPrefix will be removed from the returned path segments array.
+        // pathPrefix: "/blog",
+        // The list of locales to return.
+        // locales: ["en", "es"],
+        // The default locale.
+        // defaultLocale: "en",
+      }
+    )
+
+    return resources.map((resource) => {
+      // resources is an array containing objects like: {
+      //   path: "/blog/some-category/a-blog-post",
+      //   type: "node--article",
+      //   locale: "en", // or `undefined` if no `locales` requested.
+      //   segments: ["blog", "some-category", "a-blog-post"],
+      // }
+      return {
+        slug: resource.segments,
+      }
+    })
+  } catch (error) {
+    console.warn('Failed to generate static params, building without pre-rendering:', error)
+    return []
+  }
 }
 
 export default async function NodePage(props: NodePageProps) {

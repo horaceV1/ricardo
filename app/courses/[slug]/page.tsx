@@ -27,6 +27,10 @@ interface CoursePageProps {
 }
 
 export async function generateMetadata({ params }: CoursePageProps): Promise<Metadata> {
+  if (!process.env.NEXT_PUBLIC_DRUPAL_BASE_URL) {
+    return { title: "Course" }
+  }
+
   const course = await drupal
     .getResourceByPath<DrupalNode>(`/courses/${params.slug}`, {
       params: {

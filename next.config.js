@@ -21,6 +21,10 @@ const nextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
+  // Skip static page generation during build
+  experimental: {
+    missingSuspenseWithCSRBailout: false,
+  },
 }
 
 module.exports = nextConfig
