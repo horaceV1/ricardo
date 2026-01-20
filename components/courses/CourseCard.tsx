@@ -13,24 +13,30 @@ interface CourseCardProps {
 }
 
 export function CourseCard({ course }: CourseCardProps) {
-  // Handle both course and article content types
-  const price = course.field_price || 0
+  // Check if it's a commerce product or a node
+  const isProduct = course.type?.includes('commerce_product')
+  
+  // Handle both course nodes and commerce products
+  const price = isProduct ? (course.variations?.[0]?.price?.number || 0) : (course.field_price || 0)
   const rating = course.field_rating || 4.5
   const students = course.field_students || 100
   const duration = course.field_duration || "Self-paced"
   const lessons = course.field_lessons || 10
   const level = course.field_level || "Beginner"
-  const category = course.field_category?.name || course.type?.replace('node--', '') || "General"
+  const category = course.field_category?.name || course.type?.replace('node--', '').replace('commerce_product--', '') || "General"
+  
+  // Get image - products use 'images', nodes use 'field_image'
+  const image = isProduct ? course.images?.[0] : course.field_image
 
   return (
     <Link href={course.path?.alias || `/courses/${course.id}`} className="group block">
       <ScaleIn>
         <div className="bg-white rounded-xl shadow-md overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
           <div className="relative h-48 overflow-hidden">
-            {course.field_image && (
+            {image && (
               <ImageWithFallback
-                src={absoluteUrl(course.field_image.uri.url)}
-                alt={course.field_image.resourceIdObjMeta?.alt || course.title}
+                src={absoluteUrl(image.uri?.url || image.url)}
+                alt={image.resourceIdObjMeta?.alt || course.title}
                 width={400}
                 height={200}
                 className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"

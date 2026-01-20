@@ -16,14 +16,14 @@ export default async function Home() {
   let featuredCourses: DrupalNode[] = []
   
   try {
-    // Try to fetch courses first
-    const courses = await drupal.getResourceCollection<DrupalNode[]>(
-      "node--course",
+    // Try to fetch commerce products first
+    const products = await drupal.getResourceCollection<DrupalNode[]>(
+      "commerce_product--default",
       {
         params: {
           "filter[status]": 1,
-          "fields[node--course]": "title,path,field_image,field_price,field_rating,field_students,field_duration,field_lessons,field_level,field_category,body,created",
-          include: "field_image,field_category",
+          "fields[commerce_product--default]": "title,body,path,images,variations",
+          include: "images,variations,variations.images",
           sort: "-created",
           "page[limit]": 3,
         },
@@ -32,17 +32,19 @@ export default async function Home() {
         },
       }
     )
-    featuredCourses = courses || []
-  } catch {
-    // If no courses, fallback to articles for testing
+    console.log("Products fetched:", products?.length || 0)
+    featuredCourses = products || []
+  } catch (error) {
+    console.log("Products fetch error:", error)
+    // Fallback to courses
     try {
-      const articles = await drupal.getResourceCollection<DrupalNode[]>(
-        "node--article",
+      const courses = await drupal.getResourceCollection<DrupalNode[]>(
+        "node--course",
         {
           params: {
             "filter[status]": 1,
-            "fields[node--article]": "title,path,field_image,uid,created,body",
-            include: "field_image,uid",
+            "fields[node--course]": "title,path,field_image,field_price,field_rating,field_students,field_duration,field_lessons,field_level,field_category,body,created",
+            include: "field_image,field_category",
             sort: "-created",
             "page[limit]": 3,
           },
@@ -51,9 +53,29 @@ export default async function Home() {
           },
         }
       )
-      featuredCourses = articles || []
+      featuredCourses = courses || []
     } catch {
-      featuredCourses = []
+      // Final fallback to articles for testing
+      try {
+        const articles = await drupal.getResourceCollection<DrupalNode[]>(
+          "node--article",
+          {
+            params: {
+              "filter[status]": 1,
+              "fields[node--article]": "title,path,field_image,uid,created,body",
+              include: "field_image,uid",
+              sort: "-created",
+              "page[limit]": 3,
+            },
+            next: {
+              revalidate: 3600,
+            },
+          }
+        )
+        featuredCourses = articles || []
+      } catch {
+        featuredCourses = []
+      }
     }
   }
 
