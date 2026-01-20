@@ -8,7 +8,6 @@ const nextConfig = {
           {
             protocol: 'https',
             hostname: process.env.NEXT_IMAGE_DOMAIN,
-            port: '33002',
             pathname: '/sites/default/files/**',
           },
         ]
