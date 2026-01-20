@@ -16,7 +16,10 @@
     "node": "20.x"
   },
   "dependencies": {
+    "@gsap/react": "^2.1.2",
     "clsx": "^2.1.1",
+    "framer-motion": "^12.27.5",
+    "gsap": "^3.14.2",
     "lenis": "^1.3.17",
     "lucide-react": "^0.562.0",
     "motion": "^12.26.2",
