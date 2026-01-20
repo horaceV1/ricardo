@@ -16,14 +16,14 @@ export default async function Home() {
   let featuredCourses: DrupalNode[] = []
   
   try {
-    // Try to fetch commerce products first
+    // Try to fetch physical products first
     const products = await drupal.getResourceCollection<DrupalNode[]>(
-      "commerce_product--default",
+      "commerce_product--physical",
       {
         params: {
           "filter[status]": 1,
-          "fields[commerce_product--default]": "title,body,path,images,variations",
-          include: "images,variations,variations.images",
+          "fields[commerce_product--physical]": "title,body,path,images,variations",
+          include: "images,variations",
           sort: "-created",
           "page[limit]": 3,
         },
@@ -32,19 +32,19 @@ export default async function Home() {
         },
       }
     )
-    console.log("Products fetched:", products?.length || 0)
-    featuredCourses = products || []
-  } catch (error) {
-    console.log("Products fetch error:", error)
-    // Fallback to courses
-    try {
-      const courses = await drupal.getResourceCollection<DrupalNode[]>(
-        "node--course",
+    console.log("Physical products fetched:", products?.length || 0)
+    
+    if (products && products.length > 0) {
+      featuredCourses = products
+    } else {
+      // Try media products if no physical products
+      const mediaProducts = await drupal.getResourceCollection<DrupalNode[]>(
+        "commerce_product--media",
         {
           params: {
             "filter[status]": 1,
-            "fields[node--course]": "title,path,field_image,field_price,field_rating,field_students,field_duration,field_lessons,field_level,field_category,body,created",
-            include: "field_image,field_category",
+            "fields[commerce_product--media]": "title,body,path,images,variations",
+            include: "images,variations",
             sort: "-created",
             "page[limit]": 3,
           },
@@ -53,29 +53,31 @@ export default async function Home() {
           },
         }
       )
-      featuredCourses = courses || []
+      console.log("Media products fetched:", mediaProducts?.length || 0)
+      featuredCourses = mediaProducts || []
+    }
+  } catch (error) {
+    console.log("Products fetch error:", error)
+    // Fallback to articles for testing
+    try {
+      const articles = await drupal.getResourceCollection<DrupalNode[]>(
+        "node--article",
+        {
+          params: {
+            "filter[status]": 1,
+            "fields[node--article]": "title,path,field_image,uid,created,body",
+            include: "field_image,uid",
+            sort: "-created",
+            "page[limit]": 3,
+          },
+          next: {
+            revalidate: 3600,
+          },
+        }
+      )
+      featuredCourses = articles || []
     } catch {
-      // Final fallback to articles for testing
-      try {
-        const articles = await drupal.getResourceCollection<DrupalNode[]>(
-          "node--article",
-          {
-            params: {
-              "filter[status]": 1,
-              "fields[node--article]": "title,path,field_image,uid,created,body",
-              include: "field_image,uid",
-              sort: "-created",
-              "page[limit]": 3,
-            },
-            next: {
-              revalidate: 3600,
-            },
-          }
-        )
-        featuredCourses = articles || []
-      } catch {
-        featuredCourses = []
-      }
+      featuredCourses = []
     }
   }
 
