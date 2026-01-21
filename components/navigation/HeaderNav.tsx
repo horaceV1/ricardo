@@ -1,7 +1,7 @@
 "use client"
 
 import { Link } from "@/components/navigation/Link"
-import { Search, ShoppingCart, Menu, X } from "lucide-react"
+import { Menu, X } from "lucide-react"
 import { useState } from "react"
 import Image from "next/image"
 
@@ -30,38 +30,23 @@ export function HeaderNav() {
               Início
             </Link>
             <Link href="/courses" className="text-gray-700 hover:text-[#009999] font-semibold no-underline transition-colors">
-              Produtos
-            </Link>
-            <Link href="/instructors" className="text-gray-700 hover:text-[#009999] font-semibold no-underline transition-colors">
-              Especialistas
+              Soluções
             </Link>
             <Link href="/about" className="text-gray-700 hover:text-[#009999] font-semibold no-underline transition-colors">
               Sobre
+            </Link>
+            <Link href="/contact" className="text-gray-700 hover:text-[#009999] font-semibold no-underline transition-colors">
+              Contato
             </Link>
           </nav>
 
           {/* Actions */}
           <div className="hidden md:flex items-center gap-4">
-            <button className="p-2 text-gray-700 hover:text-[#009999] transition-colors">
-              <Search className="w-5 h-5" />
-            </button>
-            <button className="p-2 text-gray-700 hover:text-[#009999] transition-colors relative">
-              <ShoppingCart className="w-5 h-5" />
-              <span className="absolute -top-1 -right-1 bg-[#ff8c00] text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-semibold">
-                0
-              </span>
-            </button>
             <Link
-              href="/login"
-              className="px-4 py-2 text-gray-700 hover:text-[#009999] font-semibold no-underline transition-colors"
+              href="/contact"
+              className="px-6 py-2 border-2 border-[#009999] text-[#009999] rounded-lg hover:bg-[#009999] hover:text-white transition-all font-semibold no-underline"
             >
-              Entrar
-            </Link>
-            <Link
-              href="/signup"
-              className="px-6 py-2 bg-[#009999] text-white rounded-lg hover:bg-[#007a7a] transition-all font-semibold no-underline shadow-md hover:shadow-lg"
-            >
-              Cadastrar
+              Agende sua Consulta
             </Link>
           </div>
 
@@ -82,26 +67,20 @@ export function HeaderNav() {
                 Início
               </Link>
               <Link href="/courses" className="text-gray-700 hover:text-[#009999] font-semibold no-underline transition-colors">
-                Produtos
-              </Link>
-              <Link href="/instructors" className="text-gray-700 hover:text-[#009999] font-semibold no-underline transition-colors">
-                Especialistas
+                Soluções
               </Link>
               <Link href="/about" className="text-gray-700 hover:text-[#009999] font-semibold no-underline transition-colors">
                 Sobre
               </Link>
+              <Link href="/contact" className="text-gray-700 hover:text-[#009999] font-semibold no-underline transition-colors">
+                Contato
+              </Link>
               <div className="flex flex-col gap-2 pt-4 border-t border-gray-200">
                 <Link
-                  href="/login"
-                  className="px-4 py-2 text-center text-gray-700 hover:text-[#009999] font-semibold no-underline transition-colors"
-                >
-                  Entrar
-                </Link>
-                <Link
-                  href="/signup"
+                  href="/contact"
                   className="px-6 py-2 bg-[#009999] text-white rounded-lg hover:bg-[#007a7a] transition-all font-semibold text-center no-underline shadow-md"
                 >
-                  Cadastrar
+                  Agende sua Consulta
                 </Link>
               </div>
             </nav>

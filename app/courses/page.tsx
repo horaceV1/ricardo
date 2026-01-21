@@ -4,8 +4,8 @@ import type { Metadata } from "next"
 import type { DrupalNode } from "next-drupal"
 
 export const metadata: Metadata = {
-  title: "All Courses - Online Learning Platform",
-  description: "Browse our complete catalog of online courses and start learning today.",
+  title: "Nossas Soluções - Clínica do Empresário",
+  description: "Programas de consultoria e desenvolvimento empresarial personalizados para o crescimento do seu negócio.",
 }
 
 export default async function CoursesPage() {

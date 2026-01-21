@@ -17,8 +17,8 @@ export function CoursesClient({ initialCourses }: CoursesClientProps) {
   const [searchQuery, setSearchQuery] = useState("")
   const [showFilters, setShowFilters] = useState(false)
 
-  const categories = ["All", "Web Development", "Design", "Marketing", "Business"]
-  const levels = ["All", "Beginner", "Intermediate", "Advanced"]
+  const categories = ["All", "Consultoria Estratégica", "Gestão Financeira", "Marketing", "Vendas", "Recursos Humanos"]
+  const levels = ["All", "Iniciante", "Intermediário", "Avançado"]
 
   const filteredCourses = initialCourses.filter((course) => {
     const matchesCategory =
@@ -34,12 +34,12 @@ export function CoursesClient({ initialCourses }: CoursesClientProps) {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white py-12">
+      <div className="bg-gradient-to-r from-[#009999] to-[#005c5c] text-white py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <FadeIn direction="down">
-            <h1 className="text-4xl md:text-5xl font-black mb-4">Explore Courses</h1>
-            <p className="text-xl text-blue-100">
-              Discover the perfect course to advance your skills
+            <h1 className="text-4xl md:text-5xl font-black mb-4">Nossas Soluções</h1>
+            <p className="text-xl text-[#b3e6e6]">
+              Programas personalizados para o crescimento do seu negócio
             </p>
           </FadeIn>
         </div>
@@ -55,10 +55,10 @@ export function CoursesClient({ initialCourses }: CoursesClientProps) {
                 <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
                 <input
                   type="text"
-                  placeholder="Search courses..."
+                  placeholder="Buscar soluções..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#009999]"
                 />
               </div>
 
@@ -68,7 +68,7 @@ export function CoursesClient({ initialCourses }: CoursesClientProps) {
                 className="md:hidden flex items-center justify-center gap-2 px-6 py-3 border border-gray-300 rounded-lg hover:bg-gray-50"
               >
                 <SlidersHorizontal className="w-5 h-5" />
-                Filters
+                Filtros
               </button>
             </div>
 
@@ -78,7 +78,7 @@ export function CoursesClient({ initialCourses }: CoursesClientProps) {
                 {/* Category Filter */}
                 <div>
                   <label className="block text-sm font-semibold mb-2 text-gray-700">
-                    Category
+                    Categoria
                   </label>
                   <div className="flex flex-wrap gap-2">
                     {categories.map((category) => (
@@ -87,7 +87,7 @@ export function CoursesClient({ initialCourses }: CoursesClientProps) {
                         onClick={() => setSelectedCategory(category)}
                         className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                           selectedCategory === category
-                            ? "bg-blue-600 text-white"
+                            ? "bg-[#009999] text-white"
                             : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                         }`}
                       >
@@ -99,7 +99,7 @@ export function CoursesClient({ initialCourses }: CoursesClientProps) {
 
                 {/* Level Filter */}
                 <div>
-                  <label className="block text-sm font-semibold mb-2 text-gray-700">Level</label>
+                  <label className="block text-sm font-semibold mb-2 text-gray-700">Nível</label>
                   <div className="flex flex-wrap gap-2">
                     {levels.map((level) => (
                       <button
@@ -107,7 +107,7 @@ export function CoursesClient({ initialCourses }: CoursesClientProps) {
                         onClick={() => setSelectedLevel(level)}
                         className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                           selectedLevel === level
-                            ? "bg-blue-600 text-white"
+                            ? "bg-[#009999] text-white"
                             : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                         }`}
                       >
@@ -125,7 +125,7 @@ export function CoursesClient({ initialCourses }: CoursesClientProps) {
         <FadeIn direction="up" delay={0.3}>
           <div className="mb-6">
             <p className="text-gray-600">
-              Showing <span className="font-semibold">{filteredCourses.length}</span> courses
+              Mostrando <span className="font-semibold">{filteredCourses.length}</span> soluções
             </p>
           </div>
         </FadeIn>
@@ -142,7 +142,7 @@ export function CoursesClient({ initialCourses }: CoursesClientProps) {
             ) : (
               <div className="col-span-full text-center py-12">
                 <p className="text-gray-600 text-lg">
-                  No courses found. Try adjusting your filters.
+                  Nenhuma solução encontrada. Tente ajustar os filtros.
                 </p>
               </div>
             )}

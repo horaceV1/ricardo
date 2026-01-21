@@ -8,10 +8,10 @@ import "@/styles/globals.css"
 
 export const metadata: Metadata = {
   title: {
-    default: "Clínica do Empresário - Soluções para seu Negócio",
+    default: "Clínica do Empresário - Consultoria e Gestão Empresarial",
     template: "%s | Clínica do Empresário",
   },
-  description: "Produtos e serviços especializados para empresários e empreendedores.",
+  description: "Consultoria especializada para empresários. Diagnóstico, estratégia e resultados mensuráveis para o crescimento do seu negócio.",
   icons: {
     icon: "/favicon.ico",
   },
@@ -39,14 +39,14 @@ export default function RootLayout({
                 <div>
                   <h3 className="text-2xl font-bold mb-4 text-[#80d4d4]">Clínica do Empresário</h3>
                   <p className="text-gray-300">
-                    Soluções especializadas para o sucesso do seu negócio.
+                    Consultoria especializada e soluções práticas para o crescimento do seu negócio.
                   </p>
                 </div>
                 <div>
-                  <h4 className="font-bold mb-4 text-lg">Links Rápidos</h4>
+                  <h4 className="font-bold mb-4 text-lg">Menu</h4>
                   <ul className="space-y-2 text-gray-300">
-                    <li><a href="/courses" className="hover:text-[#80d4d4] transition-colors">Produtos</a></li>
-                    <li><a href="/instructors" className="hover:text-[#80d4d4] transition-colors">Especialistas</a></li>
+                    <li><a href="/" className="hover:text-[#80d4d4] transition-colors">Início</a></li>
+                    <li><a href="/courses" className="hover:text-[#80d4d4] transition-colors">Soluções</a></li>
                     <li><a href="/about" className="hover:text-[#80d4d4] transition-colors">Sobre Nós</a></li>
                   </ul>
                 </div>

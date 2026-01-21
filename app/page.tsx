@@ -7,8 +7,8 @@ import type { DrupalNode } from "next-drupal"
 import { AnimatedSection } from "@/components/animations/AnimatedSection"
 
 export const metadata: Metadata = {
-  title: "Clínica do Empresário - Soluções Empresariais",
-  description: "Produtos e serviços especializados para impulsionar seu negócio.",
+  title: "Clínica do Empresário - Consultoria e Gestão Empresarial",
+  description: "Consultoria especializada e soluções práticas para empresários que buscam crescimento sustentável e resultados consistentes.",
 }
 
 export default async function Home() {
@@ -80,12 +80,12 @@ export default async function Home() {
                 </div>
                 
                 <h1 className="text-5xl md:text-6xl lg:text-7xl font-black mb-6 leading-tight">
-                  Impulsione Seu<br />
+                  Transforme Seu<br />
                   <span className="text-[#80d4d4]">Negócio</span>
                 </h1>
                 
                 <p className="text-xl md:text-2xl text-[#b3e6e6] mb-8 leading-relaxed">
-                  Produtos e serviços especializados desenvolvidos por especialistas para transformar desafios empresariais em oportunidades de crescimento.
+                  Consultoria especializada e soluções práticas para empresários que buscam crescimento sustentável e resultados consistentes.
                 </p>
                 
                 <div className="flex flex-col sm:flex-row gap-4 mb-12">
@@ -93,14 +93,14 @@ export default async function Home() {
                     href="/courses"
                     className="bg-[#ff8c00] text-white px-8 py-4 rounded-lg hover:bg-[#cc7000] transition-all inline-flex items-center justify-center gap-2 font-bold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
                   >
-                    Explorar Produtos
+                    Conheça Nossas Soluções
                     <ArrowRight className="w-5 h-5" />
                   </Link>
                   <Link
                     href="/about"
                     className="border-2 border-white/50 text-white px-8 py-4 rounded-lg hover:bg-white/10 backdrop-blur-sm transition-all font-bold text-center"
                   >
-                    Conheça Nossa História
+                    Saiba Mais
                   </Link>
                 </div>
 
@@ -108,20 +108,20 @@ export default async function Home() {
                 <div className="grid grid-cols-3 gap-6">
                   <AnimatedSection animation="fadeIn" delay={0.2}>
                     <div className="text-center lg:text-left">
-                      <div className="text-4xl font-black mb-1 text-[#80d4d4]">500+</div>
-                      <div className="text-[#b3e6e6] text-sm font-semibold">Empresários Atendidos</div>
+                      <div className="text-4xl font-black mb-1 text-[#80d4d4]">15+</div>
+                      <div className="text-[#b3e6e6] text-sm font-semibold">Anos de Experiência</div>
                     </div>
                   </AnimatedSection>
                   <AnimatedSection animation="fadeIn" delay={0.3}>
                     <div className="text-center lg:text-left">
-                      <div className="text-4xl font-black mb-1 text-[#80d4d4]">50+</div>
-                      <div className="text-[#b3e6e6] text-sm font-semibold">Especialistas</div>
+                      <div className="text-4xl font-black mb-1 text-[#80d4d4]">300+</div>
+                      <div className="text-[#b3e6e6] text-sm font-semibold">Empresas Atendidas</div>
                     </div>
                   </AnimatedSection>
                   <AnimatedSection animation="fadeIn" delay={0.4}>
                     <div className="text-center lg:text-left">
-                      <div className="text-4xl font-black mb-1 text-[#80d4d4]">98%</div>
-                      <div className="text-[#b3e6e6] text-sm font-semibold">Satisfação</div>
+                      <div className="text-4xl font-black mb-1 text-[#80d4d4]">95%</div>
+                      <div className="text-[#b3e6e6] text-sm font-semibold">Taxa de Sucesso</div>
                     </div>
                   </AnimatedSection>
                 </div>
@@ -148,10 +148,10 @@ export default async function Home() {
           <AnimatedSection animation="fadeIn">
             <div className="text-center mb-16">
               <h2 className="text-4xl md:text-5xl font-black mb-4 text-gray-900">
-                Por Que Escolher a <span className="text-[#009999]">Clínica do Empresário?</span>
+                Nossos <span className="text-[#009999]">Diferenciais</span>
               </h2>
               <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-                Oferecemos soluções completas e personalizadas para cada etapa da jornada empresarial
+                Metodologia comprovada, expertise real e foco total nos resultados do seu negócio
               </p>
             </div>
           </AnimatedSection>
@@ -162,9 +162,9 @@ export default async function Home() {
                 <div className="bg-[#009999] w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform shadow-lg">
                   <Target className="w-8 h-8 text-white" />
                 </div>
-                <h3 className="text-xl font-bold mb-2 text-gray-900">Foco em Resultados</h3>
+                <h3 className="text-xl font-bold mb-2 text-gray-900">Diagnóstico Preciso</h3>
                 <p className="text-gray-600 text-sm leading-relaxed">
-                  Metodologias comprovadas para alcançar suas metas empresariais
+                  Análise profunda para identificar oportunidades e desafios
                 </p>
               </div>
             </AnimatedSection>
@@ -174,9 +174,9 @@ export default async function Home() {
                 <div className="bg-[#ff8c00] w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform shadow-lg">
                   <Award className="w-8 h-8 text-white" />
                 </div>
-                <h3 className="text-xl font-bold mb-2 text-gray-900">Especialistas Certificados</h3>
+                <h3 className="text-xl font-bold mb-2 text-gray-900">Expertise Comprovada</h3>
                 <p className="text-gray-600 text-sm leading-relaxed">
-                  Profissionais com experiência real no mercado empresarial
+                  Consultores com vivência prática em gestão empresarial
                 </p>
               </div>
             </AnimatedSection>
@@ -186,9 +186,9 @@ export default async function Home() {
                 <div className="bg-[#009999] w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform shadow-lg">
                   <Users className="w-8 h-8 text-white" />
                 </div>
-                <h3 className="text-xl font-bold mb-2 text-gray-900">Rede de Networking</h3>
+                <h3 className="text-xl font-bold mb-2 text-gray-900">Atendimento Personalizado</h3>
                 <p className="text-gray-600 text-sm leading-relaxed">
-                  Conecte-se com outros empresários de sucesso
+                  Soluções customizadas para a realidade do seu negócio
                 </p>
               </div>
             </AnimatedSection>
@@ -198,9 +198,9 @@ export default async function Home() {
                 <div className="bg-[#ff8c00] w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform shadow-lg">
                   <TrendingUp className="w-8 h-8 text-white" />
                 </div>
-                <h3 className="text-xl font-bold mb-2 text-gray-900">Crescimento Acelerado</h3>
+                <h3 className="text-xl font-bold mb-2 text-gray-900">Resultados Mensuráveis</h3>
                 <p className="text-gray-600 text-sm leading-relaxed">
-                  Estratégias para escalar seu negócio rapidamente
+                  Acompanhamento contínuo com métricas claras de evolução
                 </p>
               </div>
             </AnimatedSection>
@@ -214,16 +214,16 @@ export default async function Home() {
           <AnimatedSection animation="fadeIn">
             <div className="text-center mb-12">
               <h2 className="text-4xl md:text-5xl font-black mb-4 text-gray-900">
-                Produtos <span className="text-[#009999]">em Destaque</span>
+                Nossas <span className="text-[#009999]">Soluções</span>
               </h2>
               <p className="text-xl text-gray-600 max-w-3xl mx-auto mb-6">
-                Soluções cuidadosamente selecionadas para transformar seu negócio
+                Programas de consultoria e desenvolvimento empresarial sob medida
               </p>
               <Link
                 href="/courses"
                 className="inline-flex items-center gap-2 text-[#009999] hover:text-[#007a7a] font-bold text-lg transition-colors"
               >
-                Ver Todos os Produtos
+                Ver Todas as Soluções
                 <ArrowRight className="w-5 h-5" />
               </Link>
             </div>
@@ -238,7 +238,7 @@ export default async function Home() {
               ))
             ) : (
               <div className="col-span-full text-center py-12">
-                <p className="text-gray-600 text-lg mb-4">Produtos em breve. Aguarde!</p>
+                <p className="text-gray-600 text-lg mb-4">Nossas soluções serão disponibilizadas em breve.</p>
               </div>
             )}
           </div>
@@ -251,10 +251,10 @@ export default async function Home() {
           <AnimatedSection animation="fadeIn">
             <div className="text-center mb-16">
               <h2 className="text-4xl md:text-5xl font-black mb-4 text-gray-900">
-                Depoimentos de <span className="text-[#009999]">Sucesso</span>
+                O Que Dizem Nossos <span className="text-[#009999]">Clientes</span>
               </h2>
               <p className="text-xl text-gray-600">
-                Veja o que nossos clientes têm a dizer
+                Histórias reais de transformação empresarial
               </p>
             </div>
           </AnimatedSection>
@@ -269,13 +269,13 @@ export default async function Home() {
                     ))}
                   </div>
                   <p className="text-gray-700 mb-6 leading-relaxed italic">
-                    "Os produtos da Clínica do Empresário transformaram completamente a forma como gerencio meu negócio. Resultados impressionantes!"
+                    "A consultoria da Clínica do Empresário foi fundamental para reestruturar nosso negócio. Aumentamos o faturamento em 45% em apenas 6 meses!"
                   </p>
                   <div className="flex items-center gap-4">
                     <div className="w-12 h-12 bg-[#009999] rounded-full"></div>
                     <div>
-                      <div className="font-bold text-gray-900">Cliente Satisfeito</div>
-                      <div className="text-sm text-gray-600">CEO, Empresa</div>
+                      <div className="font-bold text-gray-900">João Silva</div>
+                      <div className="text-sm text-gray-600">CEO, Empresa Tech</div>
                     </div>
                   </div>
                 </div>
@@ -295,24 +295,24 @@ export default async function Home() {
         <div className="relative max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <AnimatedSection animation="scale">
             <h2 className="text-4xl md:text-5xl font-black mb-6">
-              Pronto Para Transformar Seu Negócio?
+              Agende Sua Consulta Inicial
             </h2>
             <p className="text-xl text-[#b3e6e6] mb-8 max-w-2xl mx-auto">
-              Junte-se a centenas de empresários que já estão alcançando resultados extraordinários
+              Faça uma análise gratuita do seu negócio e descubra como podemos ajudá-lo a alcançar novos patamares
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link
-                href="/signup"
+                href="/contact"
                 className="bg-[#ff8c00] text-white px-8 py-4 rounded-lg hover:bg-[#cc7000] transition-all inline-flex items-center justify-center gap-2 font-bold shadow-lg hover:shadow-xl"
               >
-                Começar Agora
+                Agendar Consulta Gratuita
                 <ArrowRight className="w-5 h-5" />
               </Link>
               <Link
-                href="/contact"
+                href="/about"
                 className="border-2 border-white text-white px-8 py-4 rounded-lg hover:bg-white/10 backdrop-blur-sm transition-all font-bold"
               >
-                Falar com Especialista
+                Conheça Nossa Metodologia
               </Link>
             </div>
           </AnimatedSection>
