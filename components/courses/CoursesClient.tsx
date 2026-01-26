@@ -215,12 +215,6 @@ export function CoursesClient({ initialCourses, articles = [] }: CoursesClientPr
             )}
           </div>
         </StaggerChildren>
-                  Nenhuma solução encontrada. Tente ajustar os filtros.
-                </p>
-              </div>
-            )}
-          </div>
-        </StaggerChildren>
       </div>
     </div>
   )
