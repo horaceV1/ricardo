@@ -1,21 +1,24 @@
 "use client"
 
 import { useState } from "react"
-import { Search, SlidersHorizontal } from "lucide-react"
+import { Search, SlidersHorizontal, BookOpen } from "lucide-react"
 import { CourseCard } from "@/components/courses/CourseCard"
+import { ArticleCard } from "@/components/articles/ArticleCard"
 import { FadeIn } from "@/components/animations/FadeIn"
 import { StaggerChildren, StaggerItem } from "@/components/animations/StaggerChildren"
 import { DrupalNode } from "next-drupal"
 
 interface CoursesClientProps {
   initialCourses: DrupalNode[]
+  articles?: DrupalNode[]
 }
 
-export function CoursesClient({ initialCourses }: CoursesClientProps) {
+export function CoursesClient({ initialCourses, articles = [] }: CoursesClientProps) {
   const [selectedCategory, setSelectedCategory] = useState("All")
   const [selectedLevel, setSelectedLevel] = useState("All")
   const [searchQuery, setSearchQuery] = useState("")
   const [showFilters, setShowFilters] = useState(false)
+  const [activeTab, setActiveTab] = useState<'courses' | 'articles'>('courses')
 
   const categories = ["All", "Consultoria Estratégica", "Gestão Financeira", "Marketing", "Vendas", "Recursos Humanos"]
   const levels = ["All", "Iniciante", "Intermediário", "Avançado"]
@@ -29,6 +32,14 @@ export function CoursesClient({ initialCourses }: CoursesClientProps) {
       course.body?.summary?.toLowerCase().includes(searchQuery.toLowerCase())
 
     return matchesCategory && matchesLevel && matchesSearch
+  })
+
+  const filteredArticles = articles.filter((article) => {
+    const matchesSearch =
+      article.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      article.body?.summary?.toLowerCase().includes(searchQuery.toLowerCase())
+
+    return matchesSearch
   })
 
   return (
@@ -121,27 +132,89 @@ export function CoursesClient({ initialCourses }: CoursesClientProps) {
           </div>
         </FadeIn>
 
+        {/* Tabs */}
+        <FadeIn direction="up" delay={0.25}>
+          <div className="flex gap-4 mb-6 border-b border-gray-200">
+            <button
+              onClick={() => setActiveTab('courses')}
+              className={`pb-3 px-4 font-semibold transition-colors relative ${
+                activeTab === 'courses'
+                  ? 'text-[#009999]'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              Cursos
+              {activeTab === 'courses' && (
+                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#009999]" />
+              )}
+            </button>
+            <button
+              onClick={() => setActiveTab('articles')}
+              className={`pb-3 px-4 font-semibold transition-colors relative flex items-center gap-2 ${
+                activeTab === 'articles'
+                  ? 'text-[#009999]'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              <BookOpen className="w-4 h-4" />
+              Artigos
+              {articles.length > 0 && (
+                <span className="bg-[#009999] text-white text-xs px-2 py-0.5 rounded-full">
+                  {articles.length}
+                </span>
+              )}
+              {activeTab === 'articles' && (
+                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#009999]" />
+              )}
+            </button>
+          </div>
+        </FadeIn>
+
         {/* Results Count */}
         <FadeIn direction="up" delay={0.3}>
           <div className="mb-6">
             <p className="text-gray-600">
-              Mostrando <span className="font-semibold">{filteredCourses.length}</span> soluções
+              Mostrando <span className="font-semibold">
+                {activeTab === 'courses' ? filteredCourses.length : filteredArticles.length}
+              </span> {activeTab === 'courses' ? 'soluções' : 'artigos'}
             </p>
           </div>
         </FadeIn>
 
-        {/* Courses Grid */}
+        {/* Courses/Articles Grid */}
         <StaggerChildren staggerDelay={0.1}>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {filteredCourses.length > 0 ? (
-              filteredCourses.map((course) => (
-                <StaggerItem key={course.id}>
-                  <CourseCard course={course} />
-                </StaggerItem>
-              ))
+            {activeTab === 'courses' ? (
+              filteredCourses.length > 0 ? (
+                filteredCourses.map((course) => (
+                  <StaggerItem key={course.id}>
+                    <CourseCard course={course} />
+                  </StaggerItem>
+                ))
+              ) : (
+                <div className="col-span-full text-center py-12">
+                  <p className="text-gray-600 text-lg">
+                    Nenhum curso encontrado com os filtros selecionados.
+                  </p>
+                </div>
+              )
             ) : (
-              <div className="col-span-full text-center py-12">
-                <p className="text-gray-600 text-lg">
+              filteredArticles.length > 0 ? (
+                filteredArticles.map((article) => (
+                  <StaggerItem key={article.id}>
+                    <ArticleCard article={article} />
+                  </StaggerItem>
+                ))
+              ) : (
+                <div className="col-span-full text-center py-12">
+                  <p className="text-gray-600 text-lg">
+                    Nenhum artigo encontrado.
+                  </p>
+                </div>
+              )
+            )}
+          </div>
+        </StaggerChildren>
                   Nenhuma solução encontrada. Tente ajustar os filtros.
                 </p>
               </div>

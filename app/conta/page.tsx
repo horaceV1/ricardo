@@ -1,13 +1,40 @@
 "use client"
 
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { useAuth } from '@/contexts/AuthContext'
-import { User, Mail, Shield, Calendar, LogOut, Loader2, ShoppingBag, Settings } from 'lucide-react'
+import { User, Mail, Shield, Calendar, LogOut, Loader2, ShoppingBag, Settings, BookOpen } from 'lucide-react'
 
 export default function AccountPage() {
   const router = useRouter()
   const { user, isAuthenticated, isLoading, logout } = useAuth()
+  const [userArticles, setUserArticles] = useState<any[]>([])
+  const [loadingArticles, setLoadingArticles] = useState(false)
+
+  useEffect(() => {
+    if (!isLoading && !isAuthenticated) {
+      router.push('/entrar')
+    }
+  }, [isAuthenticated, isLoading, router])
+
+  // Fetch user's articles (simulated as "purchased" content)
+  useEffect(() => {
+    if (user) {
+      setLoadingArticles(true)
+      // For demo, we'll fetch all articles
+      // In production, you'd filter by user purchases/access
+      fetch(`${process.env.NEXT_PUBLIC_DRUPAL_BASE_URL}/jsonapi/node/article?filter[status]=1&sort=-created&page[limit]=5`, {
+        credentials: 'include',
+      })
+        .then(res => res.json())
+        .then(data => {
+          setUserArticles(data.data || [])
+        })
+        .catch(err => console.error('Failed to fetch articles:', err))
+        .finally(() => setLoadingArticles(false))
+    }
+  }, [user])
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -135,6 +162,64 @@ export default function AccountPage() {
                   </div>
                 )}
               </div>
+            </div>
+
+            {/* My Content */}
+            <div className="bg-white rounded-2xl shadow-lg p-8">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold text-gray-900">Meu Conteúdo</h2>
+                <Link 
+                  href="/courses"
+                  className="text-[#009999] hover:text-[#007a7a] transition-colors text-sm font-medium"
+                >
+                  Ver Todos
+                </Link>
+              </div>
+              
+              {loadingArticles ? (
+                <div className="text-center py-8">
+                  <Loader2 className="h-8 w-8 animate-spin text-[#009999] mx-auto mb-4" />
+                  <p className="text-gray-600">Carregando conteúdo...</p>
+                </div>
+              ) : userArticles.length > 0 ? (
+                <div className="space-y-4">
+                  {userArticles.map((article) => (
+                    <Link 
+                      key={article.id}
+                      href={article.attributes.path?.alias || `/articles/${article.id}`}
+                      className="block p-4 border border-gray-200 rounded-lg hover:border-[#009999] hover:shadow-md transition-all group"
+                    >
+                      <div className="flex items-start gap-4">
+                        <div className="flex-shrink-0 w-12 h-12 bg-[#009999]/10 rounded-lg flex items-center justify-center group-hover:bg-[#009999] transition-colors">
+                          <BookOpen className="w-6 h-6 text-[#009999] group-hover:text-white transition-colors" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-semibold text-gray-900 group-hover:text-[#009999] transition-colors mb-1 line-clamp-1">
+                            {article.attributes.title}
+                          </h3>
+                          <p className="text-sm text-gray-600 line-clamp-2 mb-2">
+                            {article.attributes.body?.summary || 'Artigo exclusivo'}
+                          </p>
+                          <span className="text-xs text-gray-500">
+                            {new Date(article.attributes.created).toLocaleDateString('pt-BR')}
+                          </span>
+                        </div>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-12 text-gray-500">
+                  <BookOpen className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+                  <p className="mb-4">Você ainda não possui conteúdo</p>
+                  <Link
+                    href="/courses"
+                    className="inline-flex items-center px-4 py-2 bg-[#009999] text-white rounded-lg hover:bg-[#007a7a] transition-colors"
+                  >
+                    Explorar Conteúdos
+                  </Link>
+                </div>
+              )}
             </div>
 
             {/* Recent Activity */}

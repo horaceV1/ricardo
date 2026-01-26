@@ -9,20 +9,37 @@ export const metadata: Metadata = {
 }
 
 export default async function CoursesPage() {
-  const courses = await drupal.getResourceCollection<DrupalNode[]>(
-    "node--course",
-    {
-      params: {
-        "filter[status]": 1,
-        "fields[node--course]": "title,path,field_image,field_price,field_rating,field_students,field_duration,field_lessons,field_level,field_category,body,created",
-        include: "field_image,field_category",
-        sort: "-created",
-      },
-      next: {
-        revalidate: 3600,
-      },
-    }
-  ).catch(() => [])
+  // Fetch both courses and articles
+  const [courses, articles] = await Promise.all([
+    drupal.getResourceCollection<DrupalNode[]>(
+      "node--course",
+      {
+        params: {
+          "filter[status]": 1,
+          "fields[node--course]": "title,path,field_image,field_price,field_rating,field_students,field_duration,field_lessons,field_level,field_category,body,created",
+          include: "field_image,field_category",
+          sort: "-created",
+        },
+        next: {
+          revalidate: 3600,
+        },
+      }
+    ).catch(() => []),
+    drupal.getResourceCollection<DrupalNode[]>(
+      "node--article",
+      {
+        params: {
+          "filter[status]": 1,
+          "fields[node--article]": "title,path,field_image,body,created,uid",
+          include: "field_image,uid",
+          sort: "-created",
+        },
+        next: {
+          revalidate: 3600,
+        },
+      }
+    ).catch(() => [])
+  ])
 
-  return <CoursesClient initialCourses={courses || []} />
+  return <CoursesClient initialCourses={courses || []} articles={articles || []} />
 }
