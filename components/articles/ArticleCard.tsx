@@ -3,15 +3,15 @@
 import Link from "next/link"
 import { DrupalNode } from "next-drupal"
 import { Calendar, User, ArrowRight } from "lucide-react"
-import { absoluteUrl } from "@/lib/drupal"
 
 interface ArticleCardProps {
   article: DrupalNode
 }
 
 export function ArticleCard({ article }: ArticleCardProps) {
+  const baseUrl = process.env.NEXT_PUBLIC_DRUPAL_BASE_URL
   const imageSrc = article.field_image?.uri?.url
-    ? absoluteUrl(article.field_image.uri.url)
+    ? `${baseUrl}${article.field_image.uri.url}`
     : "/placeholder-article.jpg"
 
   const excerpt = article.body?.summary || article.body?.value?.substring(0, 150) + "..." || ""

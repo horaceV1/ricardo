@@ -3,7 +3,6 @@ import { DrupalNode } from "next-drupal"
 import { notFound } from "next/navigation"
 import { Calendar, User, ArrowLeft } from "lucide-react"
 import Link from "next/link"
-import { absoluteUrl } from "@/lib/drupal"
 import type { Metadata } from "next"
 
 interface ArticlePageProps {
@@ -50,8 +49,9 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
     notFound()
   }
 
+  const baseUrl = process.env.NEXT_PUBLIC_DRUPAL_BASE_URL
   const imageSrc = article.field_image?.uri?.url
-    ? absoluteUrl(article.field_image.uri.url)
+    ? `${baseUrl}${article.field_image.uri.url}`
     : null
 
   const date = new Date(article.created).toLocaleDateString('pt-BR', {
