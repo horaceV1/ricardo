@@ -86,6 +86,14 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
     year: 'numeric'
   })
 
+  // Debug logging
+  console.log('Article ID:', article.drupal_internal__nid)
+  console.log('Has dynamic_forms?', !!article.dynamic_forms)
+  console.log('Forms count:', article.dynamic_forms?.length || 0)
+  if (article.dynamic_forms) {
+    console.log('Forms data:', JSON.stringify(article.dynamic_forms, null, 2))
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Hero Section */}
@@ -157,8 +165,11 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
         </article>
 
         {/* Dynamic Forms from Layout Builder */}
-        {article.dynamic_forms && article.dynamic_forms.length > 0 && (
+        {article.dynamic_forms && article.dynamic_forms.length > 0 ? (
           <div className="mt-8 space-y-8">
+            <div className="text-center text-sm text-gray-500 mb-4">
+              DEBUG: Encontrados {article.dynamic_forms.length} formulário(s)
+            </div>
             {article.dynamic_forms.map((form: any, index: number) => (
               <DynamicForm 
                 key={index}
@@ -167,6 +178,10 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
                 fields={form.fields}
               />
             ))}
+          </div>
+        ) : (
+          <div className="mt-8 text-center text-sm text-gray-500 p-4 bg-gray-100 rounded">
+            DEBUG: Nenhum formulário dinâmico encontrado (dynamic_forms: {JSON.stringify(!!article.dynamic_forms)})
           </div>
         )}
 
