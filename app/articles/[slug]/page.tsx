@@ -28,13 +28,22 @@ async function getArticle(slug: string): Promise<DrupalNode | null> {
     if (article) {
       try {
         const baseUrl = process.env.NEXT_PUBLIC_DRUPAL_BASE_URL
-        const formsResponse = await fetch(
-          `${baseUrl}/api/article-layout/${article.drupal_internal__nid}`
-        )
+        const formsUrl = `${baseUrl}/api/article-layout/${article.drupal_internal__nid}`
+        console.log('Fetching forms from:', formsUrl)
+        
+        const formsResponse = await fetch(formsUrl, {
+          cache: 'no-store', // Don't cache this request
+        })
+        
+        console.log('Forms response status:', formsResponse.status)
+        
         if (formsResponse.ok) {
           const formsData = await formsResponse.json()
+          console.log('Forms data received:', JSON.stringify(formsData, null, 2))
+          
           if (formsData.forms && formsData.forms.length > 0) {
             article.dynamic_forms = formsData.forms
+            console.log('Set article.dynamic_forms to:', article.dynamic_forms)
           }
         }
       } catch (error) {
