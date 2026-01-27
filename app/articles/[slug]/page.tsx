@@ -18,11 +18,33 @@ async function getArticle(slug: string): Promise<DrupalNode | null> {
       params: {
         "filter[path.alias]": `/${slug}`,
         "filter[status]": 1,
-        include: "field_image,uid",
+        include: "field_image,uid,field_dynamic_form",
       },
     })
     
-    return articles?.[0] || null
+    const article = articles?.[0] || null
+    
+    // If article has a dynamic form reference, fetch the form configuration
+    if (article && article.field_dynamic_form?.id) {
+      try {
+        const baseUrl = process.env.NEXT_PUBLIC_DRUPAL_BASE_URL
+        const formResponse = await fetch(
+          `${baseUrl}/jsonapi/dynamic_form/dynamic_form/${article.field_dynamic_form.id}`
+        )
+        if (formResponse.ok) {
+          const formData = await formResponse.json()
+          article.field_dynamic_form = {
+            id: formData.data.id,
+            label: formData.data.attributes.label,
+            fields: formData.data.attributes.fields || []
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching form config:', error)
+      }
+    }
+    
+    return article
   } catch (error) {
     return null
   }
@@ -131,35 +153,16 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
           />
         </article>
 
-        {/* Dynamic Form Section */}
-        <div className="mt-8">
-          <DynamicForm 
-            formId="guacamole"
-            formTitle="Guacamole"
-            fields={[
-              {
-                label: "Nome",
-                type: "texto",
-                required: true
-              },
-              {
-                label: "Email",
-                type: "texto",
-                required: true
-              },
-              {
-                label: "Tamanho dos ombros",
-                type: "imagem",
-                required: true
-              },
-              {
-                label: "Biceps",
-                type: "imagem",
-                required: true
-              }
-            ]}
-          />
-        </div>
+        {/* Dynamic Form Section - Only show if article has a form reference */}
+        {article.field_dynamic_form?.id && (
+          <div className="mt-8">
+            <DynamicForm 
+              formId={article.field_dynamic_form.id}
+              formTitle={article.field_dynamic_form.label || "Formulário"}
+              fields={article.field_dynamic_form.fields || []}
+            />
+          </div>
+        )}
 
         {/* CTA Section */}
         <div className="mt-12 bg-gradient-to-r from-[#009999] to-[#005c5c] rounded-2xl p-8 text-white text-center">
