@@ -164,6 +164,15 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
           />
         </article>
 
+        {/* DEBUG - Always visible */}
+        <div className="mt-8 p-4 bg-yellow-100 border-2 border-yellow-500 rounded-lg">
+          <p className="font-bold">DEBUG INFO:</p>
+          <p>Article ID: {article.drupal_internal__nid}</p>
+          <p>Has dynamic_forms property: {String(!!article.dynamic_forms)}</p>
+          <p>Forms count: {article.dynamic_forms?.length || 0}</p>
+          <p>Forms data: {JSON.stringify(article.dynamic_forms)}</p>
+        </div>
+
         {/* Dynamic Forms from Layout Builder */}
         {article.dynamic_forms && article.dynamic_forms.length > 0 ? (
           <div className="mt-8 space-y-8">
