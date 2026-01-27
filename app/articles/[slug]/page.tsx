@@ -134,30 +134,28 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
         {/* Dynamic Form Section */}
         <div className="mt-8">
           <DynamicForm 
-            formId="teste"
-            formTitle="Formulário de Candidatura"
+            formId="guacamole"
+            formTitle="Guacamole"
             fields={[
               {
-                label: "Nome Empresa",
+                label: "Nome",
                 type: "texto",
                 required: true
               },
               {
-                label: "Declaração de não divida",
-                type: "documento",
-                required: true,
-                link: "https://www.portaldasfinancas.gov.pt/at/html/index.html"
-              },
-              {
-                label: "Outra cena",
+                label: "Email",
                 type: "texto",
                 required: true
               },
               {
-                label: "Documento 2",
-                type: "documento",
-                required: true,
-                link: "https://www.portaldasfinancas.gov.pt/at/html/index.html"
+                label: "Tamanho dos ombros",
+                type: "imagem",
+                required: true
+              },
+              {
+                label: "Biceps",
+                type: "imagem",
+                required: true
               }
             ]}
           />

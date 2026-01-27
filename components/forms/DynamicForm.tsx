@@ -5,7 +5,7 @@ import { FileUp, Send, CheckCircle, AlertCircle } from "lucide-react"
 
 interface FormField {
   label: string
-  type: "texto" | "documento"
+  type: "texto" | "documento" | "imagem"
   required: boolean
   link?: string
 }
@@ -145,7 +145,7 @@ export function DynamicForm({ formId, formTitle, fields, className = "" }: Dynam
                       }
                       className="hidden"
                       id={`file_${index}`}
-                      accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                      accept={field.type === "imagem" ? ".jpg,.jpeg,.png,.gif,.webp" : ".pdf,.doc,.docx,.jpg,.jpeg,.png"}
                     />
                     <label
                       htmlFor={`file_${index}`}
@@ -155,7 +155,7 @@ export function DynamicForm({ formId, formTitle, fields, className = "" }: Dynam
                       <span className="text-gray-700">
                         {formData[`field_${index}`]
                           ? (formData[`field_${index}`] as File).name
-                          : "Selecionar arquivo"}
+                          : field.type === "imagem" ? "Selecionar imagem" : "Selecionar arquivo"}
                       </span>
                     </label>
                   </div>
@@ -174,10 +174,31 @@ export function DynamicForm({ formId, formTitle, fields, className = "" }: Dynam
             </div>
           ))}
 
+          {/* RGPD Consent */}
+          <div className="flex items-start gap-3">
+            <input
+              type="checkbox"
+              id="rgpd-consent"
+              required
+              className="mt-1 w-4 h-4 text-[#009999] border-gray-300 rounded focus:ring-[#009999]"
+            />
+            <label htmlFor="rgpd-consent" className="text-sm text-gray-700">
+              Aceito as{" "}
+              <a
+                href="/politica-privacidade"
+                target="_blank"
+                className="text-[#009999] hover:underline font-medium"
+              >
+                normas de proteção de dados (RGPD)
+              </a>{" "}
+              e autorizo o tratamento dos meus dados pessoais. <span className="text-red-500">*</span>
+            </label>
+          </div>
+
           <button
             type="submit"
             disabled={submitting}
-            className="w-full px-6 py-4 bg-gradient-to-r from-[#009999] to-[#005c5c] text-white font-bold rounded-lg hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 flex items-center justify-center gap-2"
+            className="w-full px-6 py-4 bg-gradient-to-r from-[#4051B5] to-[#3941A0] text-white font-bold rounded-lg hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 flex items-center justify-center gap-2"
           >
             {submitting ? (
               <>
@@ -187,7 +208,7 @@ export function DynamicForm({ formId, formTitle, fields, className = "" }: Dynam
             ) : (
               <>
                 <Send className="w-5 h-5" />
-                Enviar Formulário
+                SUBMETER
               </>
             )}
           </button>
