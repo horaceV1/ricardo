@@ -4,6 +4,7 @@ import { notFound } from "next/navigation"
 import { Calendar, User, ArrowLeft } from "lucide-react"
 import Link from "next/link"
 import type { Metadata } from "next"
+import { DynamicForm } from "@/components/forms/DynamicForm"
 
 interface ArticlePageProps {
   params: {
@@ -129,6 +130,38 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
             dangerouslySetInnerHTML={{ __html: article.body?.value || '' }}
           />
         </article>
+
+        {/* Dynamic Form Section */}
+        <div className="mt-8">
+          <DynamicForm 
+            formId="teste"
+            formTitle="Formulário de Candidatura"
+            fields={[
+              {
+                label: "Nome Empresa",
+                type: "texto",
+                required: true
+              },
+              {
+                label: "Declaração de não divida",
+                type: "documento",
+                required: true,
+                link: "https://www.portaldasfinancas.gov.pt/at/html/index.html"
+              },
+              {
+                label: "Outra cena",
+                type: "texto",
+                required: true
+              },
+              {
+                label: "Documento 2",
+                type: "documento",
+                required: true,
+                link: "https://www.portaldasfinancas.gov.pt/at/html/index.html"
+              }
+            ]}
+          />
+        </div>
 
         {/* CTA Section */}
         <div className="mt-12 bg-gradient-to-r from-[#009999] to-[#005c5c] rounded-2xl p-8 text-white text-center">
