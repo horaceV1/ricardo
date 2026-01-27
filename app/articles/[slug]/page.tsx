@@ -24,23 +24,21 @@ async function getArticle(slug: string): Promise<DrupalNode | null> {
     
     const article = articles?.[0] || null
     
-    // If article has a dynamic form reference, fetch the form configuration
-    if (article && article.field_dynamic_form?.id) {
+    // Fetch dynamic forms from Layout Builder
+    if (article) {
       try {
         const baseUrl = process.env.NEXT_PUBLIC_DRUPAL_BASE_URL
-        const formResponse = await fetch(
-          `${baseUrl}/jsonapi/dynamic_form/dynamic_form/${article.field_dynamic_form.id}`
+        const formsResponse = await fetch(
+          `${baseUrl}/api/article-layout/${article.drupal_internal__nid}`
         )
-        if (formResponse.ok) {
-          const formData = await formResponse.json()
-          article.field_dynamic_form = {
-            id: formData.data.id,
-            label: formData.data.attributes.label,
-            fields: formData.data.attributes.fields || []
+        if (formsResponse.ok) {
+          const formsData = await formsResponse.json()
+          if (formsData.forms && formsData.forms.length > 0) {
+            article.dynamic_forms = formsData.forms
           }
         }
       } catch (error) {
-        console.error('Error fetching form config:', error)
+        console.error('Error fetching layout forms:', error)
       }
     }
     
@@ -153,14 +151,17 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
           />
         </article>
 
-        {/* Dynamic Form Section - Only show if article has a form reference */}
-        {article.field_dynamic_form?.id && (
-          <div className="mt-8">
-            <DynamicForm 
-              formId={article.field_dynamic_form.id}
-              formTitle={article.field_dynamic_form.label || "Formulário"}
-              fields={article.field_dynamic_form.fields || []}
-            />
+        {/* Dynamic Forms from Layout Builder */}
+        {article.dynamic_forms && article.dynamic_forms.length > 0 && (
+          <div className="mt-8 space-y-8">
+            {article.dynamic_forms.map((form: any, index: number) => (
+              <DynamicForm 
+                key={index}
+                formId={form.id}
+                formTitle={form.label}
+                fields={form.fields}
+              />
+            ))}
           </div>
         )}
 
