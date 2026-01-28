@@ -55,8 +55,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
       if (response.ok) {
         const data = await response.json()
+        console.log('Cart data refreshed:', data)
         setCart(data)
       } else {
+        console.error('Failed to fetch cart:', response.status)
         setCart(null)
       }
     } catch (error) {
@@ -69,6 +71,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
     setLoading(true)
     try {
       const baseUrl = process.env.NEXT_PUBLIC_DRUPAL_BASE_URL || 'https://darkcyan-stork-408379.hostingersite.com'
+      console.log('Adding to cart:', { productId, quantity, baseUrl })
+      
       const response = await fetch(`${baseUrl}/api/cart/add`, {
         method: 'POST',
         credentials: 'include',
@@ -82,11 +86,19 @@ export function CartProvider({ children }: { children: ReactNode }) {
         }]),
       })
 
-      if (response.ok) {
+      const data = await response.json()
+      console.log('Add to cart response:', data)
+      
+      if (response.ok && data.success) {
         await refreshCart()
+        return true
+      } else {
+        console.error('Failed to add to cart:', data)
+        return false
       }
     } catch (error) {
       console.error('Error adding to cart:', error)
+      return false
     } finally {
       setLoading(false)
     }

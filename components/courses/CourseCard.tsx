@@ -17,6 +17,7 @@ interface CourseCardProps {
 export function CourseCard({ course }: CourseCardProps) {
   const { addToCart, loading } = useCart()
   const [adding, setAdding] = useState(false)
+  const [showSuccess, setShowSuccess] = useState(false)
 
   // Check if it's a commerce product or a node
   const isProduct = course.type?.includes('commerce_product')
@@ -41,11 +42,18 @@ export function CourseCard({ course }: CourseCardProps) {
     e.preventDefault()
     e.stopPropagation()
     
-    if (!variationId) return
+    if (!variationId) {
+      console.error('No variation ID available')
+      return
+    }
     
     setAdding(true)
     try {
-      await addToCart(variationId)
+      const success = await addToCart(variationId)
+      if (success) {
+        setShowSuccess(true)
+        setTimeout(() => setShowSuccess(false), 2000)
+      }
     } finally {
       setAdding(false)
     }
@@ -117,10 +125,14 @@ export function CourseCard({ course }: CourseCardProps) {
               <button
                 onClick={handleAddToCart}
                 disabled={adding || loading}
-                className="mt-4 w-full flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-[#009999] to-[#007a7a] text-white rounded-lg hover:shadow-lg transition-all font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+                className={`mt-4 w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg hover:shadow-lg transition-all font-semibold disabled:opacity-50 disabled:cursor-not-allowed ${
+                  showSuccess
+                    ? 'bg-green-600 text-white'
+                    : 'bg-gradient-to-r from-[#009999] to-[#007a7a] text-white'
+                }`}
               >
                 <ShoppingCart className="w-5 h-5" />
-                {adding ? 'Adicionando...' : 'Adicionar ao Carrinho'}
+                {showSuccess ? '✓ Adicionado!' : adding ? 'Adicionando...' : 'Adicionar ao Carrinho'}
               </button>
             )}
           </div>
