@@ -5,6 +5,7 @@ import { Menu, X, User, LogOut, ShoppingBag } from "lucide-react"
 import { useState } from "react"
 import Image from "next/image"
 import { useAuth } from "@/contexts/AuthContext"
+import { CartIcon } from "@/components/cart/CartIcon"
 
 export function HeaderNav() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
@@ -50,6 +51,7 @@ export function HeaderNav() {
 
           {/* Actions */}
           <div className="hidden md:flex items-center gap-4">
+            <CartIcon />
             {isAuthenticated && user ? (
               <div className="relative">
                 <button

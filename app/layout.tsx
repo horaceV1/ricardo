@@ -3,6 +3,7 @@ import { HeaderNav } from "@/components/navigation/HeaderNav"
 import { SmoothScrollProvider } from "@/components/providers/SmoothScrollProvider"
 import { RecaptchaProvider } from "@/components/providers/RecaptchaProvider"
 import { AuthProvider } from "@/contexts/AuthContext"
+import { CartProvider } from "@/contexts/CartContext"
 import type { Metadata } from "next"
 import type { ReactNode } from "react"
 
@@ -31,10 +32,11 @@ export default function RootLayout({
       <body className="bg-gray-50">
         <RecaptchaProvider>
           <AuthProvider>
-            <SmoothScrollProvider>
-              <DraftAlert />
-              <HeaderNav />
-              <main>{children}</main>
+            <CartProvider>
+              <SmoothScrollProvider>
+                <DraftAlert />
+                <HeaderNav />
+                <main>{children}</main>
           
           {/* Footer */}
           <footer className="bg-gradient-to-br from-gray-900 via-[#003d3d] to-gray-900 text-white py-16 mt-20">
@@ -75,7 +77,8 @@ export default function RootLayout({
               </div>
             </div>
           </footer>
-          </SmoothScrollProvider>
+            </SmoothScrollProvider>
+          </CartProvider>
         </AuthProvider>
         </RecaptchaProvider>
       </body>

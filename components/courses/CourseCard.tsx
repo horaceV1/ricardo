@@ -1,18 +1,23 @@
 "use client"
 
-import { Star, Clock, Users, BookOpen } from "lucide-react"
+import { Star, Clock, Users, BookOpen, ShoppingCart } from "lucide-react"
 import { DrupalNode } from "next-drupal"
 import Link from "next/link"
 import { FadeIn } from "@/components/animations/FadeIn"
 import { ScaleIn } from "@/components/animations/ScaleIn"
 import { ImageWithFallback } from "@/components/ui/ImageWithFallback"
 import { absoluteUrl, formatPrice } from "@/lib/utils"
+import { useCart } from "@/contexts/CartContext"
+import { useState } from "react"
 
 interface CourseCardProps {
   course: DrupalNode
 }
 
 export function CourseCard({ course }: CourseCardProps) {
+  const { addToCart, loading } = useCart()
+  const [adding, setAdding] = useState(false)
+
   // Check if it's a commerce product or a node
   const isProduct = course.type?.includes('commerce_product')
   
@@ -27,6 +32,24 @@ export function CourseCard({ course }: CourseCardProps) {
   
   // Get image - products use 'images', nodes use 'field_image'
   const image = isProduct ? course.images?.[0] : course.field_image
+
+  // Get product variation ID for cart
+  const variationId = isProduct ? course.variations?.[0]?.id : course.field_product_variation?.id
+  const isPaid = price > 0
+
+  const handleAddToCart = async (e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    
+    if (!variationId) return
+    
+    setAdding(true)
+    try {
+      await addToCart(variationId)
+    } finally {
+      setAdding(false)
+    }
+  }
 
   return (
     <Link href={course.path?.alias || `/courses/${course.id}`} className="group block h-full">
@@ -86,9 +109,20 @@ export function CourseCard({ course }: CourseCardProps) {
               </div>
 
               <div className="text-2xl font-black text-[#009999]">
-                {formatPrice(price)}
+                {isPaid ? formatPrice(price) : 'Gratuito'}
               </div>
             </div>
+
+            {isPaid && variationId && (
+              <button
+                onClick={handleAddToCart}
+                disabled={adding || loading}
+                className="mt-4 w-full flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-[#009999] to-[#007a7a] text-white rounded-lg hover:shadow-lg transition-all font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <ShoppingCart className="w-5 h-5" />
+                {adding ? 'Adicionando...' : 'Adicionar ao Carrinho'}
+              </button>
+            )}
           </div>
         </div>
       </ScaleIn>
