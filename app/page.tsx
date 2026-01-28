@@ -15,13 +15,13 @@ export default async function Home() {
   let featuredCourses: DrupalNode[] = []
   
   try {
-    // Fetch the specific "Dining Armchair in Pink" product
-    const pinkChair = await drupal.getResource<DrupalNode>(
-      "commerce_product--physical",
-      "8c0549b0-9faa-4ae9-8d4d-2e8a54eaa4e5",
+    // Fetch the curso-1 media product
+    const curso1 = await drupal.getResource<DrupalNode>(
+      "commerce_product--media",
+      "72d8b57c-9575-4eb5-abbe-8be6f36e2e5f",
       {
         params: {
-          "fields[commerce_product--physical]": "title,body,path,images,variations",
+          "fields[commerce_product--media]": "title,body,path,images,variations",
           include: "images,variations",
         },
         next: {
@@ -30,15 +30,15 @@ export default async function Home() {
       }
     )
     
-    // Fetch two more physical products
+    // Fetch additional media products for the featured section
     const products = await drupal.getResourceCollection<DrupalNode[]>(
-      "commerce_product--physical",
+      "commerce_product--media",
       {
         params: {
           "filter[status]": 1,
           "filter[id][operator]": "NOT IN",
-          "filter[id][value]": ["8c0549b0-9faa-4ae9-8d4d-2e8a54eaa4e5"],
-          "fields[commerce_product--physical]": "title,body,path,images,variations",
+          "filter[id][value]": ["72d8b57c-9575-4eb5-abbe-8be6f36e2e5f"],
+          "fields[commerce_product--media]": "title,body,path,images,variations",
           include: "images,variations",
           sort: "-created",
           "page[limit]": 2,
@@ -49,9 +49,9 @@ export default async function Home() {
       }
     )
     
-    // Combine: Pink chair first, then other products
-    if (pinkChair) {
-      featuredCourses = [pinkChair, ...(products || [])]
+    // Combine: Curso 1 first, then other products
+    if (curso1) {
+      featuredCourses = [curso1, ...(products || [])]
     } else if (products && products.length > 0) {
       featuredCourses = products
     }
