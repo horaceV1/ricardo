@@ -30,7 +30,7 @@ interface Cart {
 interface CartContextType {
   cart: Cart | null
   loading: boolean
-  addToCart: (productId: string, quantity?: number) => Promise<void>
+  addToCart: (productId: string, quantity?: number) => Promise<boolean>
   removeFromCart: (orderItemId: string) => Promise<void>
   updateQuantity: (orderItemId: string, quantity: number) => Promise<void>
   clearCart: () => Promise<void>
