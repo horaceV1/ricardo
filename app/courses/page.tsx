@@ -9,21 +9,45 @@ export const metadata: Metadata = {
 }
 
 export default async function CoursesPage() {
-  // Fetch commerce products only (no articles)
-  const courses = await drupal.getResourceCollection<DrupalNode[]>(
-    "node--course",
-    {
-      params: {
-        "filter[status]": 1,
-        "fields[node--course]": "title,path,field_image,field_price,field_rating,field_students,field_duration,field_lessons,field_level,field_category,body,created",
-        include: "field_image,field_category",
-        sort: "-created",
-      },
-      next: {
-        revalidate: 3600,
-      },
-    }
-  ).catch(() => [])
+  // Fetch commerce products (both media and physical types)
+  const [mediaProducts, physicalProducts] = await Promise.all([
+    drupal.getResourceCollection<DrupalNode[]>(
+      "commerce_product--media",
+      {
+        params: {
+          "filter[status]": 1,
+          include: "variations,images,default_variation",
+          sort: "-created",
+        },
+        next: {
+          revalidate: 3600,
+        },
+      }
+    ).catch((error) => {
+      console.error('Error fetching media products:', error)
+      return []
+    }),
+    drupal.getResourceCollection<DrupalNode[]>(
+      "commerce_product--physical",
+      {
+        params: {
+          "filter[status]": 1,
+          include: "variations,images,default_variation",
+          sort: "-created",
+        },
+        next: {
+          revalidate: 3600,
+        },
+      }
+    ).catch((error) => {
+      console.error('Error fetching physical products:', error)
+      return []
+    })
+  ])
 
-  return <CoursesClient initialCourses={courses || []} />
+  const allProducts = [...(mediaProducts || []), ...(physicalProducts || [])]
+
+  console.log('Fetched products:', allProducts.length)
+
+  return <CoursesClient initialCourses={allProducts} />
 }

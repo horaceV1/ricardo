@@ -22,8 +22,15 @@ export function CourseCard({ course }: CourseCardProps) {
   // Check if it's a commerce product or a node
   const isProduct = course.type?.includes('commerce_product')
   
+  // For commerce products, get default_variation or first variation
+  const variation = isProduct 
+    ? (course.default_variation || course.variations?.[0])
+    : null
+  
   // Handle both course nodes and commerce products
-  const price = isProduct ? (course.variations?.[0]?.price?.number || 0) : (course.field_price || 0)
+  const price = isProduct 
+    ? (variation?.price?.number || 0) 
+    : (course.field_price || 0)
   const rating = course.field_rating || 4.5
   const students = course.field_students || 100
   const duration = course.field_duration || "Self-paced"
@@ -35,7 +42,7 @@ export function CourseCard({ course }: CourseCardProps) {
   const image = isProduct ? course.images?.[0] : course.field_image
 
   // Get product variation ID for cart
-  const variationId = isProduct ? course.variations?.[0]?.id : course.field_product_variation?.id
+  const variationId = variation?.id
   const isPaid = price > 0
 
   const handleAddToCart = async (e: React.MouseEvent) => {
@@ -66,8 +73,8 @@ export function CourseCard({ course }: CourseCardProps) {
           <div className="relative h-56 overflow-hidden">
             {image && (
               <ImageWithFallback
-                src={absoluteUrl(image.uri?.url || image.url)}
-                alt={image.resourceIdObjMeta?.alt || course.title}
+                src={absoluteUrl(image.uri?.url || image.url || image.attributes?.uri?.url)}
+                alt={image.resourceIdObjMeta?.alt || image.meta?.alt || image.attributes?.meta?.alt || course.title}
                 width={400}
                 height={224}
                 className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
