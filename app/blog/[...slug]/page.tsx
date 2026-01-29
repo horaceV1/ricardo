@@ -1,49 +1,53 @@
 "use client"
 
 import { useEffect, useState } from 'react'
-import { useParams } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
 import { Calendar, User, Tag, ArrowLeft, Share2 } from 'lucide-react'
+import DynamicForm from '@/components/forms/DynamicForm'
 
 interface BlogPost {
   id: string
+  nid: number
   title: string
   body: string
   created: string
+  path: string
   image: {
     url: string
     alt: string
   }
   author: string
   tags: string[]
+  dynamicFormId: string | null
 }
 
-export default function BlogPostPage() {
-  const params = useParams()
+export default function BlogPostPage({ params }: { params: { slug: string[] } }) {
   const [post, setPost] = useState<BlogPost | null>(null)
   const [loading, setLoading] = useState(true)
   const [relatedPosts, setRelatedPosts] = useState<any[]>([])
 
   useEffect(() => {
-    if (params.slug) {
-      fetchBlogPost()
-    }
+    fetchAllPostsAndFind()
   }, [params.slug])
 
-  const fetchBlogPost = async () => {
+  const fetchAllPostsAndFind = async () => {
     try {
       const baseUrl = process.env.NEXT_PUBLIC_DRUPAL_BASE_URL || 'https://darkcyan-stork-408379.hostingersite.com'
       
-      // Fetch by path alias
-      const slug = Array.isArray(params.slug) ? params.slug.join('/') : params.slug
+      // Fetch all posts to find the one with matching path
       const response = await fetch(
-        `${baseUrl}/jsonapi/node/article?filter[path.alias]=/blog/${slug}&include=field_image,uid,field_tags&fields[node--article]=title,body,created,field_image,uid,field_tags&fields[file--file]=uri,url&fields[user--user]=display_name&fields[taxonomy_term--tags]=name`
+        `${baseUrl}/jsonapi/node/article?include=field_image,uid,field_tags,field_dynamic_form&fields[node--article]=drupal_internal__nid,title,body,created,path,field_image,uid,field_tags,field_dynamic_form&fields[file--file]=uri,url&fields[user--user]=display_name&fields[taxonomy_term--tags]=name&fields[dynamic_form--dynamic_form]=drupal_internal__id`
       )
       const data = await response.json()
 
-      if (data.data && data.data[0]) {
-        const postData = data.data[0]
+      // Construct the path from slug
+      const fullPath = `/blog/${params.slug.join('/')}`
+      
+      // Find the post with matching path
+      const postData = data.data.find((p: any) => p.attributes.path?.alias === fullPath)
+
+      if (postData) {
         const image = data.included?.find(
           (inc: any) => inc.type === 'file--file' && inc.id === postData.relationships.field_image?.data?.id
         )
@@ -55,22 +59,30 @@ export default function BlogPostPage() {
           return tag?.attributes?.name || ''
         }).filter(Boolean) || []
 
+        const dynamicForm = postData.relationships.field_dynamic_form?.data ? 
+          data.included?.find(
+            (inc: any) => inc.type === 'dynamic_form--dynamic_form' && inc.id === postData.relationships.field_dynamic_form.data.id
+          ) : null
+
         setPost({
           id: postData.id,
+          nid: postData.attributes.drupal_internal__nid,
           title: postData.attributes.title,
           body: postData.attributes.body?.processed || postData.attributes.body?.value || '',
           created: postData.attributes.created,
+          path: postData.attributes.path?.alias || '',
           image: {
             url: image?.attributes?.uri?.url || image?.attributes?.url || '',
             alt: postData.relationships.field_image?.data?.meta?.alt || postData.attributes.title,
           },
           author: author?.attributes?.display_name || 'Admin',
           tags,
+          dynamicFormId: dynamicForm?.attributes?.drupal_internal__id || null,
         })
 
-        // Fetch related posts (same tag)
+        // Fetch related posts
         if (tags.length > 0) {
-          fetchRelatedPosts(tags[0], postData.id)
+          fetchRelatedPosts(tags[0], postData.id, data.data)
         }
       }
     } catch (error) {
@@ -80,33 +92,47 @@ export default function BlogPostPage() {
     }
   }
 
-  const fetchRelatedPosts = async (tag: string, excludeId: string) => {
+  const fetchRelatedPosts = async (tag: string, excludeId: string, allPosts: any[]) => {
     try {
       const baseUrl = process.env.NEXT_PUBLIC_DRUPAL_BASE_URL || 'https://darkcyan-stork-408379.hostingersite.com'
-      const response = await fetch(
-        `${baseUrl}/jsonapi/node/article?include=field_image&sort=-created&page[limit]=3&fields[node--article]=title,path,field_image&fields[file--file]=uri,url`
-      )
-      const data = await response.json()
-
-      const related = data.data
+      
+      const related = allPosts
         .filter((p: any) => p.id !== excludeId)
         .slice(0, 3)
         .map((p: any) => {
-          const image = data.included?.find(
-            (inc: any) => inc.type === 'file--file' && inc.id === p.relationships.field_image?.data?.id
-          )
+          const imageId = p.relationships.field_image?.data?.id
           return {
             id: p.id,
             title: p.attributes.title,
             path: p.attributes.path?.alias || `/blog/${p.id}`,
-            image: {
-              url: image?.attributes?.uri?.url || image?.attributes?.url || '',
-              alt: p.attributes.title,
-            },
+            imageId,
           }
         })
 
-      setRelatedPosts(related)
+      // Fetch images for related posts
+      if (related.length > 0) {
+        const imageIds = related.map(r => r.imageId).filter(Boolean)
+        if (imageIds.length > 0) {
+          const imageResponse = await fetch(
+            `${baseUrl}/jsonapi/file/file?filter[id][value]=${imageIds.join(',')}&filter[id][operator]=IN`
+          )
+          const imageData = await imageResponse.json()
+          
+          const relatedWithImages = related.map(r => {
+            const image = imageData.data?.find((img: any) => img.id === r.imageId)
+            return {
+              ...r,
+              image: {
+                url: image?.attributes?.uri?.url || image?.attributes?.url || '',
+                alt: r.title,
+              }
+            }
+          })
+          setRelatedPosts(relatedWithImages)
+        } else {
+          setRelatedPosts(related.map(r => ({ ...r, image: { url: '', alt: r.title } })))
+        }
+      }
     } catch (error) {
       console.error('Error fetching related posts:', error)
     }
@@ -231,9 +257,17 @@ export default function BlogPostPage() {
 
           {/* Content */}
           <div
-            className="prose prose-lg max-w-none prose-headings:text-gray-900 prose-a:text-[#009999] prose-a:no-underline hover:prose-a:underline prose-strong:text-gray-900 prose-img:rounded-xl"
+            className="prose prose-lg max-w-none prose-headings:text-gray-900 prose-a:text-[#009999] prose-a:no-underline hover:prose-a:underline prose-strong:text-gray-900 prose-img:rounded-xl mb-12"
             dangerouslySetInnerHTML={{ __html: post.body }}
           />
+
+          {/* Dynamic Form */}
+          {post.dynamicFormId && (
+            <div className="mt-16 pt-12 border-t border-gray-200">
+              <h2 className="text-3xl font-bold text-gray-900 mb-8">Entre em Contato</h2>
+              <DynamicForm formId={post.dynamicFormId} />
+            </div>
+          )}
         </div>
       </article>
 
