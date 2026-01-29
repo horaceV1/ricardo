@@ -41,6 +41,9 @@ export function HeaderNav() {
             <Link href="/courses" className="text-gray-700 hover:text-[#009999] font-semibold no-underline transition-colors">
               Soluções
             </Link>
+            <Link href="/blog" className="text-gray-700 hover:text-[#009999] font-semibold no-underline transition-colors">
+              Blog
+            </Link>
             <Link href="/about" className="text-gray-700 hover:text-[#009999] font-semibold no-underline transition-colors">
               Sobre
             </Link>
@@ -143,6 +146,9 @@ export function HeaderNav() {
               </Link>
               <Link href="/courses" className="text-gray-700 hover:text-[#009999] font-semibold no-underline transition-colors">
                 Soluções
+              </Link>
+              <Link href="/blog" className="text-gray-700 hover:text-[#009999] font-semibold no-underline transition-colors">
+                Blog
               </Link>
               <Link href="/about" className="text-gray-700 hover:text-[#009999] font-semibold no-underline transition-colors">
                 Sobre
