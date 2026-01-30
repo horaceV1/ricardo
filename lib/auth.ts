@@ -83,8 +83,19 @@ export async function login(credentials: LoginCredentials): Promise<AuthTokens &
         credentials: 'include',
       })
       
-      // Wait for logout to process
-      await new Promise(resolve => setTimeout(resolve, 3000))
+      // Wait longer for logout to process (10 seconds)
+      console.log('Waiting 10 seconds for session to clear...')
+      await new Promise(resolve => setTimeout(resolve, 10000))
+      
+      // Verify logout by checking login status
+      const statusCheck = await fetch(`${baseUrl}/user/login_status?_format=json`, {
+        credentials: 'include',
+      })
+      const isStillLoggedIn = await statusCheck.text()
+      
+      if (isStillLoggedIn === '1') {
+        throw new Error('Não foi possível encerrar a sessão anterior. Por favor, feche o navegador, abra novamente e tente fazer login.')
+      }
       
       // Get fresh CSRF token
       const newCsrfResponse = await fetch(`${baseUrl}/session/token`, {
