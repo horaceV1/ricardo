@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { Calendar, User, Tag, ArrowLeft, Share2 } from 'lucide-react'
-import DynamicForm from '@/components/forms/DynamicForm'
+import DynamicFormWrapper from '@/components/forms/DynamicFormWrapper'
 
 interface BlogPost {
   id: string
@@ -37,7 +37,7 @@ export default function BlogPostPage({ params }: { params: { slug: string[] } })
       
       // Fetch all posts to find the one with matching path
       const response = await fetch(
-        `${baseUrl}/jsonapi/node/article?include=field_image,uid,field_tags,field_dynamic_form&fields[node--article]=drupal_internal__nid,title,body,created,path,field_image,uid,field_tags,field_dynamic_form&fields[file--file]=uri,url&fields[user--user]=display_name&fields[taxonomy_term--tags]=name&fields[dynamic_form--dynamic_form]=drupal_internal__id`
+        `${baseUrl}/jsonapi/node/article?include=field_image,uid,field_tags,field_dynamic_form&fields[node--article]=drupal_internal__nid,title,body,created,path,field_image,uid,field_tags,field_dynamic_form&fields[file--file]=uri,url&fields[user--user]=display_name&fields[taxonomy_term--tags]=name&fields[dynamic_form--dynamic_form]=drupal_internal__id,name,fields`
       )
       const data = await response.json()
 
@@ -77,7 +77,7 @@ export default function BlogPostPage({ params }: { params: { slug: string[] } })
           },
           author: author?.attributes?.display_name || 'Admin',
           tags,
-          dynamicFormId: dynamicForm?.attributes?.drupal_internal__id || null,
+          dynamicFormId: dynamicForm?.id || dynamicForm?.attributes?.drupal_internal__id || null,
         })
 
         // Fetch related posts
@@ -265,7 +265,7 @@ export default function BlogPostPage({ params }: { params: { slug: string[] } })
           {post.dynamicFormId && (
             <div className="mt-16 pt-12 border-t border-gray-200">
               <h2 className="text-3xl font-bold text-gray-900 mb-8">Entre em Contato</h2>
-              <DynamicForm formId={post.dynamicFormId} />
+              <DynamicFormWrapper formId={post.dynamicFormId} />
             </div>
           )}
         </div>
