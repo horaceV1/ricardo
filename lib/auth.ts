@@ -46,7 +46,17 @@ export interface RegisterData {
 export async function login(credentials: LoginCredentials): Promise<AuthTokens & { user?: any }> {
   const baseUrl = process.env.NEXT_PUBLIC_DRUPAL_BASE_URL
   
-  // First, get CSRF token
+  // First, logout to clear any existing session
+  try {
+    await fetch(`${baseUrl}/user/logout?_format=json`, {
+      method: 'POST',
+      credentials: 'include',
+    })
+  } catch (e) {
+    // Ignore errors from logout - user might not be logged in
+  }
+  
+  // Get fresh CSRF token
   const csrfResponse = await fetch(`${baseUrl}/session/token`, {
     credentials: 'include',
   })
