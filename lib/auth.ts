@@ -121,19 +121,6 @@ export async function login(credentials: LoginCredentials): Promise<AuthTokens &
     
     throw new Error(errorMessage)
   }
-      const errorJson = JSON.parse(errorText)
-      errorMessage = errorJson.message || errorMessage
-    } catch (e) {
-      // If response contains HTML or other text
-      if (errorText.includes('anonymous users')) {
-        errorMessage = 'Sessão existente detectada. Por favor, aguarde um momento e tente novamente.'
-      } else {
-        errorMessage = errorText.substring(0, 100) || errorMessage
-      }
-    }
-    
-    throw new Error(errorMessage)
-  }
 
   const userData = await response.json()
   
