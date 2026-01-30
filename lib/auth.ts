@@ -48,15 +48,27 @@ export async function login(credentials: LoginCredentials): Promise<AuthTokens &
   
   // First, logout to clear any existing session
   try {
+    const logoutCsrf = await fetch(`${baseUrl}/session/token`, {
+      credentials: 'include',
+    }).then(r => r.text())
+    
     await fetch(`${baseUrl}/user/logout?_format=json`, {
       method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-Token': logoutCsrf,
+      },
       credentials: 'include',
     })
+    
+    // Small delay to ensure session is cleared
+    await new Promise(resolve => setTimeout(resolve, 100))
   } catch (e) {
     // Ignore errors from logout - user might not be logged in
+    console.log('Logout before login:', e)
   }
   
-  // Get fresh CSRF token
+  // Get fresh CSRF token after logout
   const csrfResponse = await fetch(`${baseUrl}/session/token`, {
     credentials: 'include',
   })
@@ -77,8 +89,22 @@ export async function login(credentials: LoginCredentials): Promise<AuthTokens &
   })
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ message: 'Login failed' }))
-    throw new Error(error.message || 'Invalid credentials')
+    const errorText = await response.text()
+    let errorMessage = 'Invalid credentials'
+    
+    try {
+      const errorJson = JSON.parse(errorText)
+      errorMessage = errorJson.message || errorMessage
+    } catch (e) {
+      // If response contains HTML or other text
+      if (errorText.includes('anonymous users')) {
+        errorMessage = 'Sessão existente detectada. Por favor, aguarde um momento e tente novamente.'
+      } else {
+        errorMessage = errorText.substring(0, 100) || errorMessage
+      }
+    }
+    
+    throw new Error(errorMessage)
   }
 
   const userData = await response.json()
