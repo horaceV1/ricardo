@@ -227,13 +227,21 @@ export async function refreshAccessToken(refreshToken: string): Promise<AuthToke
 export async function logout(csrfToken: string): Promise<void> {
   const baseUrl = process.env.NEXT_PUBLIC_DRUPAL_BASE_URL
 
-  await fetch(`${baseUrl}/user/logout?_format=json`, {
+  const response = await fetch(`${baseUrl}/user/logout?_format=json`, {
     method: 'POST',
     credentials: 'include',
     headers: {
+      'Content-Type': 'application/json',
       'X-CSRF-Token': csrfToken,
     },
   })
+
+  if (!response.ok) {
+    throw new Error('Logout failed')
+  }
+
+  // Wait a moment to ensure the session is cleared on the server
+  await new Promise(resolve => setTimeout(resolve, 100))
 }
 
 /**

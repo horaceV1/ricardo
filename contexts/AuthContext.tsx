@@ -208,6 +208,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     
     clearTokens()
     setUser(null)
+    
+    // Redirect to home page after logout
+    window.location.href = '/'
   }, [getTokens, clearTokens])
 
   // Refresh user data
