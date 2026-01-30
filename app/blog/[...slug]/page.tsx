@@ -59,10 +59,8 @@ export default function BlogPostPage({ params }: { params: { slug: string[] } })
           return tag?.attributes?.name || ''
         }).filter(Boolean) || []
 
-        const dynamicForm = postData.relationships.field_dynamic_form?.data ? 
-          data.included?.find(
-            (inc: any) => inc.type === 'dynamic_form--dynamic_form' && inc.id === postData.relationships.field_dynamic_form.data.id
-          ) : null
+        // Get dynamic form ID - use internal ID from meta as the API expects it
+        const dynamicFormId = postData.relationships.field_dynamic_form?.data?.meta?.drupal_internal__target_id || null
 
         setPost({
           id: postData.id,
@@ -77,7 +75,7 @@ export default function BlogPostPage({ params }: { params: { slug: string[] } })
           },
           author: author?.attributes?.display_name || 'Admin',
           tags,
-          dynamicFormId: dynamicForm?.id || dynamicForm?.attributes?.drupal_internal__id || null,
+          dynamicFormId: dynamicFormId,
         })
 
         // Fetch related posts
