@@ -71,8 +71,8 @@ export async function login(credentials: LoginCredentials): Promise<AuthTokens &
       
       console.log('Logout response:', logoutResponse.status)
       
-      // Wait longer for session to fully clear
-      await new Promise(resolve => setTimeout(resolve, 500))
+      // Wait longer for session to fully clear (increased to 1.5 seconds)
+      await new Promise(resolve => setTimeout(resolve, 1500))
       
       // Verify logout was successful
       const verifyLogout = await fetch(`${baseUrl}/user/login_status?_format=json`, {
@@ -265,8 +265,8 @@ export async function logout(csrfToken: string): Promise<void> {
     throw new Error('Logout failed')
   }
 
-  // Wait a moment to ensure the session is cleared on the server
-  await new Promise(resolve => setTimeout(resolve, 100))
+  // Wait longer to ensure the session is fully cleared on the server
+  await new Promise(resolve => setTimeout(resolve, 1000))
 }
 
 /**
