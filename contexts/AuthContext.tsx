@@ -209,11 +209,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     clearTokens()
     setUser(null)
     
-    // Wait before redirect to ensure logout completes
-    await new Promise(resolve => setTimeout(resolve, 1000))
-    
-    // Redirect to home page after logout with timestamp to prevent caching
-    window.location.href = '/?logout=' + Date.now()
+    // Redirect to home page after logout
+    window.location.href = '/'
   }, [getTokens, clearTokens])
 
   // Refresh user data

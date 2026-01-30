@@ -43,231 +43,143 @@ export interface RegisterData {
 /**
  * Login to Drupal using username and password (cookie-based authentication)
  */
+/**
+ * Login to Drupal using JWT authentication
+ */
 export async function login(credentials: LoginCredentials): Promise<AuthTokens & { user?: any }> {
   const baseUrl = process.env.NEXT_PUBLIC_DRUPAL_BASE_URL
-  
-  // Get CSRF token
-  const csrfResponse = await fetch(`${baseUrl}/session/token`, {
-    credentials: 'include',
-  })
-  const csrfToken = await csrfResponse.text()
 
-  // Try login first
-  let response = await fetch(`${baseUrl}/user/login?_format=json`, {
+  const response = await fetch(`${baseUrl}/api/auth/login`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'X-CSRF-Token': csrfToken,
     },
-    credentials: 'include',
     body: JSON.stringify({
-      name: credentials.username,
-      pass: credentials.password,
+      username: credentials.username,
+      password: credentials.password,
     }),
   })
 
-  // If login fails because user is already logged in, logout and retry
   if (!response.ok) {
-    const errorText = await response.text()
-    
-    if (errorText.includes('anonymous users')) {
-      console.log('Already logged in, attempting logout...')
-      
-      // Logout
-      await fetch(`${baseUrl}/user/logout?_format=json`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-CSRF-Token': csrfToken,
-        },
-        credentials: 'include',
-      })
-      
-      // Wait longer for logout to process (10 seconds)
-      console.log('Waiting 10 seconds for session to clear...')
-      await new Promise(resolve => setTimeout(resolve, 10000))
-      
-      // Verify logout by checking login status
-      const statusCheck = await fetch(`${baseUrl}/user/login_status?_format=json`, {
-        credentials: 'include',
-      })
-      const isStillLoggedIn = await statusCheck.text()
-      
-      if (isStillLoggedIn === '1') {
-        throw new Error('Não foi possível encerrar a sessão anterior. Por favor, feche o navegador, abra novamente e tente fazer login.')
-      }
-      
-      // Get fresh CSRF token
-      const newCsrfResponse = await fetch(`${baseUrl}/session/token`, {
-        credentials: 'include',
-      })
-      const newCsrfToken = await newCsrfResponse.text()
-      
-      // Retry login
-      response = await fetch(`${baseUrl}/user/login?_format=json`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-CSRF-Token': newCsrfToken,
-        },
-        credentials: 'include',
-        body: JSON.stringify({
-          name: credentials.username,
-          pass: credentials.password,
-        }),
-      })
-    }
+    const error = await response.json().catch(() => ({ error: 'Login failed' }))
+    throw new Error(error.error || 'Invalid credentials')
   }
 
-  if (!response.ok) {
-    const errorText = await response.text()
-    let errorMessage = 'Invalid credentials'
-    
-    try {
-      const errorJson = JSON.parse(errorText)
-      errorMessage = errorJson.message || errorMessage
-    } catch (e) {
-      errorMessage = errorText.substring(0, 100) || errorMessage
-    }
-    
-    throw new Error(errorMessage)
-  }
-
-  const userData = await response.json()
+  const data = await response.json()
   
-  // Return session data with user info
   return {
-    access_token: userData.csrf_token || csrfToken,
-    token_type: 'Bearer',
-    expires_in: 86400, // 24 hours
-    refresh_token: csrfToken,
-    user: userData.current_user, // Include user data from login response
+    access_token: data.access_token,
+    token_type: data.token_type,
+    expires_in: data.expires_in,
+    refresh_token: data.access_token,
+    user: data.user,
   }
 }
 
 /**
- * Get current user data using CSRF token (cookie-based auth)
- * Note: This is a workaround since Drupal doesn't have a simple "current user" endpoint
+ * Get current user data using JWT token
  */
-export async function getCurrentUser(csrfToken: string): Promise<DrupalUser> {
+export async function getCurrentUser(token: string): Promise<DrupalUser> {
   const baseUrl = process.env.NEXT_PUBLIC_DRUPAL_BASE_URL
 
-  // First check if user is authenticated
-  const statusResponse = await fetch(`${baseUrl}/user/login_status?_format=json`, {
-    credentials: 'include',
+  const response = await fetch(`${baseUrl}/api/auth/user`, {
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
   })
 
-  const loginStatus = await statusResponse.text()
-  
-  if (loginStatus !== '1') {
+  if (!response.ok) {
     throw new Error('Not authenticated')
   }
 
-  // For simplicity, return a basic user object
-  // In a real app, you'd fetch from JSON:API or create a custom endpoint
-  // For now, we rely on the user data from login response
+  const data = await response.json()
+  
   return {
-    uid: '0',
-    uuid: '',
-    name: 'User',
-    mail: '',
-    roles: ['authenticated'],
-    created: '',
-    access: '',
-    login: '',
-    status: true,
+    uid: data.uid.toString(),
+    uuid: data.uuid,
+    name: data.name,
+    mail: data.mail,
+    roles: data.roles,
+    created: data.created,
+    access: data.access,
+    login: data.login,
+    status: data.status,
+    field_first_name: data.field_first_name,
+    field_last_name: data.field_last_name,
   }
 }
 
 /**
- * Register a new user
+ * Register a new user with JWT
  */
 export async function register(userData: RegisterData): Promise<DrupalUser> {
   const baseUrl = process.env.NEXT_PUBLIC_DRUPAL_BASE_URL
 
-  const response = await fetch(`${baseUrl}/user/register?_format=json`, {
+  const response = await fetch(`${baseUrl}/api/auth/register`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'Accept': 'application/json',
     },
     body: JSON.stringify({
-      name: { value: userData.name },
-      mail: { value: userData.mail },
-      pass: { value: userData.pass },
+      name: userData.name,
+      mail: userData.mail,
+      pass: userData.pass,
+      field_first_name: userData.field_first_name,
+      field_last_name: userData.field_last_name,
     }),
   })
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ message: 'Registration failed' }))
-    throw new Error(error.message || 'Registration failed')
+    const error = await response.json().catch(() => ({ error: 'Registration failed' }))
+    throw new Error(error.error || 'Registration failed')
   }
 
   const data = await response.json()
-
-  // After registration, return a basic user object
-  // The user will need to login to get full details
+  
+  // Return user data from registration
   return {
-    uid: data.uid?.[0]?.value || '',
-    uuid: data.uuid?.[0]?.value || '',
-    name: data.name?.[0]?.value || userData.name,
-    mail: data.mail?.[0]?.value || userData.mail,
-    roles: ['authenticated'],
-    created: data.created?.[0]?.value || new Date().toISOString(),
-    access: '',
-    login: '',
+    uid: data.user.uid.toString(),
+    uuid: data.user.uuid,
+    name: data.user.name,
+    mail: data.user.mail,
+    roles: data.user.roles,
+    created: new Date().toISOString(),
+    access: new Date().toISOString(),
+    login: new Date().toISOString(),
     status: true,
-    field_first_name: userData.field_first_name,
-    field_last_name: userData.field_last_name,
+    field_first_name: data.user.field_first_name,
+    field_last_name: data.user.field_last_name,
   }
 }
 
 /**
- * Refresh CSRF token (cookie-based auth)
+ * Refresh JWT token
  */
 export async function refreshAccessToken(refreshToken: string): Promise<AuthTokens> {
-  const baseUrl = process.env.NEXT_PUBLIC_DRUPAL_BASE_URL
-  
-  // Get new CSRF token
-  const csrfResponse = await fetch(`${baseUrl}/session/token`, {
-    credentials: 'include',
-  })
-  
-  if (!csrfResponse.ok) {
-    throw new Error('Failed to refresh token')
-  }
-
-  const csrfToken = await csrfResponse.text()
-
+  // For JWT, we can just return the same token since it's still valid
+  // In a production app, you'd implement proper refresh token logic
   return {
-    access_token: csrfToken,
+    access_token: refreshToken,
     token_type: 'Bearer',
     expires_in: 86400,
-    refresh_token: csrfToken,
+    refresh_token: refreshToken,
   }
 }
 
 /**
- * Logout (destroy Drupal session)
+ * Logout - with JWT this just clears the client-side token
  */
-export async function logout(csrfToken: string): Promise<void> {
+export async function logout(token: string): Promise<void> {
   const baseUrl = process.env.NEXT_PUBLIC_DRUPAL_BASE_URL
 
-  const response = await fetch(`${baseUrl}/user/logout?_format=json`, {
+  await fetch(`${baseUrl}/api/auth/logout`, {
     method: 'POST',
-    credentials: 'include',
     headers: {
+      'Authorization': `Bearer ${token}`,
       'Content-Type': 'application/json',
-      'X-CSRF-Token': csrfToken,
     },
   })
-
-  if (!response.ok) {
-    throw new Error('Logout failed')
-  }
-
-  // Wait longer to ensure the session is fully cleared on the server
-  await new Promise(resolve => setTimeout(resolve, 1000))
 }
 
 /**
