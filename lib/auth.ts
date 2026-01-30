@@ -46,38 +46,14 @@ export interface RegisterData {
 export async function login(credentials: LoginCredentials): Promise<AuthTokens & { user?: any }> {
   const baseUrl = process.env.NEXT_PUBLIC_DRUPAL_BASE_URL
   
-  // First, always attempt to logout to clear any existing session
-  try {
-    const logoutCsrf = await fetch(`${baseUrl}/session/token`, {
-      credentials: 'include',
-    }).then(r => r.text())
-    
-    await fetch(`${baseUrl}/user/logout?_format=json`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-CSRF-Token': logoutCsrf,
-      },
-      credentials: 'include',
-    })
-    
-    console.log('Attempted logout before login')
-    
-    // Wait even longer for session to clear (5 seconds)
-    await new Promise(resolve => setTimeout(resolve, 5000))
-  } catch (e) {
-    console.log('Logout before login error (ignoring):', e)
-    // Ignore all errors - just proceed with login
-  }
-  
-  // Get fresh CSRF token after logout attempt
+  // Get CSRF token
   const csrfResponse = await fetch(`${baseUrl}/session/token`, {
     credentials: 'include',
   })
   const csrfToken = await csrfResponse.text()
 
-  // Login via Drupal's user login endpoint
-  const response = await fetch(`${baseUrl}/user/login?_format=json`, {
+  // Try login first
+  let response = await fetch(`${baseUrl}/user/login?_format=json`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -90,11 +66,61 @@ export async function login(credentials: LoginCredentials): Promise<AuthTokens &
     }),
   })
 
+  // If login fails because user is already logged in, logout and retry
+  if (!response.ok) {
+    const errorText = await response.text()
+    
+    if (errorText.includes('anonymous users')) {
+      console.log('Already logged in, attempting logout...')
+      
+      // Logout
+      await fetch(`${baseUrl}/user/logout?_format=json`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-Token': csrfToken,
+        },
+        credentials: 'include',
+      })
+      
+      // Wait for logout to process
+      await new Promise(resolve => setTimeout(resolve, 3000))
+      
+      // Get fresh CSRF token
+      const newCsrfResponse = await fetch(`${baseUrl}/session/token`, {
+        credentials: 'include',
+      })
+      const newCsrfToken = await newCsrfResponse.text()
+      
+      // Retry login
+      response = await fetch(`${baseUrl}/user/login?_format=json`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-Token': newCsrfToken,
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          name: credentials.username,
+          pass: credentials.password,
+        }),
+      })
+    }
+  }
+
   if (!response.ok) {
     const errorText = await response.text()
     let errorMessage = 'Invalid credentials'
     
     try {
+      const errorJson = JSON.parse(errorText)
+      errorMessage = errorJson.message || errorMessage
+    } catch (e) {
+      errorMessage = errorText.substring(0, 100) || errorMessage
+    }
+    
+    throw new Error(errorMessage)
+  }
       const errorJson = JSON.parse(errorText)
       errorMessage = errorJson.message || errorMessage
     } catch (e) {
