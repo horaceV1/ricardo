@@ -80,13 +80,24 @@ export function DynamicForm({ formId, formTitle, fields, className = "" }: Dynam
         }
       )
 
+      console.log('Response status:', response.status)
+      console.log('Response headers:', response.headers)
+      
+      const responseText = await response.text()
+      console.log('Response text:', responseText)
+
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }))
+        let errorData
+        try {
+          errorData = JSON.parse(responseText)
+        } catch (e) {
+          errorData = { error: responseText || 'Unknown error' }
+        }
         console.error('Form submission error:', errorData)
         throw new Error(errorData.error || `Failed to submit form (${response.status})`)
       }
 
-      const result = await response.json()
+      const result = JSON.parse(responseText)
       console.log('Form submitted successfully:', result)
       
       setSuccess(true)
