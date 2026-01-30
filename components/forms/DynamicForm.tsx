@@ -60,10 +60,15 @@ export function DynamicForm({ formId, formTitle, fields, className = "" }: Dynam
       })
 
       // Get JWT token for authenticated request
-      const token = localStorage.getItem('authToken')
+      const tokensStr = localStorage.getItem('drupal_auth_tokens')
       const headers: HeadersInit = {}
-      if (token) {
-        headers['Authorization'] = `Bearer ${token}`
+      if (tokensStr) {
+        try {
+          const tokens = JSON.parse(tokensStr)
+          headers['Authorization'] = `Bearer ${tokens.access_token}`
+        } catch (e) {
+          console.error('Failed to parse auth tokens:', e)
+        }
       }
 
       const response = await fetch(
