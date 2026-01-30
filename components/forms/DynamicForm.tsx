@@ -81,9 +81,14 @@ export function DynamicForm({ formId, formTitle, fields, className = "" }: Dynam
       )
 
       if (!response.ok) {
-        throw new Error("Failed to submit form")
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }))
+        console.error('Form submission error:', errorData)
+        throw new Error(errorData.error || `Failed to submit form (${response.status})`)
       }
 
+      const result = await response.json()
+      console.log('Form submitted successfully:', result)
+      
       setSuccess(true)
       
       // Reset form
@@ -96,8 +101,9 @@ export function DynamicForm({ formId, formTitle, fields, className = "" }: Dynam
       // Reset success message after 5 seconds
       setTimeout(() => setSuccess(false), 5000)
     } catch (err) {
-      setError("Erro ao enviar formulário. Por favor, tente novamente.")
-      console.error(err)
+      console.error('Form submission error:', err)
+      const errorMessage = err instanceof Error ? err.message : "Erro ao enviar formulário. Por favor, tente novamente."
+      setError(errorMessage)
     } finally {
       setSubmitting(false)
     }
