@@ -31,19 +31,12 @@ export default function DynamicFormWrapper({ formId, className }: DynamicFormWra
       try {
         const baseUrl = process.env.NEXT_PUBLIC_DRUPAL_BASE_URL
         
-        // formId can be either UUID or internal ID
-        // Try UUID first (if it contains dashes)
-        const isUUID = String(formId).includes('-')
-        let url = `${baseUrl}/jsonapi/dynamic_form/dynamic_form/${formId}`
-        
-        // If it's not a UUID, we need to fetch all and filter by drupal_internal__id
-        if (!isUUID) {
-          url = `${baseUrl}/jsonapi/dynamic_form/dynamic_form?filter[drupal_internal__id]=${formId}`
-        }
+        // Use the custom API endpoint that doesn't require authentication
+        const url = `${baseUrl}/api/dynamic-form/${formId}`
         
         const response = await fetch(url, {
           headers: {
-            'Content-Type': 'application/vnd.api+json',
+            'Content-Type': 'application/json',
           },
         })
 
@@ -51,19 +44,18 @@ export default function DynamicFormWrapper({ formId, className }: DynamicFormWra
           throw new Error('Failed to fetch form data')
         }
 
-        const json = await response.json()
-        const form = isUUID ? json.data : json.data[0]
+        const form = await response.json()
         
-        if (!form) {
-          throw new Error('Form not found')
+        if (!form || form.error) {
+          throw new Error(form.error || 'Form not found')
         }
 
-        // Parse the form fields from Drupal
-        const fields: FormField[] = form.attributes.fields || []
+        // The API returns the form data directly
+        const fields: FormField[] = form.fields || []
 
         setFormData({
-          id: form.attributes.drupal_internal__id || formId.toString(),
-          title: form.attributes.name || form.attributes.label || 'Formulário',
+          id: form.id || formId.toString(),
+          title: form.label || 'Formulário',
           fields,
         })
       } catch (err) {
