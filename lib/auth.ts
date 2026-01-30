@@ -63,8 +63,8 @@ export async function login(credentials: LoginCredentials): Promise<AuthTokens &
     
     console.log('Attempted logout before login')
     
-    // Wait for session to clear
-    await new Promise(resolve => setTimeout(resolve, 2000))
+    // Wait even longer for session to clear (5 seconds)
+    await new Promise(resolve => setTimeout(resolve, 5000))
   } catch (e) {
     console.log('Logout before login error (ignoring):', e)
     // Ignore all errors - just proceed with login

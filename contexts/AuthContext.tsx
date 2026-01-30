@@ -209,8 +209,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     clearTokens()
     setUser(null)
     
-    // Wait a bit before redirect to ensure logout completes
-    await new Promise(resolve => setTimeout(resolve, 500))
+    // Wait longer before redirect to ensure logout completes
+    await new Promise(resolve => setTimeout(resolve, 1000))
+    
+    // Show message to user
+    alert('Você foi desconectado. Por favor, aguarde 5 segundos antes de fazer login novamente.')
     
     // Redirect to home page after logout with timestamp to prevent caching
     window.location.href = '/?logout=' + Date.now()
