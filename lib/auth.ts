@@ -46,26 +46,51 @@ export interface RegisterData {
 export async function login(credentials: LoginCredentials): Promise<AuthTokens & { user?: any }> {
   const baseUrl = process.env.NEXT_PUBLIC_DRUPAL_BASE_URL
   
-  // First, logout to clear any existing session
+  // First, check if user is already logged in and logout if needed
   try {
-    const logoutCsrf = await fetch(`${baseUrl}/session/token`, {
-      credentials: 'include',
-    }).then(r => r.text())
-    
-    await fetch(`${baseUrl}/user/logout?_format=json`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-CSRF-Token': logoutCsrf,
-      },
+    const statusCheck = await fetch(`${baseUrl}/user/login_status?_format=json`, {
       credentials: 'include',
     })
+    const isLoggedIn = await statusCheck.text()
     
-    // Small delay to ensure session is cleared
-    await new Promise(resolve => setTimeout(resolve, 100))
+    if (isLoggedIn === '1') {
+      console.log('User already logged in, logging out first...')
+      
+      const logoutCsrf = await fetch(`${baseUrl}/session/token`, {
+        credentials: 'include',
+      }).then(r => r.text())
+      
+      const logoutResponse = await fetch(`${baseUrl}/user/logout?_format=json`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-Token': logoutCsrf,
+        },
+        credentials: 'include',
+      })
+      
+      console.log('Logout response:', logoutResponse.status)
+      
+      // Wait longer for session to fully clear
+      await new Promise(resolve => setTimeout(resolve, 500))
+      
+      // Verify logout was successful
+      const verifyLogout = await fetch(`${baseUrl}/user/login_status?_format=json`, {
+        credentials: 'include',
+      })
+      const stillLoggedIn = await verifyLogout.text()
+      
+      if (stillLoggedIn === '1') {
+        throw new Error('Falha ao encerrar sessão anterior. Por favor, limpe os cookies e tente novamente.')
+      }
+    }
   } catch (e) {
-    // Ignore errors from logout - user might not be logged in
-    console.log('Logout before login:', e)
+    console.log('Logout before login error:', e)
+    // If the error is about logout failure, throw it
+    if (e instanceof Error && e.message.includes('encerrar sessão')) {
+      throw e
+    }
+    // Otherwise ignore - user might not be logged in
   }
   
   // Get fresh CSRF token after logout
