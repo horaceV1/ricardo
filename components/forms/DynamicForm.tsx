@@ -18,7 +18,9 @@ interface DynamicFormProps {
 }
 
 export function DynamicForm({ formId, formTitle, fields, className = "" }: DynamicFormProps) {
-  const [formData, setFormData] = useState<Record<string, string | File | null>>({})
+  const [formData, setFormData] = useState<Record<string, string | File | null>>({
+    email: "",
+  })
   const [submitting, setSubmitting] = useState(false)
   const [success, setSuccess] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -47,6 +49,7 @@ export function DynamicForm({ formId, formTitle, fields, className = "" }: Dynam
       const submitData = new FormData()
       
       submitData.append("form_id", formId)
+      submitData.append("email", formData.email as string)
       
       fields.forEach((field, index) => {
         const value = formData[`field_${index}`]
@@ -56,12 +59,19 @@ export function DynamicForm({ formId, formTitle, fields, className = "" }: Dynam
         }
       })
 
+      // Get JWT token for authenticated request
+      const token = localStorage.getItem('authToken')
+      const headers: HeadersInit = {}
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`
+      }
+
       const response = await fetch(
         `${baseUrl}/api/dynamic-form/submit`,
         {
           method: "POST",
           body: submitData,
-          credentials: "include",
+          headers,
         }
       )
 
@@ -72,7 +82,7 @@ export function DynamicForm({ formId, formTitle, fields, className = "" }: Dynam
       setSuccess(true)
       
       // Reset form
-      const resetData: Record<string, string | File | null> = {}
+      const resetData: Record<string, string | File | null> = { email: "" }
       fields.forEach((field, index) => {
         resetData[`field_${index}`] = field.type === "documento" ? null : ""
       })
@@ -118,6 +128,22 @@ export function DynamicForm({ formId, formTitle, fields, className = "" }: Dynam
         )}
 
         <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Email field - required */}
+          <div>
+            <label className="block text-sm font-semibold text-gray-900 mb-2">
+              Email
+              <span className="text-red-500 ml-1">*</span>
+            </label>
+            <input
+              type="email"
+              required
+              value={(formData.email as string) || ""}
+              onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
+              className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#009999] focus:border-transparent transition-all"
+              placeholder="seu@email.com"
+            />
+          </div>
+
           {fields.map((field, index) => (
             <div key={index}>
               <label className="block text-sm font-semibold text-gray-900 mb-2">
