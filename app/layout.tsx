@@ -4,6 +4,7 @@ import { SmoothScrollProvider } from "@/components/providers/SmoothScrollProvide
 import { RecaptchaProvider } from "@/components/providers/RecaptchaProvider"
 import { AuthProvider } from "@/contexts/AuthContext"
 import { CartProvider } from "@/contexts/CartContext"
+import { CookieConsent } from "@/components/ui/CookieConsent"
 import type { Metadata } from "next"
 import type { ReactNode } from "react"
 
@@ -77,6 +78,7 @@ export default function RootLayout({
               </div>
             </div>
           </footer>
+          <CookieConsent />
             </SmoothScrollProvider>
           </CartProvider>
         </AuthProvider>
