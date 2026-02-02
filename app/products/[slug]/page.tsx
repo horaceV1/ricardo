@@ -62,13 +62,39 @@ export async function generateMetadata({ params }: ProductPageProps): Promise<Me
 }
 
 export default async function ProductPage({ params }: ProductPageProps) {
-  const product = await drupal
-    .getResourceByPath<DrupalNode>(`/products/${params.slug}`, {
+  let product: DrupalNode | null = null
+  
+  try {
+    // Try to fetch by path first
+    product = await drupal.getResourceByPath<DrupalNode>(`/products/${params.slug}`, {
       params: {
         include: "images,variations,default_variation",
       },
     })
-    .catch(() => null)
+  } catch (error) {
+    console.error('Error fetching product by path:', error)
+    
+    // Fallback: try to fetch all products and find by slug
+    try {
+      const products = await drupal.getResourceCollection<DrupalNode[]>(
+        "commerce_product--media",
+        {
+          params: {
+            "filter[status]": 1,
+            include: "variations,images,default_variation",
+          },
+        }
+      )
+      
+      // Find product that matches the slug
+      product = products.find(p => 
+        p.path?.alias?.includes(params.slug) || 
+        p.title?.toLowerCase().replace(/\s+/g, '-') === params.slug
+      ) || null
+    } catch (fallbackError) {
+      console.error('Error fetching products collection:', fallbackError)
+    }
+  }
 
   if (!product) {
     notFound()
