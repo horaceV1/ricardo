@@ -8,7 +8,7 @@ import { User, Mail, Shield, Calendar, LogOut, Loader2, ShoppingBag, Settings, B
 
 export default function AccountPage() {
   const router = useRouter()
-  const { user, isAuthenticated, isLoading, logout } = useAuth()
+  const { user, isAuthenticated, isLoading, logout, refreshUser } = useAuth()
   const [userArticles, setUserArticles] = useState<any[]>([])
   const [loadingArticles, setLoadingArticles] = useState(false)
 
@@ -17,6 +17,13 @@ export default function AccountPage() {
       router.push('/entrar')
     }
   }, [isAuthenticated, isLoading, router])
+
+  // Refresh user data when page loads to get latest profile info
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      refreshUser()
+    }
+  }, [isAuthenticated, refreshUser])
 
   // Fetch user's articles (simulated as "purchased" content)
   useEffect(() => {
@@ -35,12 +42,6 @@ export default function AccountPage() {
         .finally(() => setLoadingArticles(false))
     }
   }, [user])
-
-  useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
-      router.push('/entrar')
-    }
-  }, [isAuthenticated, isLoading, router])
 
   const handleLogout = async () => {
     await logout()

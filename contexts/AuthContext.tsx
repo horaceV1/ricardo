@@ -124,22 +124,33 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [getTokens, isTokenExpired, storeTokens, clearTokens])
 
   // Fetch and set user data
-  const fetchUser = useCallback(async () => {
+  const fetchUser = useCallback(async (forceRefresh = false) => {
     const accessToken = await refreshTokenIfNeeded()
     if (!accessToken) {
       setIsLoading(false)
       return
     }
 
-    // Try to get user from localStorage first
-    const storedUser = getStoredUser()
-    if (storedUser) {
-      setUser(storedUser)
-      setIsLoading(false)
-      return
+    // Try to get user from localStorage first (only if not forcing refresh)
+    if (!forceRefresh) {
+      const storedUser = getStoredUser()
+      if (storedUser) {
+        setUser(storedUser)
+        setIsLoading(false)
+        
+        // Fetch fresh data in background to update
+        getCurrentUser(accessToken).then(userData => {
+          setUser(userData)
+          storeUser(userData)
+        }).catch(error => {
+          console.error('Background user fetch failed:', error)
+        })
+        
+        return
+      }
     }
 
-    // If no stored user, try to fetch (though this may fail with current implementation)
+    // Fetch from API
     try {
       const userData = await getCurrentUser(accessToken)
       setUser(userData)
@@ -155,7 +166,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Initialize auth state on mount
   useEffect(() => {
-    fetchUser()
+    fetchUser(false)
   }, [fetchUser])
 
   // Login function
@@ -215,7 +226,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Refresh user data
   const refreshUser = useCallback(async () => {
-    await fetchUser()
+    await fetchUser(true) // Force refresh from API
   }, [fetchUser])
 
   const value: AuthContextType = {
