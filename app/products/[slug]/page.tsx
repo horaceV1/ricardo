@@ -30,7 +30,7 @@ interface ProductPageProps {
 
 export async function generateMetadata({ params }: ProductPageProps): Promise<Metadata> {
   try {
-    const product = await drupal.getResourceByPath<DrupalNode>(`/product/${params.slug}`, {
+    const product = await drupal.getResourceByPath<DrupalNode>(`/products/${params.slug}`, {
       params: {
         include: "images,variations,default_variation",
       },
@@ -63,7 +63,7 @@ export async function generateMetadata({ params }: ProductPageProps): Promise<Me
 
 export default async function ProductPage({ params }: ProductPageProps) {
   const product = await drupal
-    .getResourceByPath<DrupalNode>(`/product/${params.slug}`, {
+    .getResourceByPath<DrupalNode>(`/products/${params.slug}`, {
       params: {
         include: "images,variations,default_variation",
       },

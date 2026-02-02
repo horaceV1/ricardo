@@ -66,8 +66,14 @@ export function CourseCard({ course }: CourseCardProps) {
     }
   }
 
+  const productPath = isProduct && course.path?.alias 
+    ? course.path.alias 
+    : isProduct 
+    ? `/products/${course.id}` 
+    : (course.path?.alias || `/courses/${course.id}`)
+
   return (
-    <Link href={isProduct ? `/produtos/${course.path?.alias?.replace('/product/', '') || course.id}` : (course.path?.alias || `/courses/${course.id}`)} className="group block h-full">
+    <Link href={productPath} className="group block h-full">
       <ScaleIn>
         <div className="bg-white rounded-2xl shadow-lg overflow-hidden transition-all duration-300 hover:shadow-2xl hover:-translate-y-2 border-2 border-transparent hover:border-[#009999] h-full flex flex-col">
           <div className="relative h-56 overflow-hidden">
