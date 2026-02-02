@@ -117,6 +117,11 @@ export async function getCurrentUser(token: string): Promise<DrupalUser> {
     status: data.status,
     field_first_name: data.field_first_name,
     field_last_name: data.field_last_name,
+    field_phone: data.field_phone,
+    field_address: data.field_address,
+    field_city: data.field_city,
+    field_postal_code: data.field_postal_code,
+    field_country: data.field_country,
   }
 }
 

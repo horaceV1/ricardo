@@ -59,6 +59,9 @@ export default function AccountPage() {
     )
   }
 
+  // Debug: Log user data to console
+  console.log('User data:', user)
+
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('pt-BR', {
       year: 'numeric',
