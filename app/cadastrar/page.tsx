@@ -22,6 +22,11 @@ export default function RegisterPage() {
     confirmPassword: '',
     field_first_name: '',
     field_last_name: '',
+    field_phone: '',
+    field_address: '',
+    field_city: '',
+    field_postal_code: '',
+    field_country: 'Portugal',
   })
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -54,6 +59,11 @@ export default function RegisterPage() {
         pass: formData.pass,
         field_first_name: formData.field_first_name,
         field_last_name: formData.field_last_name,
+        field_phone: formData.field_phone,
+        field_address: formData.field_address,
+        field_city: formData.field_city,
+        field_postal_code: formData.field_postal_code,
+        field_country: formData.field_country,
       })
       
       setSuccess(true)
@@ -196,6 +206,100 @@ export default function RegisterPage() {
               />
             </div>
 
+            {/* Phone */}
+            <div>
+              <label htmlFor="field_phone" className="block text-sm font-medium text-gray-700 mb-1">
+                Telefone
+              </label>
+              <input
+                id="field_phone"
+                name="field_phone"
+                type="tel"
+                autoComplete="tel"
+                value={formData.field_phone}
+                onChange={handleChange}
+                className="appearance-none relative block w-full px-4 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#009999] focus:border-transparent transition-colors"
+                placeholder="+351 123 456 789"
+                disabled={isLoading}
+              />
+            </div>
+
+            {/* Address */}
+            <div>
+              <label htmlFor="field_address" className="block text-sm font-medium text-gray-700 mb-1">
+                Morada
+              </label>
+              <input
+                id="field_address"
+                name="field_address"
+                type="text"
+                autoComplete="street-address"
+                value={formData.field_address}
+                onChange={handleChange}
+                className="appearance-none relative block w-full px-4 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#009999] focus:border-transparent transition-colors"
+                placeholder="Rua Exemplo, 123"
+                disabled={isLoading}
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* City */}
+            <div>
+              <label htmlFor="field_city" className="block text-sm font-medium text-gray-700 mb-1">
+                Cidade
+              </label>
+              <input
+                id="field_city"
+                name="field_city"
+                type="text"
+                autoComplete="address-level2"
+                value={formData.field_city}
+                onChange={handleChange}
+                className="appearance-none relative block w-full px-4 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#009999] focus:border-transparent transition-colors"
+                placeholder="Lisboa"
+                disabled={isLoading}
+              />
+            </div>
+
+            {/* Postal Code */}
+            <div>
+              <label htmlFor="field_postal_code" className="block text-sm font-medium text-gray-700 mb-1">
+                Código Postal
+              </label>
+              <input
+                id="field_postal_code"
+                name="field_postal_code"
+                type="text"
+                autoComplete="postal-code"
+                value={formData.field_postal_code}
+                onChange={handleChange}
+                className="appearance-none relative block w-full px-4 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#009999] focus:border-transparent transition-colors"
+                placeholder="1000-001"
+                disabled={isLoading}
+              />
+            </div>
+
+            {/* Country */}
+            <div>
+              <label htmlFor="field_country" className="block text-sm font-medium text-gray-700 mb-1">
+                País
+              </label>
+              <input
+                id="field_country"
+                name="field_country"
+                type="text"
+                autoComplete="country"
+                value={formData.field_country}
+                onChange={handleChange}
+                className="appearance-none relative block w-full px-4 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#009999] focus:border-transparent transition-colors"
+                placeholder="Portugal"
+                disabled={isLoading}
+              />
+            </div>
+          </div>
+
+          <div className="space-y-4">
             {/* Password */}
             <div>
               <label htmlFor="pass" className="block text-sm font-medium text-gray-700 mb-1">

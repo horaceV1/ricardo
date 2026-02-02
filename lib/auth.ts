@@ -14,6 +14,11 @@ export interface DrupalUser {
   status: boolean
   field_first_name?: string
   field_last_name?: string
+  field_phone?: string
+  field_address?: string
+  field_city?: string
+  field_postal_code?: string
+  field_country?: string
   user_picture?: {
     url: string
     alt: string
@@ -38,6 +43,11 @@ export interface RegisterData {
   pass: string
   field_first_name?: string
   field_last_name?: string
+  field_phone?: string
+  field_address?: string
+  field_city?: string
+  field_postal_code?: string
+  field_country?: string
 }
 
 /**
@@ -127,6 +137,11 @@ export async function register(userData: RegisterData): Promise<DrupalUser> {
       pass: userData.pass,
       field_first_name: userData.field_first_name,
       field_last_name: userData.field_last_name,
+      field_phone: userData.field_phone,
+      field_address: userData.field_address,
+      field_city: userData.field_city,
+      field_postal_code: userData.field_postal_code,
+      field_country: userData.field_country,
     }),
   })
 
