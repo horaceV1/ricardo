@@ -82,6 +82,14 @@ export function HeaderNav() {
                       <span>Minha Conta</span>
                     </Link>
                     <Link
+                      href="/area-aluno"
+                      className="flex items-center gap-3 px-4 py-2 hover:bg-gray-50 transition-colors text-gray-700 no-underline"
+                      onClick={() => setUserMenuOpen(false)}
+                    >
+                      <ShoppingBag className="h-4 w-4" />
+                      <span>Área do Aluno</span>
+                    </Link>
+                    <Link
                       href="/pedidos"
                       className="flex items-center gap-3 px-4 py-2 hover:bg-gray-50 transition-colors text-gray-700 no-underline"
                       onClick={() => setUserMenuOpen(false)}
