@@ -33,6 +33,12 @@ export function DynamicForm({ formId, formTitle, fields, className = "" }: Dynam
   }
 
   const handleFileChange = (fieldIndex: number, file: File | null) => {
+    // Validate PDF files only
+    if (file && !file.type.includes('pdf')) {
+      setError('Only PDF files are allowed')
+      return
+    }
+    
     setFormData((prev) => ({
       ...prev,
       [`field_${fieldIndex}`]: file,
@@ -193,7 +199,7 @@ export function DynamicForm({ formId, formTitle, fields, className = "" }: Dynam
                       }
                       className="hidden"
                       id={`file_${index}`}
-                      accept={field.type === "imagem" ? ".jpg,.jpeg,.png,.gif,.webp" : ".pdf,.doc,.docx,.jpg,.jpeg,.png"}
+                      accept=".pdf"
                     />
                     <label
                       htmlFor={`file_${index}`}
@@ -203,10 +209,13 @@ export function DynamicForm({ formId, formTitle, fields, className = "" }: Dynam
                       <span className="text-gray-700">
                         {formData[`field_${index}`]
                           ? (formData[`field_${index}`] as File).name
-                          : field.type === "imagem" ? "Selecionar imagem" : "Selecionar arquivo"}
+                          : "Selecionar PDF"}
                       </span>
                     </label>
                   </div>
+                  <p className="text-sm text-gray-500 mt-1">
+                    Only PDF files are accepted
+                  </p>
                   {field.link && (
                     <a
                       href={field.link}
