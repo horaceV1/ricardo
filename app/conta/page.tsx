@@ -257,10 +257,10 @@ export default function AccountPage() {
             <div className="bg-white rounded-2xl shadow-lg p-6">
               <h3 className="text-lg font-bold text-gray-900 mb-4">Ações Rápidas</h3>
               <div className="space-y-3">
-                <button className="w-full text-left px-4 py-3 rounded-lg hover:bg-gray-50 transition-colors flex items-center space-x-3">
+                <Link href="/conta/editar" className="w-full text-left px-4 py-3 rounded-lg hover:bg-gray-50 transition-colors flex items-center space-x-3">
                   <Settings className="h-5 w-5 text-[#009999]" />
                   <span className="text-sm font-medium text-gray-700">Editar Perfil</span>
-                </button>
+                </Link>
                 <button className="w-full text-left px-4 py-3 rounded-lg hover:bg-gray-50 transition-colors flex items-center space-x-3">
                   <Shield className="h-5 w-5 text-[#009999]" />
                   <span className="text-sm font-medium text-gray-700">Alterar Senha</span>
