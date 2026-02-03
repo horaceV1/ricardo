@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useAuth } from '@/contexts/AuthContext'
+import RecentActivity from '@/components/forms/RecentActivity'
 import { 
   BookOpen, 
   PlayCircle, 
@@ -313,6 +314,11 @@ export default function StudentAreaPage() {
               ))}
             </div>
           )}
+        </div>
+
+        {/* Recent Activity Section */}
+        <div className="mt-8">
+          <RecentActivity limit={5} showHeader={true} />
         </div>
 
         {/* Quick Links */}
