@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useAuth } from '@/contexts/AuthContext'
+import RecentActivity from '@/components/forms/RecentActivity'
 import { User, Mail, Shield, Calendar, LogOut, Loader2, ShoppingBag, Settings, BookOpen } from 'lucide-react'
 
 export default function AccountPage() {
@@ -263,12 +264,8 @@ export default function AccountPage() {
             </div>
 
             {/* Recent Activity */}
-            <div className="bg-white rounded-2xl shadow-lg p-8">
-              <h2 className="text-2xl font-bold text-gray-900 mb-6">Atividade Recente</h2>
-              <div className="text-center py-12 text-gray-500">
-                <ShoppingBag className="h-12 w-12 mx-auto mb-4 text-gray-400" />
-                <p>Nenhuma atividade recente</p>
-              </div>
+            <div>
+              <RecentActivity limit={10} showHeader={true} />
             </div>
           </div>
 
