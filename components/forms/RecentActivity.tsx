@@ -36,13 +36,24 @@ export default function RecentActivity({ limit, showHeader = true }: RecentActiv
       setLoading(true)
       setError(null)
 
+      // Get JWT token from localStorage
+      const tokensStr = localStorage.getItem('drupal_auth_tokens')
+      const headers: HeadersInit = {
+        'Content-Type': 'application/json',
+      }
+      
+      if (tokensStr) {
+        const tokens = JSON.parse(tokensStr)
+        if (tokens.access_token) {
+          headers['Authorization'] = `Bearer ${tokens.access_token}`
+        }
+      }
+
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_DRUPAL_BASE_URL}/api/recent-activity`,
         {
           credentials: 'include',
-          headers: {
-            'Content-Type': 'application/json',
-          },
+          headers,
         }
       )
 
