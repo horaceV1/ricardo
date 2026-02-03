@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from 'react'
-import { Clock, CheckCircle, XCircle, AlertCircle, FileText, Calendar } from 'lucide-react'
+import { Clock, CheckCircle, XCircle, AlertCircle, FileText, Calendar, Trash2, Loader2 } from 'lucide-react'
 
 interface Activity {
   id: number
@@ -26,6 +26,9 @@ export default function RecentActivity({ limit, showHeader = true }: RecentActiv
   const [activities, setActivities] = useState<Activity[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [deletingId, setDeletingId] = useState<number | null>(null)
+  const [showClearAllConfirm, setShowClearAllConfirm] = useState(false)
+  const [clearingAll, setClearingAll] = useState(false)
 
   useEffect(() => {
     fetchActivities()
@@ -74,6 +77,103 @@ export default function RecentActivity({ limit, showHeader = true }: RecentActiv
       setError('Não foi possível carregar as atividades recentes')
     } finally {
       setLoading(false)
+    }
+  }
+
+  const deleteSubmission = async (submissionId: number) => {
+    if (!confirm('Tem certeza que deseja excluir esta submissão? Esta ação não pode ser desfeita.')) {
+      return
+    }
+
+    try {
+      setDeletingId(submissionId)
+
+      // Get JWT token from localStorage
+      const tokensStr = localStorage.getItem('drupal_auth_tokens')
+      const headers: HeadersInit = {
+        'Content-Type': 'application/json',
+      }
+      
+      if (tokensStr) {
+        const tokens = JSON.parse(tokensStr)
+        if (tokens.access_token) {
+          headers['Authorization'] = `Bearer ${tokens.access_token}`
+        }
+      }
+
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_DRUPAL_BASE_URL}/api/submission/${submissionId}/delete`,
+        {
+          method: 'DELETE',
+          credentials: 'include',
+          headers,
+        }
+      )
+
+      if (!response.ok) {
+        throw new Error('Failed to delete submission')
+      }
+
+      const data = await response.json()
+      
+      if (data.success) {
+        // Remove from local state
+        setActivities(activities.filter(a => a.id !== submissionId))
+      } else {
+        throw new Error(data.message || 'Failed to delete submission')
+      }
+    } catch (err) {
+      console.error('Error deleting submission:', err)
+      alert('Erro ao excluir submissão. Por favor, tente novamente.')
+    } finally {
+      setDeletingId(null)
+    }
+  }
+
+  const clearAllSubmissions = async () => {
+    try {
+      setClearingAll(true)
+
+      // Get JWT token from localStorage
+      const tokensStr = localStorage.getItem('drupal_auth_tokens')
+      const headers: HeadersInit = {
+        'Content-Type': 'application/json',
+      }
+      
+      if (tokensStr) {
+        const tokens = JSON.parse(tokensStr)
+        if (tokens.access_token) {
+          headers['Authorization'] = `Bearer ${tokens.access_token}`
+        }
+      }
+
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_DRUPAL_BASE_URL}/api/submissions/clear-all`,
+        {
+          method: 'DELETE',
+          credentials: 'include',
+          headers,
+        }
+      )
+
+      if (!response.ok) {
+        throw new Error('Failed to clear submissions')
+      }
+
+      const data = await response.json()
+      
+      if (data.success) {
+        // Clear local state
+        setActivities([])
+        setShowClearAllConfirm(false)
+      } else {
+        throw new Error(data.message || 'Failed to clear submissions')
+      }
+    } catch (err) {
+      console.error('Error clearing submissions:', err)
+      alert('Erro ao limpar submissões. Por favor, tente novamente.')
+    } finally {
+      setClearingAll(false)
     }
   }
 
@@ -164,13 +264,60 @@ export default function RecentActivity({ limit, showHeader = true }: RecentActiv
     <div className="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden">
       {showHeader && (
         <div className="p-6 border-b border-gray-100 bg-gradient-to-r from-[#009999]/5 to-transparent">
-          <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
-            <FileText className="h-6 w-6 text-[#009999]" />
-            Atividade Recente
-          </h2>
-          <p className="text-sm text-gray-600 mt-1">
-            Acompanhe o status das suas submissões
-          </p>
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
+                <FileText className="h-6 w-6 text-[#009999]" />
+                Atividade Recente
+              </h2>
+              <p className="text-sm text-gray-600 mt-1">
+                Acompanhe o status das suas submissões
+              </p>
+            </div>
+            {activities.length > 0 && (
+              <button
+                onClick={() => setShowClearAllConfirm(true)}
+                className="px-4 py-2 text-sm font-medium text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors flex items-center gap-2"
+              >
+                <Trash2 className="h-4 w-4" />
+                Limpar Tudo
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Clear All Confirmation Dialog */}
+      {showClearAllConfirm && (
+        <div className="p-6 bg-red-50 border-b border-red-200">
+          <div className="flex items-start gap-4">
+            <AlertCircle className="h-6 w-6 text-red-600 flex-shrink-0 mt-1" />
+            <div className="flex-1">
+              <h3 className="text-lg font-semibold text-red-900 mb-2">
+                Confirmar exclusão de todas as submissões
+              </h3>
+              <p className="text-sm text-red-800 mb-4">
+                Tem certeza que deseja excluir TODAS as suas submissões? Esta ação não pode ser desfeita.
+              </p>
+              <div className="flex gap-3">
+                <button
+                  onClick={clearAllSubmissions}
+                  disabled={clearingAll}
+                  className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                >
+                  {clearingAll && <Loader2 className="h-4 w-4 animate-spin" />}
+                  Sim, Excluir Tudo
+                </button>
+                <button
+                  onClick={() => setShowClearAllConfirm(false)}
+                  disabled={clearingAll}
+                  className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Cancelar
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       )}
 
@@ -214,8 +361,20 @@ export default function RecentActivity({ limit, showHeader = true }: RecentActiv
                 )}
               </div>
 
-              <div className="flex-shrink-0">
+              <div className="flex items-center gap-2 flex-shrink-0">
                 {getStatusIcon(activity.status)}
+                <button
+                  onClick={() => deleteSubmission(activity.id)}
+                  disabled={deletingId === activity.id}
+                  className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  title="Excluir submissão"
+                >
+                  {deletingId === activity.id ? (
+                    <Loader2 className="h-5 w-5 animate-spin" />
+                  ) : (
+                    <Trash2 className="h-5 w-5" />
+                  )}
+                </button>
               </div>
             </div>
           </div>
