@@ -51,21 +51,34 @@ export default function CheckoutPage() {
     if (paypalLoaded && cart && window.paypal) {
       window.paypal.Buttons({
         createOrder: async () => {
-          // Create order on backend
-          const baseUrl = process.env.NEXT_PUBLIC_DRUPAL_BASE_URL || 'https://darkcyan-stork-408379.hostingersite.com'
-          const response = await fetch(`${baseUrl}/api/checkout/paypal/create-order`, {
-            method: 'POST',
-            credentials: 'include',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              order_id: cart.order_id,
-            }),
-          })
+          try {
+            // Create order on backend
+            const baseUrl = process.env.NEXT_PUBLIC_DRUPAL_BASE_URL || 'https://darkcyan-stork-408379.hostingersite.com'
+            const response = await fetch(`${baseUrl}/api/checkout/paypal/create-order`, {
+              method: 'POST',
+              credentials: 'include',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                order_id: cart.order_id,
+              }),
+            })
 
-          const data = await response.json()
-          return data.paypal_order_id
+            if (!response.ok) {
+              const error = await response.json()
+              console.error('Error creating PayPal order:', error)
+              throw new Error(error.error || 'Failed to create order')
+            }
+
+            // Backend returns the PayPal order ID as a JSON string
+            const orderId = await response.json()
+            console.log('PayPal Order ID:', orderId)
+            return orderId
+          } catch (error) {
+            console.error('Error in createOrder:', error)
+            throw error
+          }
         },
         onApprove: async (data: any) => {
           setProcessing(true)
