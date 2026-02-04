@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { CheckCircle, Package, User as UserIcon, Calendar, ArrowRight } from 'lucide-react'
+import { CheckCircle, Package, User as UserIcon, Calendar, ArrowRight, Download, FileText } from 'lucide-react'
 import Link from 'next/link'
 
 interface OrderItem {
@@ -12,6 +12,7 @@ interface OrderItem {
     number: string
     currency_code: string
   }
+  purchased_entity_id?: string
 }
 
 interface Order {
@@ -30,11 +31,27 @@ interface Order {
   }
 }
 
+interface PurchasedProduct {
+  product_id: string
+  title: string
+  variation_id: string
+  digital_media: Array<{
+    fid: string
+    filename: string
+    filesize: number
+    mime_type: string
+    url: string
+    title: string
+  }>
+  has_downloads: boolean
+}
+
 export default function OrderConfirmationPage() {
   const params = useParams()
   const router = useRouter()
   const [order, setOrder] = useState<Order | null>(null)
   const [loading, setLoading] = useState(true)
+  const [purchasedProducts, setPurchasedProducts] = useState<PurchasedProduct[]>([])
 
   const formatPrice = (number: string, currencyCode: string) => {
     return new Intl.NumberFormat('pt-PT', {
@@ -51,6 +68,12 @@ export default function OrderConfirmationPage() {
       hour: '2-digit',
       minute: '2-digit',
     })
+  }
+
+  const formatFileSize = (bytes: number) => {
+    if (bytes < 1024) return bytes + ' B'
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB'
+    return (bytes / (1024 * 1024)).toFixed(1) + ' MB'
   }
 
   useEffect(() => {
@@ -82,6 +105,32 @@ export default function OrderConfirmationPage() {
       fetchOrder()
     }
   }, [params.id, router])
+
+  // Fetch purchased products with download links
+  useEffect(() => {
+    const fetchPurchases = async () => {
+      try {
+        const baseUrl = process.env.NEXT_PUBLIC_DRUPAL_BASE_URL || 'https://darkcyan-stork-408379.hostingersite.com'
+        const response = await fetch(`${baseUrl}/api/auth/purchases`, {
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        })
+
+        if (response.ok) {
+          const data = await response.json()
+          setPurchasedProducts(data.data || [])
+        }
+      } catch (error) {
+        console.error('Error fetching purchases:', error)
+      }
+    }
+
+    if (order) {
+      fetchPurchases()
+    }
+  }, [order])
 
   if (loading) {
     return (
@@ -140,19 +189,59 @@ export default function OrderConfirmationPage() {
               Itens do Pedido
             </h2>
             <div className="space-y-4">
-              {order.order_items.map((item, index) => (
-                <div key={index} className="flex items-start justify-between py-4 border-b border-gray-100 last:border-0">
-                  <div className="flex-1">
-                    <h3 className="font-semibold text-gray-900">{item.title}</h3>
-                    <p className="text-sm text-gray-600 mt-1">Quantidade: {item.quantity}</p>
+              {order.order_items.map((item, index) => {
+                // Find matching purchased product
+                const product = purchasedProducts.find(p => p.title === item.title)
+                
+                return (
+                  <div key={index} className="py-4 border-b border-gray-100 last:border-0">
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="flex-1">
+                        <h3 className="font-semibold text-gray-900">{item.title}</h3>
+                        <p className="text-sm text-gray-600 mt-1">Quantidade: {item.quantity}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-bold text-gray-900">
+                          {formatPrice(item.total_price.number, item.total_price.currency_code)}
+                        </p>
+                      </div>
+                    </div>
+                    
+                    {/* Download Section */}
+                    {product && product.has_downloads && (
+                      <div className="mt-4 p-4 bg-gradient-to-r from-[#009999]/10 to-[#007a7a]/10 rounded-lg border border-[#009999]/20">
+                        <div className="flex items-center gap-2 mb-3">
+                          <FileText className="h-5 w-5 text-[#009999]" />
+                          <h4 className="font-semibold text-gray-900">Conteúdo Digital Disponível</h4>
+                        </div>
+                        <div className="space-y-2">
+                          {product.digital_media.map((file, fileIndex) => (
+                            <a
+                              key={fileIndex}
+                              href={file.url}
+                              download
+                              className="flex items-center justify-between p-3 bg-white hover:bg-gray-50 rounded-lg border border-gray-200 hover:border-[#009999] transition-all group"
+                            >
+                              <div className="flex items-center gap-3">
+                                <div className="p-2 bg-[#009999]/10 rounded-lg group-hover:bg-[#009999] transition-colors">
+                                  <Download className="h-4 w-4 text-[#009999] group-hover:text-white transition-colors" />
+                                </div>
+                                <div>
+                                  <p className="font-medium text-gray-900 text-sm">{file.title || file.filename}</p>
+                                  <p className="text-xs text-gray-500">{formatFileSize(file.filesize)}</p>
+                                </div>
+                              </div>
+                              <span className="text-xs font-medium text-[#009999] group-hover:text-[#007a7a]">
+                                Download
+                              </span>
+                            </a>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
-                  <div className="text-right">
-                    <p className="font-bold text-gray-900">
-                      {formatPrice(item.total_price.number, item.total_price.currency_code)}
-                    </p>
-                  </div>
-                </div>
-              ))}
+                )
+              })}
             </div>
           </div>
 
@@ -173,7 +262,11 @@ export default function OrderConfirmationPage() {
           <ul className="space-y-3">
             <li className="flex items-start gap-3">
               <CheckCircle className="h-6 w-6 flex-shrink-0 mt-0.5" />
-              <span>Acesse seus cursos na área "Minha Conta"</span>
+              <span>Faça o download do seu conteúdo digital acima</span>
+            </li>
+            <li className="flex items-start gap-3">
+              <CheckCircle className="h-6 w-6 flex-shrink-0 mt-0.5" />
+              <span>Acesse seus produtos a qualquer momento em "Meu Conteúdo"</span>
             </li>
             <li className="flex items-start gap-3">
               <CheckCircle className="h-6 w-6 flex-shrink-0 mt-0.5" />
