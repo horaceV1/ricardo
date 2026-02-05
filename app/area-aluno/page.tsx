@@ -30,6 +30,28 @@ interface EnrolledCourse {
   certificateAvailable: boolean
 }
 
+interface CourseArticle {
+  id: string
+  type: string
+  attributes: {
+    title: string
+    created: string
+    changed: string
+    body?: {
+      value: string
+      summary: string
+    }
+  }
+  relationships?: {
+    field_children?: {
+      data: Array<{ id: string; type: string }>
+    }
+    field_parent?: {
+      data: { id: string; type: string } | null
+    }
+  }
+}
+
 export default function StudentAreaPage() {
   const router = useRouter()
   const { user, isAuthenticated, isLoading } = useAuth()
@@ -44,51 +66,64 @@ export default function StudentAreaPage() {
 
   useEffect(() => {
     if (user) {
-      // Simulate loading enrolled courses
-      // In production, fetch from Drupal API
-      setTimeout(() => {
-        setCourses([
-          {
-            id: '1',
-            title: 'Gestão Empresarial Avançada',
-            image: '/images/curso-1.jpg',
-            totalChapters: 12,
-            completedChapters: 7,
-            currentChapter: 8,
-            progress: 58,
-            lastAccessed: '2026-02-01T14:30:00',
-            totalDuration: '8h 30min',
-            certificateAvailable: false,
-          },
-          {
-            id: '2',
-            title: 'Estratégias de Marketing Digital',
-            image: '/images/curso-2.jpg',
-            totalChapters: 10,
-            completedChapters: 3,
-            currentChapter: 4,
-            progress: 30,
-            lastAccessed: '2026-01-28T10:15:00',
-            totalDuration: '6h 45min',
-            certificateAvailable: false,
-          },
-          {
-            id: '3',
-            title: 'Finanças para Empreendedores',
-            image: '/images/curso-3.jpg',
-            totalChapters: 8,
-            completedChapters: 8,
-            currentChapter: 8,
-            progress: 100,
-            lastAccessed: '2026-01-25T16:20:00',
-            totalDuration: '5h 20min',
-            certificateAvailable: true,
-          },
-        ])
-        setLoadingCourses(false)
-      }, 500)
+      fetchCourses()
     }
   }, [user])
+
+  const fetchCourses = async () => {
+    try {
+      setLoadingCourses(true)
+      const baseUrl = 'https://darkcyan-stork-408379.hostingersite.com'
+      
+      // Fetch all articles from production
+      const response = await fetch(
+        `${baseUrl}/jsonapi/node/article?include=field_children`,
+        {
+          headers: {
+            'Content-Type': 'application/vnd.api+json',
+          },
+        }
+      )
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch courses')
+      }
+
+      const data = await response.json()
+      const articles: CourseArticle[] = data.data
+
+      // Filter for parent courses (those with children)
+      const parentCourses = articles.filter(article => {
+        const children = article.relationships?.field_children?.data || []
+        return children.length > 0
+      })
+
+      // Transform to EnrolledCourse format
+      const transformedCourses: EnrolledCourse[] = parentCourses.map(course => {
+        const childrenCount = course.relationships?.field_children?.data?.length || 0
+        
+        return {
+          id: course.id,
+          title: course.attributes.title,
+          totalChapters: childrenCount,
+          completedChapters: 0, // This would come from user progress data
+          currentChapter: 1,
+          progress: 0, // This would come from user progress data
+          lastAccessed: course.attributes.changed,
+          totalDuration: `${childrenCount * 30}min`, // Estimate 30min per chapter
+          certificateAvailable: false,
+        }
+      })
+
+      setCourses(transformedCourses)
+    } catch (error) {
+      console.error('Error fetching courses:', error)
+      // Fallback to empty array on error
+      setCourses([])
+    } finally {
+      setLoadingCourses(false)
+    }
+  }
 
   if (isLoading || !user) {
     return (
@@ -291,10 +326,13 @@ export default function StudentAreaPage() {
 
                       {/* Actions */}
                       <div className="flex flex-wrap gap-3">
-                        <button className="flex items-center gap-2 bg-[#009999] hover:bg-[#007a7a] text-white px-6 py-2.5 rounded-lg font-semibold transition-colors">
+                        <Link
+                          href={`/area-aluno/curso/${course.id}`}
+                          className="flex items-center gap-2 bg-[#009999] hover:bg-[#007a7a] text-white px-6 py-2.5 rounded-lg font-semibold transition-colors"
+                        >
                           <PlayCircle className="h-5 w-5" />
                           {course.progress === 100 ? 'Revisar Curso' : 'Continuar Aprendendo'}
-                        </button>
+                        </Link>
                         
                         {course.certificateAvailable && (
                           <button className="flex items-center gap-2 bg-yellow-500 hover:bg-yellow-600 text-white px-6 py-2.5 rounded-lg font-semibold transition-colors">
@@ -303,9 +341,12 @@ export default function StudentAreaPage() {
                           </button>
                         )}
 
-                        <button className="flex items-center gap-2 border-2 border-gray-300 hover:border-[#009999] text-gray-700 hover:text-[#009999] px-6 py-2.5 rounded-lg font-semibold transition-colors">
+                        <Link
+                          href={`/area-aluno/curso/${course.id}`}
+                          className="flex items-center gap-2 border-2 border-gray-300 hover:border-[#009999] text-gray-700 hover:text-[#009999] px-6 py-2.5 rounded-lg font-semibold transition-colors"
+                        >
                           Ver Detalhes
-                        </button>
+                        </Link>
                       </div>
                     </div>
                   </div>
