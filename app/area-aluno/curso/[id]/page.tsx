@@ -60,7 +60,7 @@ export default function CourseViewerPage() {
       
       // Fetch the parent course node
       const parentResponse = await fetch(
-        `${baseUrl}/jsonapi/node/article/${params.id}?include=field_children`,
+        `${baseUrl}/jsonapi/node/article/${params.id}`,
         {
           headers: {
             'Content-Type': 'application/vnd.api+json',
@@ -75,34 +75,34 @@ export default function CourseViewerPage() {
       const parentData = await parentResponse.json()
       const parent = parentData.data
 
-      // Extract children from relationships
-      const childrenIds = parent.relationships?.field_children?.data || []
-      
-      // Fetch all children
-      const children: CourseNode[] = []
-      for (const childRef of childrenIds) {
-        try {
-          const childResponse = await fetch(
-            `${baseUrl}/jsonapi/node/article/${childRef.id}`,
-            {
-              headers: {
-                'Content-Type': 'application/vnd.api+json',
-              },
-            }
-          )
-          if (childResponse.ok) {
-            const childData = await childResponse.json()
-            children.push({
-              nid: childData.data.id,
-              title: childData.data.attributes.title,
-              body: childData.data.attributes.body,
-              created: childData.data.attributes.created,
-            })
-          }
-        } catch (err) {
-          console.error('Error fetching child:', err)
+      // Fetch all articles to find children
+      const allArticlesResponse = await fetch(
+        `${baseUrl}/jsonapi/node/article`,
+        {
+          headers: {
+            'Content-Type': 'application/vnd.api+json',
+          },
         }
+      )
+
+      if (!allArticlesResponse.ok) {
+        throw new Error('Failed to fetch articles')
       }
+
+      const allArticlesData = await allArticlesResponse.json()
+      const allArticles = allArticlesData.data
+      
+      // Find children that reference this parent
+      const children: CourseNode[] = allArticles
+        .filter((article: any) => 
+          article.relationships?.curso?.data?.id === params.id
+        )
+        .map((article: any) => ({
+          nid: article.id,
+          title: article.attributes.title,
+          body: article.attributes.body,
+          created: article.attributes.created,
+        }))
 
       setCourseData({
         parent: {

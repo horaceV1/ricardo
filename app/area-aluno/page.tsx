@@ -43,10 +43,7 @@ interface CourseArticle {
     }
   }
   relationships?: {
-    field_children?: {
-      data: Array<{ id: string; type: string }>
-    }
-    field_parent?: {
+    curso?: {
       data: { id: string; type: string } | null
     }
   }
@@ -75,9 +72,9 @@ export default function StudentAreaPage() {
       setLoadingCourses(true)
       const baseUrl = 'https://darkcyan-stork-408379.hostingersite.com'
       
-      // Fetch all articles from production
+      // Fetch all articles to find parent and children
       const response = await fetch(
-        `${baseUrl}/jsonapi/node/article?include=field_children`,
+        `${baseUrl}/jsonapi/node/article`,
         {
           headers: {
             'Content-Type': 'application/vnd.api+json',
@@ -92,15 +89,17 @@ export default function StudentAreaPage() {
       const data = await response.json()
       const articles: CourseArticle[] = data.data
 
-      // Filter for parent courses (those with children)
+      // Find parent courses (those that are NOT children of others)
       const parentCourses = articles.filter(article => {
-        const children = article.relationships?.field_children?.data || []
-        return children.length > 0
+        return !article.relationships?.curso?.data
       })
 
       // Transform to EnrolledCourse format
       const transformedCourses: EnrolledCourse[] = parentCourses.map(course => {
-        const childrenCount = course.relationships?.field_children?.data?.length || 0
+        // Count how many articles have this course as parent
+        const childrenCount = articles.filter(a => 
+          a.relationships?.curso?.data?.id === course.id
+        ).length
         
         return {
           id: course.id,
@@ -115,7 +114,9 @@ export default function StudentAreaPage() {
         }
       })
 
-      setCourses(transformedCourses)
+      // Filter to only show courses with children
+      const coursesWithChildren = transformedCourses.filter(c => c.totalChapters > 0)
+      setCourses(coursesWithChildren)
     } catch (error) {
       console.error('Error fetching courses:', error)
       // Fallback to empty array on error
