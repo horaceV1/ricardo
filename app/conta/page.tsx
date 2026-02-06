@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useAuth } from '@/contexts/AuthContext'
 import RecentActivity from '@/components/forms/RecentActivity'
-import { User, Mail, Shield, Calendar, LogOut, Loader2, ShoppingBag, Settings, BookOpen, Download, FileText } from 'lucide-react'
+import { User, Mail, Shield, Calendar, LogOut, Loader2, ShoppingBag, Settings, BookOpen, Download, FileText, Trash2, X } from 'lucide-react'
 
 interface PurchasedProduct {
   product_id: string
@@ -38,6 +38,8 @@ export default function AccountPage() {
   const { user, isAuthenticated, isLoading, logout, refreshUser } = useAuth()
   const [purchasedProducts, setPurchasedProducts] = useState<PurchasedProduct[]>([])
   const [loadingPurchases, setLoadingPurchases] = useState(false)
+  const [hiddenProducts, setHiddenProducts] = useState<Set<string>>(new Set())
+  const [deletingProduct, setDeletingProduct] = useState<string | null>(null)
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -71,6 +73,36 @@ export default function AccountPage() {
         .finally(() => setLoadingPurchases(false))
     }
   }, [user])
+
+  // Load hidden products from localStorage
+  useEffect(() => {
+    const stored = localStorage.getItem('hiddenProducts')
+    if (stored) {
+      setHiddenProducts(new Set(JSON.parse(stored)))
+    }
+  }, [])
+
+  const handleHideProduct = (productId: string) => {
+    setDeletingProduct(productId)
+    setTimeout(() => {
+      const newHidden = new Set(hiddenProducts)
+      newHidden.add(productId)
+      setHiddenProducts(newHidden)
+      localStorage.setItem('hiddenProducts', JSON.stringify([...newHidden]))
+      setDeletingProduct(null)
+    }, 300)
+  }
+
+  const handleRestoreProduct = (productId: string) => {
+    const newHidden = new Set(hiddenProducts)
+    newHidden.delete(productId)
+    setHiddenProducts(newHidden)
+    localStorage.setItem('hiddenProducts', JSON.stringify([...newHidden]))
+  }
+
+  // Filter out hidden products
+  const visibleProducts = purchasedProducts.filter(p => !hiddenProducts.has(p.product_id))
+  const hiddenProductsList = purchasedProducts.filter(p => hiddenProducts.has(p.product_id))
 
   const formatFileSize = (bytes: number) => {
     if (bytes < 1024) return bytes + ' B'
@@ -256,14 +288,25 @@ export default function AccountPage() {
                   <Loader2 className="h-8 w-8 animate-spin text-[#009999] mx-auto mb-4" />
                   <p className="text-gray-600">Carregando conteúdo...</p>
                 </div>
-              ) : purchasedProducts.length > 0 ? (
+              ) : visibleProducts.length > 0 ? (
                 <div className="space-y-4">
-                  {purchasedProducts.map((product) => (
+                  {visibleProducts.map((product) => (
                     <div 
                       key={product.product_id}
-                      className="block p-5 border border-gray-200 rounded-lg hover:border-[#009999] hover:shadow-md transition-all"
+                      className={`block p-5 border border-gray-200 rounded-lg hover:border-[#009999] hover:shadow-md transition-all relative ${
+                        deletingProduct === product.product_id ? 'opacity-0 scale-95' : 'opacity-100 scale-100'
+                      }`}
                     >
-                      <div className="flex items-start gap-4 mb-4">
+                      {/* Delete/Hide Button */}
+                      <button
+                        onClick={() => handleHideProduct(product.product_id)}
+                        className="absolute top-4 right-4 p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
+                        title="Remover da lista"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+
+                      <div className="flex items-start gap-4 mb-4 pr-10">
                         <div className="flex-shrink-0 w-12 h-12 bg-[#009999]/10 rounded-lg flex items-center justify-center">
                           <BookOpen className="w-6 h-6 text-[#009999]" />
                         </div>
@@ -326,6 +369,34 @@ export default function AccountPage() {
                   >
                     Explorar Produtos
                   </Link>
+                </div>
+              )}
+
+              {/* Hidden Products Section */}
+              {hiddenProductsList.length > 0 && (
+                <div className="mt-8 pt-8 border-t border-gray-200">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                    Conteúdo Oculto ({hiddenProductsList.length})
+                  </h3>
+                  <div className="space-y-2">
+                    {hiddenProductsList.map((product) => (
+                      <div
+                        key={product.product_id}
+                        className="flex items-center justify-between p-4 bg-gray-50 rounded-lg"
+                      >
+                        <div className="flex items-center gap-3 flex-1 min-w-0">
+                          <BookOpen className="h-5 w-5 text-gray-400 flex-shrink-0" />
+                          <span className="text-sm text-gray-600 truncate">{product.title}</span>
+                        </div>
+                        <button
+                          onClick={() => handleRestoreProduct(product.product_id)}
+                          className="ml-4 text-xs text-[#009999] hover:text-[#007a7a] font-medium whitespace-nowrap"
+                        >
+                          Restaurar
+                        </button>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
             </div>
