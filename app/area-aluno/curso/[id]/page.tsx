@@ -67,6 +67,12 @@ export default function CourseViewerPage() {
   const verifyAccessAndFetchCourse = async () => {
     try {
       setCheckingAccess(true)
+      
+      // Get JWT token from localStorage
+      const tokensStr = localStorage.getItem('drupal_auth_tokens')
+      const tokens = tokensStr ? JSON.parse(tokensStr) : null
+      const token = tokens?.access_token
+
       const baseUrl = process.env.NEXT_PUBLIC_DRUPAL_BASE_URL || 'https://darkcyan-stork-408379.hostingersite.com'
       
       // Check if user has purchased this course
@@ -74,10 +80,12 @@ export default function CourseViewerPage() {
         credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
+          ...(token && { 'Authorization': `Bearer ${token}` }),
         },
       })
 
       if (!response.ok) {
+        console.error('[Course Viewer] Failed to verify access, status:', response.status)
         throw new Error('Failed to verify access')
       }
 
@@ -85,14 +93,22 @@ export default function CourseViewerPage() {
       const purchases: PurchasedProduct[] = data.data || []
       
       console.log('[Course Viewer] Purchases:', purchases)
+      console.log('[Course Viewer] Number of purchases:', purchases.length)
       console.log('[Course Viewer] Checking access for curso ID:', params.id)
       
-      // Check if user purchased a product linked to this curso
-      const hasPurchased = purchases.some(product => 
-        product.curso?.id === params.id
-      )
+      // Debug each purchase
+      purchases.forEach(product => {
+        console.log('[Course Viewer] Product:', product.title, 'Curso ID:', product.curso?.id, 'Curso Title:', product.curso?.title)
+      })
       
-      console.log('[Course Viewer] Has access:', hasPurchased)
+      // Check if user purchased a product linked to this curso
+      const hasPurchased = purchases.some(product => {
+        const matches = product.curso?.id === params.id
+        console.log('[Course Viewer] Comparing:', product.curso?.id, 'with', params.id, '=', matches)
+        return matches
+      })
+      
+      console.log('[Course Viewer] Final access decision:', hasPurchased)
       
       setHasAccess(hasPurchased)
       setCheckingAccess(false)
