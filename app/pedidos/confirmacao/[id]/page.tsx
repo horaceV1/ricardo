@@ -85,11 +85,17 @@ export default function OrderConfirmationPage() {
   useEffect(() => {
     const fetchOrder = async () => {
       try {
+        // Get JWT token from localStorage
+        const tokensStr = localStorage.getItem('drupal_auth_tokens')
+        const tokens = tokensStr ? JSON.parse(tokensStr) : null
+        const token = tokens?.access_token
+
         const baseUrl = process.env.NEXT_PUBLIC_DRUPAL_BASE_URL || 'https://darkcyan-stork-408379.hostingersite.com'
         const response = await fetch(`${baseUrl}/api/order/${params.id}`, {
           credentials: 'include',
           headers: {
             'Content-Type': 'application/json',
+            ...(token && { 'Authorization': `Bearer ${token}` }),
           },
         })
 
@@ -116,16 +122,23 @@ export default function OrderConfirmationPage() {
   useEffect(() => {
     const fetchPurchases = async () => {
       try {
+        // Get JWT token from localStorage
+        const tokensStr = localStorage.getItem('drupal_auth_tokens')
+        const tokens = tokensStr ? JSON.parse(tokensStr) : null
+        const token = tokens?.access_token
+
         const baseUrl = process.env.NEXT_PUBLIC_DRUPAL_BASE_URL || 'https://darkcyan-stork-408379.hostingersite.com'
         const response = await fetch(`${baseUrl}/api/auth/purchases`, {
           credentials: 'include',
           headers: {
             'Content-Type': 'application/json',
+            ...(token && { 'Authorization': `Bearer ${token}` }),
           },
         })
 
         if (response.ok) {
           const data = await response.json()
+          console.log('Purchased products:', data)
           setPurchasedProducts(data.data || [])
         }
       } catch (error) {
@@ -134,7 +147,10 @@ export default function OrderConfirmationPage() {
     }
 
     if (order) {
-      fetchPurchases()
+      // Wait a moment for order processing to complete
+      setTimeout(() => {
+        fetchPurchases()
+      }, 1000)
     }
   }, [order])
 
