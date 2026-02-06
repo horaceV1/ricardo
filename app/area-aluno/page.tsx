@@ -96,6 +96,8 @@ export default function StudentAreaPage() {
       const data = await response.json()
       const purchases: PurchasedProduct[] = data.data || []
       
+      console.log('[Area Aluno] Purchases response:', purchases)
+      
       // Extract curso UUIDs from purchased products
       const cursoIds = new Set<string>()
       purchases.forEach(product => {
@@ -104,12 +106,23 @@ export default function StudentAreaPage() {
         }
       })
       
+      console.log('[Area Aluno] Extracted curso IDs:', Array.from(cursoIds))
+      
       setPurchasedCursoIds(cursoIds)
       
-      // Now fetch courses
-      fetchCourses(cursoIds)
+      // Only fetch courses if user has purchases
+      if (cursoIds.size > 0) {
+        console.log('[Area Aluno] User has purchases, fetching courses')
+        fetchCourses(cursoIds)
+      } else {
+        // No purchases, set empty courses and stop loading
+        console.log('[Area Aluno] No purchases found, showing empty state')
+        setCourses([])
+        setLoadingCourses(false)
+      }
     } catch (error) {
       console.error('Error fetching purchases:', error)
+      setCourses([])
       setLoadingCourses(false)
     }
   }
@@ -117,6 +130,14 @@ export default function StudentAreaPage() {
   const fetchCourses = async (purchasedIds: Set<string>) => {
     try {
       setLoadingCourses(true)
+      
+      // Safety check: if no purchased IDs, return empty
+      if (purchasedIds.size === 0) {
+        setCourses([])
+        setLoadingCourses(false)
+        return
+      }
+      
       const baseUrl = 'https://darkcyan-stork-408379.hostingersite.com'
       
       // Fetch all articles to find parent and children

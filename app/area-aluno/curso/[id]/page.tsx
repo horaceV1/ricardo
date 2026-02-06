@@ -84,10 +84,15 @@ export default function CourseViewerPage() {
       const data = await response.json()
       const purchases: PurchasedProduct[] = data.data || []
       
+      console.log('[Course Viewer] Purchases:', purchases)
+      console.log('[Course Viewer] Checking access for curso ID:', params.id)
+      
       // Check if user purchased a product linked to this curso
       const hasPurchased = purchases.some(product => 
         product.curso?.id === params.id
       )
+      
+      console.log('[Course Viewer] Has access:', hasPurchased)
       
       setHasAccess(hasPurchased)
       setCheckingAccess(false)
