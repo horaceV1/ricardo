@@ -49,11 +49,23 @@ interface CourseArticle {
   }
 }
 
+interface PurchasedProduct {
+  product_id: string
+  title: string
+  curso?: {
+    id: string
+    nid: string
+    title: string
+    path: string
+  }
+}
+
 export default function StudentAreaPage() {
   const router = useRouter()
   const { user, isAuthenticated, isLoading } = useAuth()
   const [courses, setCourses] = useState<EnrolledCourse[]>([])
   const [loadingCourses, setLoadingCourses] = useState(true)
+  const [purchasedCursoIds, setPurchasedCursoIds] = useState<Set<string>>(new Set())
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -63,11 +75,46 @@ export default function StudentAreaPage() {
 
   useEffect(() => {
     if (user) {
-      fetchCourses()
+      fetchPurchasedCursos()
     }
   }, [user])
 
-  const fetchCourses = async () => {
+  const fetchPurchasedCursos = async () => {
+    try {
+      const baseUrl = process.env.NEXT_PUBLIC_DRUPAL_BASE_URL || 'https://darkcyan-stork-408379.hostingersite.com'
+      const response = await fetch(`${baseUrl}/api/auth/purchases`, {
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch purchases')
+      }
+
+      const data = await response.json()
+      const purchases: PurchasedProduct[] = data.data || []
+      
+      // Extract curso UUIDs from purchased products
+      const cursoIds = new Set<string>()
+      purchases.forEach(product => {
+        if (product.curso?.id) {
+          cursoIds.add(product.curso.id)
+        }
+      })
+      
+      setPurchasedCursoIds(cursoIds)
+      
+      // Now fetch courses
+      fetchCourses(cursoIds)
+    } catch (error) {
+      console.error('Error fetching purchases:', error)
+      setLoadingCourses(false)
+    }
+  }
+
+  const fetchCourses = async (purchasedIds: Set<string>) => {
     try {
       setLoadingCourses(true)
       const baseUrl = 'https://darkcyan-stork-408379.hostingersite.com'
@@ -94,8 +141,13 @@ export default function StudentAreaPage() {
         return !article.relationships?.curso?.data
       })
 
+      // Filter to only show purchased courses
+      const purchasedParentCourses = parentCourses.filter(course => {
+        return purchasedIds.has(course.id)
+      })
+
       // Transform to EnrolledCourse format
-      const transformedCourses: EnrolledCourse[] = parentCourses.map(course => {
+      const transformedCourses: EnrolledCourse[] = purchasedParentCourses.map(course => {
         // Count how many articles have this course as parent
         const childrenCount = articles.filter(a => 
           a.relationships?.curso?.data?.id === course.id
