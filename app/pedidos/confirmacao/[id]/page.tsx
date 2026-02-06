@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { CheckCircle, Package, User as UserIcon, Calendar, ArrowRight, Download, FileText } from 'lucide-react'
+import { CheckCircle, Package, User as UserIcon, Calendar, ArrowRight, Download, FileText, BookOpen, PlayCircle } from 'lucide-react'
 import Link from 'next/link'
 
 interface OrderItem {
@@ -44,6 +44,12 @@ interface PurchasedProduct {
     title: string
   }>
   has_downloads: boolean
+  curso?: {
+    id: string
+    nid: string
+    title: string
+    path: string
+  }
 }
 
 export default function OrderConfirmationPage() {
@@ -207,6 +213,20 @@ export default function OrderConfirmationPage() {
                       </div>
                     </div>
                     
+                    {/* Course Access Button */}
+                    {product && product.curso && (
+                      <div className="mt-4">
+                        <Link
+                          href={`/area-aluno/curso/${product.curso.id}`}
+                          className="flex items-center justify-center gap-3 px-6 py-4 bg-gradient-to-r from-[#009999] to-[#007a7a] text-white rounded-lg hover:shadow-lg transition-all font-semibold group"
+                        >
+                          <PlayCircle className="h-5 w-5 group-hover:scale-110 transition-transform" />
+                          Acessar Curso: {product.curso.title}
+                          <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
+                        </Link>
+                      </div>
+                    )}
+                    
                     {/* Download Section */}
                     {product && product.has_downloads && (
                       <div className="mt-4 p-4 bg-gradient-to-r from-[#009999]/10 to-[#007a7a]/10 rounded-lg border border-[#009999]/20">
@@ -260,13 +280,21 @@ export default function OrderConfirmationPage() {
         <div className="bg-gradient-to-br from-[#009999] to-[#007a7a] rounded-2xl shadow-sm p-8 text-white mb-6">
           <h2 className="text-2xl font-bold mb-4">Próximos Passos</h2>
           <ul className="space-y-3">
+            {purchasedProducts.some(p => p.curso) && (
+              <li className="flex items-start gap-3">
+                <BookOpen className="h-6 w-6 flex-shrink-0 mt-0.5" />
+                <span className="font-semibold">Acesse seu curso clicando no botão "Acessar Curso" acima</span>
+              </li>
+            )}
+            {purchasedProducts.some(p => p.has_downloads) && (
+              <li className="flex items-start gap-3">
+                <CheckCircle className="h-6 w-6 flex-shrink-0 mt-0.5" />
+                <span>Faça o download do seu conteúdo digital acima</span>
+              </li>
+            )}
             <li className="flex items-start gap-3">
               <CheckCircle className="h-6 w-6 flex-shrink-0 mt-0.5" />
-              <span>Faça o download do seu conteúdo digital acima</span>
-            </li>
-            <li className="flex items-start gap-3">
-              <CheckCircle className="h-6 w-6 flex-shrink-0 mt-0.5" />
-              <span>Acesse seus produtos a qualquer momento em "Meu Conteúdo"</span>
+              <span>Acesse seus produtos a qualquer momento na Área do Aluno</span>
             </li>
             <li className="flex items-start gap-3">
               <CheckCircle className="h-6 w-6 flex-shrink-0 mt-0.5" />
@@ -282,18 +310,19 @@ export default function OrderConfirmationPage() {
         {/* Action Buttons */}
         <div className="flex flex-col sm:flex-row gap-4">
           <Link
-            href="/conta"
+            href="/area-aluno"
             className="flex-1 flex items-center justify-center gap-2 px-6 py-4 bg-gradient-to-r from-[#009999] to-[#007a7a] text-white rounded-lg hover:shadow-lg transition-all font-semibold"
           >
-            <UserIcon className="h-5 w-5" />
-            Ir para Minha Conta
+            <BookOpen className="h-5 w-5" />
+            Ir para Área do Aluno
             <ArrowRight className="h-5 w-5" />
           </Link>
           <Link
-            href="/courses"
+            href="/conta"
             className="flex-1 flex items-center justify-center gap-2 px-6 py-4 bg-white text-[#009999] border-2 border-[#009999] rounded-lg hover:bg-[#009999] hover:text-white transition-all font-semibold"
           >
-            Explorar Mais Cursos
+            <UserIcon className="h-5 w-5" />
+            Minha Conta
           </Link>
         </div>
       </div>
