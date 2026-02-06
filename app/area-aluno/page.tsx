@@ -81,15 +81,22 @@ export default function StudentAreaPage() {
 
   const fetchPurchasedCursos = async () => {
     try {
+      // Get JWT token from localStorage
+      const tokensStr = localStorage.getItem('drupal_auth_tokens')
+      const tokens = tokensStr ? JSON.parse(tokensStr) : null
+      const token = tokens?.access_token
+
       const baseUrl = process.env.NEXT_PUBLIC_DRUPAL_BASE_URL || 'https://darkcyan-stork-408379.hostingersite.com'
       const response = await fetch(`${baseUrl}/api/auth/purchases`, {
         credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
+          ...(token && { 'Authorization': `Bearer ${token}` }),
         },
       })
 
       if (!response.ok) {
+        console.error('[Area Aluno] Failed to fetch purchases, status:', response.status)
         throw new Error('Failed to fetch purchases')
       }
 
@@ -97,12 +104,18 @@ export default function StudentAreaPage() {
       const purchases: PurchasedProduct[] = data.data || []
       
       console.log('[Area Aluno] Purchases response:', purchases)
+      console.log('[Area Aluno] Purchases response:', purchases)
+      console.log('[Area Aluno] Number of purchases:', purchases.length)
       
       // Extract curso UUIDs from purchased products
       const cursoIds = new Set<string>()
       purchases.forEach(product => {
+        console.log('[Area Aluno] Processing product:', product.title, 'curso:', product.curso)
         if (product.curso?.id) {
           cursoIds.add(product.curso.id)
+          console.log('[Area Aluno] Added curso ID:', product.curso.id, 'Title:', product.curso.title)
+        } else {
+          console.log('[Area Aluno] Product has NO curso linked:', product.title)
         }
       })
       
