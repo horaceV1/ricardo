@@ -8,7 +8,7 @@ import { useRouter } from 'next/navigation'
 import { useState, useEffect } from 'react'
 
 export default function CheckoutPage() {
-  const { cart, loading } = useCart()
+  const { cart, loading, refreshCart } = useCart()
   const { user, isAuthenticated } = useAuth()
   const router = useRouter()
   const [processing, setProcessing] = useState(false)
@@ -131,7 +131,12 @@ export default function CheckoutPage() {
 
             const result = await response.json()
             if (result.success) {
+              // Clear cart by refreshing it - Drupal will create a new cart
+              await refreshCart()
+              // Redirect to confirmation page
               router.push(`/pedidos/confirmacao/${cart.order_id}`)
+            } else {
+              throw new Error('Payment capture failed')
             }
           } catch (error) {
             console.error('Error capturing payment:', error)
@@ -146,7 +151,7 @@ export default function CheckoutPage() {
         },
       }).render('#paypal-button-container')
     }
-  }, [paypalLoaded, cart, router])
+  }, [paypalLoaded, cart, router, refreshCart])
 
   if (loading || !cart || !user) {
     return (
