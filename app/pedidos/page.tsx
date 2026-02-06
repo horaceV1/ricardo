@@ -70,17 +70,27 @@ export default function OrdersPage() {
   const fetchOrders = async () => {
     try {
       setLoadingOrders(true)
+      
+      // Get JWT token from localStorage
+      const tokensStr = localStorage.getItem('drupal_auth_tokens')
+      const tokens = tokensStr ? JSON.parse(tokensStr) : null
+      const token = tokens?.access_token
+
       const baseUrl = process.env.NEXT_PUBLIC_DRUPAL_BASE_URL || 'https://darkcyan-stork-408379.hostingersite.com'
       const response = await fetch(`${baseUrl}/api/auth/orders`, {
         credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
+          ...(token && { 'Authorization': `Bearer ${token}` }),
         },
       })
 
       if (response.ok) {
         const data = await response.json()
+        console.log('[Orders] Fetched orders:', data)
         setOrders(data.data || [])
+      } else {
+        console.error('[Orders] Failed to fetch orders, status:', response.status)
       }
     } catch (error) {
       console.error('Error fetching orders:', error)
