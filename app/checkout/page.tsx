@@ -52,6 +52,16 @@ export default function CheckoutPage() {
       window.paypal.Buttons({
         createOrder: async () => {
           try {
+            // Get JWT token from localStorage
+            const tokensStr = localStorage.getItem('drupal_auth_tokens')
+            const tokens = tokensStr ? JSON.parse(tokensStr) : null
+            const token = tokens?.access_token
+
+            if (!token) {
+              console.error('No authentication token found')
+              throw new Error('Authentication required')
+            }
+
             // Create order on backend
             const baseUrl = process.env.NEXT_PUBLIC_DRUPAL_BASE_URL || 'https://darkcyan-stork-408379.hostingersite.com'
             const response = await fetch(`${baseUrl}/api/checkout/paypal/create-order`, {
@@ -59,6 +69,7 @@ export default function CheckoutPage() {
               credentials: 'include',
               headers: {
                 'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
               },
               body: JSON.stringify({
                 order_id: cart.order_id,
@@ -93,6 +104,16 @@ export default function CheckoutPage() {
         onApprove: async (data: any) => {
           setProcessing(true)
           try {
+            // Get JWT token from localStorage
+            const tokensStr = localStorage.getItem('drupal_auth_tokens')
+            const tokens = tokensStr ? JSON.parse(tokensStr) : null
+            const token = tokens?.access_token
+
+            if (!token) {
+              console.error('No authentication token found')
+              throw new Error('Authentication required')
+            }
+
             // Capture payment on backend
             const baseUrl = process.env.NEXT_PUBLIC_DRUPAL_BASE_URL || 'https://darkcyan-stork-408379.hostingersite.com'
             const response = await fetch(`${baseUrl}/api/checkout/paypal/capture-order`, {
@@ -100,6 +121,7 @@ export default function CheckoutPage() {
               credentials: 'include',
               headers: {
                 'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
               },
               body: JSON.stringify({
                 paypal_order_id: data.orderID,
