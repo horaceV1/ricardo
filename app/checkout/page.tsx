@@ -65,16 +65,26 @@ export default function CheckoutPage() {
               }),
             })
 
+            // Get response text first to debug
+            const responseText = await response.text()
+            console.log('Create order response status:', response.status)
+            console.log('Create order response text:', responseText)
+
             if (!response.ok) {
-              const error = await response.json()
-              console.error('Error creating PayPal order:', error)
-              throw new Error(error.error || 'Failed to create order')
+              console.error('Error creating PayPal order:', responseText)
+              throw new Error(responseText || 'Failed to create order')
             }
 
-            // Backend returns the PayPal order ID as a JSON string
-            const orderId = await response.json()
-            console.log('PayPal Order ID:', orderId)
-            return orderId
+            try {
+              // Try to parse as JSON
+              const orderId = JSON.parse(responseText)
+              console.log('PayPal Order ID:', orderId)
+              return orderId
+            } catch (parseError) {
+              console.error('Failed to parse response as JSON:', parseError)
+              console.error('Response was:', responseText)
+              throw new Error('Invalid response from server')
+            }
           } catch (error) {
             console.error('Error in createOrder:', error)
             throw error
