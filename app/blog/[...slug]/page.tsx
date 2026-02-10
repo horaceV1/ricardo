@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { Calendar, User, Tag, ArrowLeft, Share2 } from 'lucide-react'
-import DynamicFormWrapper from '@/components/forms/DynamicFormWrapper'
+import { DynamicForm } from '@/components/forms/DynamicForm'
 
 interface BlogPost {
   id: string
@@ -26,6 +26,7 @@ export default function BlogPostPage({ params }: { params: { slug: string[] } })
   const [post, setPost] = useState<BlogPost | null>(null)
   const [loading, setLoading] = useState(true)
   const [relatedPosts, setRelatedPosts] = useState<any[]>([])
+  const [dynamicForms, setDynamicForms] = useState<any[]>([])
 
   useEffect(() => {
     fetchAllPostsAndFind()
@@ -82,11 +83,30 @@ export default function BlogPostPage({ params }: { params: { slug: string[] } })
         if (tags.length > 0) {
           fetchRelatedPosts(tags[0], postData.id, data.data)
         }
+
+        // Fetch dynamic forms from Layout Builder
+        fetchDynamicForms(postData.attributes.drupal_internal__nid)
       }
     } catch (error) {
       console.error('Error fetching blog post:', error)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const fetchDynamicForms = async (nid: number) => {
+    try {
+      const baseUrl = process.env.NEXT_PUBLIC_DRUPAL_BASE_URL || 'https://darkcyan-stork-408379.hostingersite.com'
+      const response = await fetch(`${baseUrl}/api/article-layout/${nid}`)
+      
+      if (response.ok) {
+        const data = await response.json()
+        if (data.forms && Array.isArray(data.forms) && data.forms.length > 0) {
+          setDynamicForms(data.forms)
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching dynamic forms:', error)
     }
   }
 
@@ -259,11 +279,17 @@ export default function BlogPostPage({ params }: { params: { slug: string[] } })
             dangerouslySetInnerHTML={{ __html: post.body }}
           />
 
-          {/* Dynamic Form */}
-          {post.dynamicFormId && (
-            <div className="mt-16 pt-12 border-t border-gray-200">
-              <h2 className="text-3xl font-bold text-gray-900 mb-8">Entre em Contato</h2>
-              <DynamicFormWrapper formId={post.dynamicFormId} />
+          {/* Dynamic Forms */}
+          {dynamicForms.length > 0 && (
+            <div className="mt-16 pt-12 border-t border-gray-200 space-y-12">
+              {dynamicForms.map((form, index) => (
+                <DynamicForm 
+                  key={index}
+                  formId={form.form_id || form.id}
+                  formTitle={form.label}
+                  fields={form.fields}
+                />
+              ))}
             </div>
           )}
         </div>
