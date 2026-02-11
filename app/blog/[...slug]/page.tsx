@@ -38,7 +38,7 @@ export default function BlogPostPage({ params }: { params: { slug: string[] } })
       
       // Fetch all posts to find the one with matching path
       const response = await fetch(
-        `${baseUrl}/jsonapi/node/curso?include=field_image,uid,field_tags,field_dynamic_form&fields[node--curso]=drupal_internal__nid,title,corpo,created,path,field_image,uid,field_tags,field_dynamic_form&fields[file--file]=uri,url&fields[user--user]=display_name&fields[taxonomy_term--tags]=name&fields[dynamic_form--dynamic_form]=drupal_internal__id,name,fields`
+        `${baseUrl}/jsonapi/node/curso?include=imagem,imagem.field_media_image,uid,field_tags,field_dynamic_form&fields[node--curso]=drupal_internal__nid,title,corpo,created,path,imagem,uid,field_tags,field_dynamic_form&fields[file--file]=uri,url&fields[media--image]=field_media_image&fields[user--user]=display_name&fields[taxonomy_term--tags]=name&fields[dynamic_form--dynamic_form]=drupal_internal__id,name,fields`
       )
       const data = await response.json()
 
@@ -49,8 +49,13 @@ export default function BlogPostPage({ params }: { params: { slug: string[] } })
       const postData = data.data.find((p: any) => p.attributes.path?.alias === fullPath)
 
       if (postData) {
+        // Get media entity
+        const mediaImage = data.included?.find(
+          (inc: any) => inc.type === 'media--image' && inc.id === postData.relationships.imagem?.data?.id
+        )
+        // Get actual file from media
         const image = data.included?.find(
-          (inc: any) => inc.type === 'file--file' && inc.id === postData.relationships.field_image?.data?.id
+          (inc: any) => inc.type === 'file--file' && inc.id === mediaImage?.relationships?.field_media_image?.data?.id
         )
         const author = data.included?.find(
           (inc: any) => inc.type === 'user--user' && inc.id === postData.relationships.uid?.data?.id
@@ -72,7 +77,7 @@ export default function BlogPostPage({ params }: { params: { slug: string[] } })
           path: postData.attributes.path?.alias || '',
           image: {
             url: image?.attributes?.uri?.url || image?.attributes?.url || '',
-            alt: postData.relationships.field_image?.data?.meta?.alt || postData.attributes.title,
+            alt: mediaImage?.attributes?.name || postData.attributes.title,
           },
           author: author?.attributes?.display_name || 'Admin',
           tags,

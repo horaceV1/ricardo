@@ -32,13 +32,18 @@ export default function BlogPage() {
     try {
       const baseUrl = process.env.NEXT_PUBLIC_DRUPAL_BASE_URL || 'https://darkcyan-stork-408379.hostingersite.com'
       const response = await fetch(
-        `${baseUrl}/jsonapi/node/curso?include=field_image,uid,field_tags&sort=-created&fields[node--curso]=title,corpo,created,path,field_image,uid,field_tags,drupal_internal__nid&fields[file--file]=uri,url&fields[user--user]=display_name&fields[taxonomy_term--tags]=name`
+        `${baseUrl}/jsonapi/node/curso?include=imagem,imagem.field_media_image,uid,field_tags&sort=-created&fields[node--curso]=title,corpo,created,path,imagem,uid,field_tags,drupal_internal__nid&fields[file--file]=uri,url&fields[media--image]=field_media_image&fields[user--user]=display_name&fields[taxonomy_term--tags]=name`
       )
       const data = await response.json()
 
       const posts: BlogPost[] = data.data.map((post: any) => {
+        // Get media entity
+        const mediaImage = data.included?.find(
+          (inc: any) => inc.type === 'media--image' && inc.id === post.relationships.imagem?.data?.id
+        )
+        // Get actual file from media
         const image = data.included?.find(
-          (inc: any) => inc.type === 'file--file' && inc.id === post.relationships.field_image?.data?.id
+          (inc: any) => inc.type === 'file--file' && inc.id === mediaImage?.relationships?.field_media_image?.data?.id
         )
         const author = data.included?.find(
           (inc: any) => inc.type === 'user--user' && inc.id === post.relationships.uid?.data?.id
@@ -48,15 +53,26 @@ export default function BlogPage() {
           return tag?.attributes?.name || ''
         }).filter(Boolean) || []
 
+        // Extract summary from corpo field (first 150 chars of processed HTML)
+        const corpoText = post.attributes.corpo?.processed || ''
+        const tempDiv = typeof document !== 'undefined' ? document.createElement('div') : null
+        if (tempDiv) {
+          tempDiv.innerHTML = corpoText
+          var plainText = tempDiv.textContent || tempDiv.innerText || ''
+        } else {
+          var plainText = corpoText.replace(/<[^>]*>/g, '')
+        }
+        const summary = plainText.substring(0, 150) + (plainText.length > 150 ? '...' : '')
+
         return {
           id: post.id,
           title: post.attributes.title,
-          summary: post.attributes.body?.summary || '',
+          summary: summary,
           created: post.attributes.created,
-          path: post.attributes.path?.alias || `/blog/${post.id}`,
+          path: post.attributes.path?.alias || `/blog/${post.attributes.drupal_internal__nid}`,
           image: {
             url: image?.attributes?.uri?.url || image?.attributes?.url || '',
-            alt: post.relationships.field_image?.data?.meta?.alt || post.attributes.title,
+            alt: mediaImage?.attributes?.name || post.attributes.title,
           },
           author: author?.attributes?.display_name || 'Admin',
           tags,
