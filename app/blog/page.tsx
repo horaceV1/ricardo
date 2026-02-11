@@ -32,7 +32,7 @@ export default function BlogPage() {
     try {
       const baseUrl = process.env.NEXT_PUBLIC_DRUPAL_BASE_URL || 'https://darkcyan-stork-408379.hostingersite.com'
       const response = await fetch(
-        `${baseUrl}/jsonapi/node/curso?include=field_image,uid,field_tags&sort=-created&fields[node--curso]=title,body,created,path,field_image,uid,field_tags,drupal_internal__nid&fields[file--file]=uri,url&fields[user--user]=display_name&fields[taxonomy_term--tags]=name`
+        `${baseUrl}/jsonapi/node/curso?include=field_image,uid,field_tags&sort=-created&fields[node--curso]=title,corpo,created,path,field_image,uid,field_tags,drupal_internal__nid&fields[file--file]=uri,url&fields[user--user]=display_name&fields[taxonomy_term--tags]=name`
       )
       const data = await response.json()
 

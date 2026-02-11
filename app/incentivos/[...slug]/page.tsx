@@ -34,7 +34,7 @@ export default function IncentivoPostPage({ params }: { params: { slug: string[]
       const baseUrl = process.env.NEXT_PUBLIC_DRUPAL_BASE_URL || 'https://darkcyan-stork-408379.hostingersite.com'
       
       const response = await fetch(
-        `${baseUrl}/jsonapi/node/article?include=field_image,uid&fields[node--article]=drupal_internal__nid,title,body,created,path,field_image,uid&fields[file--file]=uri,url&fields[user--user]=display_name`
+        `${baseUrl}/jsonapi/node/article?include=imagem,uid&fields[node--article]=drupal_internal__nid,title,body,created,path,imagem,uid&fields[media--image]=field_media_image&fields[file--file]=uri,url&fields[user--user]=display_name`
       )
       const data = await response.json()
 
@@ -42,9 +42,12 @@ export default function IncentivoPostPage({ params }: { params: { slug: string[]
       const postData = data.data.find((p: any) => p.attributes.path?.alias === fullPath)
 
       if (postData) {
-        const image = data.included?.find(
-          (inc: any) => inc.type === 'file--file' && inc.id === postData.relationships.field_image?.data?.id
+        const mediaImage = data.included?.find(
+          (inc: any) => inc.type === 'media--image' && inc.id === postData.relationships.imagem?.data?.id
         )
+        const image = mediaImage ? data.included?.find(
+          (inc: any) => inc.type === 'file--file' && inc.id === mediaImage.relationships?.field_media_image?.data?.id
+        ) : null
         const author = data.included?.find(
           (inc: any) => inc.type === 'user--user' && inc.id === postData.relationships.uid?.data?.id
         )
@@ -58,7 +61,7 @@ export default function IncentivoPostPage({ params }: { params: { slug: string[]
           path: postData.attributes.path?.alias || '',
           image: {
             url: image?.attributes?.uri?.url || image?.attributes?.url || '',
-            alt: postData.relationships.field_image?.data?.meta?.alt || postData.attributes.title,
+            alt: postData.relationships.imagem?.data?.meta?.alt || postData.attributes.title,
           },
           author: author?.attributes?.display_name || 'Admin',
         })

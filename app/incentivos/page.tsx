@@ -25,7 +25,7 @@ async function getIncentivos(): Promise<Incentivo[]> {
     const baseUrl = process.env.NEXT_PUBLIC_DRUPAL_BASE_URL || 'https://darkcyan-stork-408379.hostingersite.com'
     
     const response = await fetch(
-      `${baseUrl}/jsonapi/node/article?include=field_image&sort=-created&fields[node--article]=drupal_internal__nid,title,body,created,path,field_image&fields[file--file]=uri,url`,
+      `${baseUrl}/jsonapi/node/article?include=imagem&sort=-created&fields[node--article]=drupal_internal__nid,title,body,created,path,imagem&fields[media--image]=field_media_image&fields[file--file]=uri,url`,
       {
         next: { revalidate: 60 },
       }
@@ -39,9 +39,12 @@ async function getIncentivos(): Promise<Incentivo[]> {
     const data = await response.json()
 
     return data.data.map((item: any) => {
-      const image = data.included?.find(
-        (inc: any) => inc.type === 'file--file' && inc.id === item.relationships?.field_image?.data?.id
+      const mediaImage = data.included?.find(
+        (inc: any) => inc.type === 'media--image' && inc.id === item.relationships?.imagem?.data?.id
       )
+      const image = mediaImage ? data.included?.find(
+        (inc: any) => inc.type === 'file--file' && inc.id === mediaImage.relationships?.field_media_image?.data?.id
+      ) : null
 
       return {
         id: item.id,

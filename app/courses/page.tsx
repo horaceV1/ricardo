@@ -26,7 +26,7 @@ async function getCursos(): Promise<Curso[]> {
     const baseUrl = process.env.NEXT_PUBLIC_DRUPAL_BASE_URL || 'https://darkcyan-stork-408379.hostingersite.com'
     
     const response = await fetch(
-      `${baseUrl}/jsonapi/node/cursos?include=field_image&sort=-created&fields[node--cursos]=drupal_internal__nid,title,body,created,path,field_image&fields[file--file]=uri,url`,
+      `${baseUrl}/jsonapi/node/cursos?include=imagem&sort=-created&fields[node--cursos]=drupal_internal__nid,title,body_curso,created,path,imagem&fields[media--image]=field_media_image&fields[file--file]=uri,url`,
       {
         next: { revalidate: 60 },
       }
@@ -40,15 +40,18 @@ async function getCursos(): Promise<Curso[]> {
     const data = await response.json()
 
     return data.data.map((item: any) => {
-      const image = data.included?.find(
-        (inc: any) => inc.type === 'file--file' && inc.id === item.relationships?.field_image?.data?.id
+      const mediaImage = data.included?.find(
+        (inc: any) => inc.type === 'media--image' && inc.id === item.relationships?.imagem?.data?.id
       )
+      const image = mediaImage ? data.included?.find(
+        (inc: any) => inc.type === 'file--file' && inc.id === mediaImage.relationships?.field_media_image?.data?.id
+      ) : null
 
       return {
         id: item.id,
         nid: item.attributes.drupal_internal__nid,
         title: item.attributes.title,
-        body: item.attributes.body?.processed || item.attributes.body?.value || '',
+        body: item.attributes.body_curso?.processed || item.attributes.body_curso?.value || '',
         created: item.attributes.created,
         path: item.attributes.path?.alias || `/node/${item.attributes.drupal_internal__nid}`,
         image: image ? {
