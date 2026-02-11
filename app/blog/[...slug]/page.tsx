@@ -38,7 +38,7 @@ export default function BlogPostPage({ params }: { params: { slug: string[] } })
       
       // Fetch all posts to find the one with matching path
       const response = await fetch(
-        `${baseUrl}/jsonapi/node/article?include=field_image,uid,field_tags,field_dynamic_form&fields[node--article]=drupal_internal__nid,title,body,created,path,field_image,uid,field_tags,field_dynamic_form&fields[file--file]=uri,url&fields[user--user]=display_name&fields[taxonomy_term--tags]=name&fields[dynamic_form--dynamic_form]=drupal_internal__id,name,fields`
+        `${baseUrl}/jsonapi/node/curso?include=field_image,uid,field_tags,field_dynamic_form&fields[node--curso]=drupal_internal__nid,title,body,created,path,field_image,uid,field_tags,field_dynamic_form&fields[file--file]=uri,url&fields[user--user]=display_name&fields[taxonomy_term--tags]=name&fields[dynamic_form--dynamic_form]=drupal_internal__id,name,fields`
       )
       const data = await response.json()
 
