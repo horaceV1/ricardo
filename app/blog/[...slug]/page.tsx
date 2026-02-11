@@ -36,34 +36,44 @@ export default function BlogPostPage({ params }: { params: { slug: string[] } })
     try {
       const baseUrl = process.env.NEXT_PUBLIC_DRUPAL_BASE_URL || 'https://darkcyan-stork-408379.hostingersite.com'
       
-      // Fetch all posts to find the one with matching path
+      // Simplified: fetch without nested includes to avoid timeouts
       const response = await fetch(
-        `${baseUrl}/jsonapi/node/curso?include=imagem,imagem.field_media_image,uid,field_tags,field_dynamic_form&fields[node--curso]=drupal_internal__nid,title,corpo,created,path,imagem,uid,field_tags,field_dynamic_form&fields[file--file]=uri,url&fields[media--image]=field_media_image&fields[user--user]=display_name&fields[taxonomy_term--tags]=name&fields[dynamic_form--dynamic_form]=drupal_internal__id,name,fields`
+        `${baseUrl}/jsonapi/node/curso?fields[node--curso]=drupal_internal__nid,title,corpo,created,path,imagem,field_dynamic_form`
       )
       const data = await response.json()
 
       // Construct the path from slug
       const fullPath = `/blog/${params.slug.join('/')}`
       
-      // Find the post with matching path
-      const postData = data.data.find((p: any) => p.attributes.path?.alias === fullPath)
+      // Find the post with matching path or nid
+      let postData = data.data.find((p: any) => p.attributes.path?.alias === fullPath)
+      
+      // If no alias match, try matching by nid from slug
+      if (!postData && params.slug.length === 1 && !isNaN(Number(params.slug[0]))) {
+        const nid = Number(params.slug[0])
+        postData = data.data.find((p: any) => p.attributes.drupal_internal__nid === nid)
+      }
 
       if (postData) {
-        // Get media entity
-        const mediaImage = data.included?.find(
-          (inc: any) => inc.type === 'media--image' && inc.id === postData.relationships.imagem?.data?.id
-        )
-        // Get actual file from media
-        const image = data.included?.find(
-          (inc: any) => inc.type === 'file--file' && inc.id === mediaImage?.relationships?.field_media_image?.data?.id
-        )
-        const author = data.included?.find(
-          (inc: any) => inc.type === 'user--user' && inc.id === postData.relationships.uid?.data?.id
-        )
-        const tags = postData.relationships.field_tags?.data?.map((tagRef: any) => {
-          const tag = data.included?.find((inc: any) => inc.type === 'taxonomy_term--tags' && inc.id === tagRef.id)
-          return tag?.attributes?.name || ''
-        }).filter(Boolean) || []
+        // Fetch image from media entity if exists
+        let imageUrl = ''
+        let imageAlt = postData.attributes.title
+        
+        if (postData.relationships.imagem?.data?.id) {
+          try {
+            const mediaResponse = await fetch(
+              `${baseUrl}/jsonapi/media/image/${postData.relationships.imagem.data.id}?include=field_media_image&fields[file--file]=uri`
+            )
+            const mediaData = await mediaResponse.json()
+            const fileEntity = mediaData.included?.find((inc: any) => inc.type === 'file--file')
+            if (fileEntity) {
+              imageUrl = baseUrl + fileEntity.attributes.uri.url
+              imageAlt = mediaData.data.attributes.name || imageAlt
+            }
+          } catch (e) {
+            console.error('Error fetching media:', e)
+          }
+        }
 
         // Get dynamic form ID - use internal ID from meta as the API expects it
         const dynamicFormId = postData.relationships.field_dynamic_form?.data?.meta?.drupal_internal__target_id || null
@@ -76,11 +86,11 @@ export default function BlogPostPage({ params }: { params: { slug: string[] } })
           created: postData.attributes.created,
           path: postData.attributes.path?.alias || '',
           image: {
-            url: image?.attributes?.uri?.url || image?.attributes?.url || '',
-            alt: mediaImage?.attributes?.name || postData.attributes.title,
+            url: imageUrl,
+            alt: imageAlt,
           },
-          author: author?.attributes?.display_name || 'Admin',
-          tags,
+          author: 'Admin',
+          tags: [],
           dynamicFormId: dynamicFormId,
         })
 
