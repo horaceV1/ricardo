@@ -5,13 +5,41 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useAuth } from '@/contexts/AuthContext'
 import RecentActivity from '@/components/forms/RecentActivity'
-import { User, Mail, Shield, Calendar, LogOut, Loader2, ShoppingBag, Settings, BookOpen } from 'lucide-react'
+import { User, Mail, Shield, Calendar, LogOut, Loader2, ShoppingBag, Settings, BookOpen, Download, FileText, Trash2, X } from 'lucide-react'
+
+interface PurchasedProduct {
+  product_id: string
+  title: string
+  variation_id: string
+  order_id: string
+  order_number: string
+  purchased_date: string
+  body?: {
+    value: string
+    summary: string
+  }
+  image?: {
+    url: string
+    alt: string
+  }
+  digital_media: Array<{
+    fid: string
+    filename: string
+    filesize: number
+    mime_type: string
+    url: string
+    title: string
+  }>
+  has_downloads: boolean
+}
 
 export default function AccountPage() {
   const router = useRouter()
   const { user, isAuthenticated, isLoading, logout, refreshUser } = useAuth()
-  const [userArticles, setUserArticles] = useState<any[]>([])
-  const [loadingArticles, setLoadingArticles] = useState(false)
+  const [purchasedProducts, setPurchasedProducts] = useState<PurchasedProduct[]>([])
+  const [loadingPurchases, setLoadingPurchases] = useState(false)
+  const [hiddenProducts, setHiddenProducts] = useState<Set<string>>(new Set())
+  const [deletingProduct, setDeletingProduct] = useState<string | null>(null)
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -26,23 +54,61 @@ export default function AccountPage() {
     }
   }, [isAuthenticated, refreshUser])
 
-  // Fetch user's articles (simulated as "purchased" content)
+  // Fetch user's purchased products
   useEffect(() => {
     if (user) {
-      setLoadingArticles(true)
-      // For demo, we'll fetch all articles
-      // In production, you'd filter by user purchases/access
-      fetch(`${process.env.NEXT_PUBLIC_DRUPAL_BASE_URL}/jsonapi/node/article?filter[status]=1&sort=-created&page[limit]=5`, {
+      setLoadingPurchases(true)
+      const baseUrl = process.env.NEXT_PUBLIC_DRUPAL_BASE_URL || 'https://darkcyan-stork-408379.hostingersite.com'
+      fetch(`${baseUrl}/api/auth/purchases`, {
         credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
       })
         .then(res => res.json())
         .then(data => {
-          setUserArticles(data.data || [])
+          setPurchasedProducts(data.data || [])
         })
-        .catch(err => console.error('Failed to fetch articles:', err))
-        .finally(() => setLoadingArticles(false))
+        .catch(err => console.error('Failed to fetch purchases:', err))
+        .finally(() => setLoadingPurchases(false))
     }
   }, [user])
+
+  // Load hidden products from localStorage
+  useEffect(() => {
+    const stored = localStorage.getItem('hiddenProducts')
+    if (stored) {
+      setHiddenProducts(new Set(JSON.parse(stored)))
+    }
+  }, [])
+
+  const handleHideProduct = (productId: string) => {
+    setDeletingProduct(productId)
+    setTimeout(() => {
+      const newHidden = new Set(hiddenProducts)
+      newHidden.add(productId)
+      setHiddenProducts(newHidden)
+      localStorage.setItem('hiddenProducts', JSON.stringify([...newHidden]))
+      setDeletingProduct(null)
+    }, 300)
+  }
+
+  const handleRestoreProduct = (productId: string) => {
+    const newHidden = new Set(hiddenProducts)
+    newHidden.delete(productId)
+    setHiddenProducts(newHidden)
+    localStorage.setItem('hiddenProducts', JSON.stringify([...newHidden]))
+  }
+
+  // Filter out hidden products
+  const visibleProducts = purchasedProducts.filter(p => !hiddenProducts.has(p.product_id))
+  const hiddenProductsList = purchasedProducts.filter(p => hiddenProducts.has(p.product_id))
+
+  const formatFileSize = (bytes: number) => {
+    if (bytes < 1024) return bytes + ' B'
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB'
+    return (bytes / (1024 * 1024)).toFixed(1) + ' MB'
+  }
 
   const handleLogout = async () => {
     await logout()
@@ -217,48 +283,120 @@ export default function AccountPage() {
                 </Link>
               </div>
               
-              {loadingArticles ? (
+              {loadingPurchases ? (
                 <div className="text-center py-8">
                   <Loader2 className="h-8 w-8 animate-spin text-[#009999] mx-auto mb-4" />
                   <p className="text-gray-600">Carregando conteúdo...</p>
                 </div>
-              ) : userArticles.length > 0 ? (
+              ) : visibleProducts.length > 0 ? (
                 <div className="space-y-4">
-                  {userArticles.map((article) => (
-                    <Link 
-                      key={article.id}
-                      href={article.attributes.path?.alias || `/articles/${article.id}`}
-                      className="block p-4 border border-gray-200 rounded-lg hover:border-[#009999] hover:shadow-md transition-all group"
+                  {visibleProducts.map((product) => (
+                    <div 
+                      key={product.product_id}
+                      className={`block p-5 border border-gray-200 rounded-lg hover:border-[#009999] hover:shadow-md transition-all relative ${
+                        deletingProduct === product.product_id ? 'opacity-0 scale-95' : 'opacity-100 scale-100'
+                      }`}
                     >
-                      <div className="flex items-start gap-4">
-                        <div className="flex-shrink-0 w-12 h-12 bg-[#009999]/10 rounded-lg flex items-center justify-center group-hover:bg-[#009999] transition-colors">
-                          <BookOpen className="w-6 h-6 text-[#009999] group-hover:text-white transition-colors" />
+                      {/* Delete/Hide Button */}
+                      <button
+                        onClick={() => handleHideProduct(product.product_id)}
+                        className="absolute top-4 right-4 p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
+                        title="Remover da lista"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+
+                      <div className="flex items-start gap-4 mb-4 pr-10">
+                        <div className="flex-shrink-0 w-12 h-12 bg-[#009999]/10 rounded-lg flex items-center justify-center">
+                          <BookOpen className="w-6 h-6 text-[#009999]" />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <h3 className="font-semibold text-gray-900 group-hover:text-[#009999] transition-colors mb-1 line-clamp-1">
-                            {article.attributes.title}
+                          <h3 className="font-semibold text-gray-900 mb-1 line-clamp-1">
+                            {product.title}
                           </h3>
                           <p className="text-sm text-gray-600 line-clamp-2 mb-2">
-                            {article.attributes.body?.summary || 'Artigo exclusivo'}
+                            {product.body?.summary || 'Artigo exclusivo'}
                           </p>
                           <span className="text-xs text-gray-500">
-                            {new Date(article.attributes.created).toLocaleDateString('pt-BR')}
+                            Comprado em {new Date(product.purchased_date).toLocaleDateString('pt-PT')}
                           </span>
                         </div>
                       </div>
-                    </Link>
+                      
+                      {/* Downloads Section */}
+                      {product.has_downloads && (
+                        <div className="mt-4 pt-4 border-t border-gray-100">
+                          <div className="flex items-center gap-2 mb-3">
+                            <FileText className="h-4 w-4 text-[#009999]" />
+                            <h4 className="text-sm font-semibold text-gray-900">Arquivos Disponíveis</h4>
+                          </div>
+                          <div className="space-y-2">
+                            {product.digital_media.map((file) => (
+                              <a
+                                key={file.fid}
+                                href={file.url}
+                                download
+                                className="flex items-center justify-between p-3 bg-gray-50 hover:bg-[#009999]/10 rounded-lg border border-gray-200 hover:border-[#009999] transition-all group"
+                              >
+                                <div className="flex items-center gap-3">
+                                  <div className="p-2 bg-white rounded group-hover:bg-[#009999] transition-colors">
+                                    <Download className="h-4 w-4 text-[#009999] group-hover:text-white transition-colors" />
+                                  </div>
+                                  <div>
+                                    <p className="font-medium text-gray-900 text-sm">{file.title || file.filename}</p>
+                                    <p className="text-xs text-gray-500">{formatFileSize(file.filesize)}</p>
+                                  </div>
+                                </div>
+                                <span className="text-xs font-medium text-[#009999] group-hover:text-[#007a7a]">
+                                  Download
+                                </span>
+                              </a>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   ))}
                 </div>
               ) : (
                 <div className="text-center py-12 text-gray-500">
                   <BookOpen className="h-12 w-12 mx-auto mb-4 text-gray-400" />
-                  <p className="mb-4">Você ainda não possui conteúdo</p>
+                  <p className="mb-2 font-medium">Você ainda não comprou nenhum produto</p>
+                  <p className="text-sm mb-4">Explore nossos cursos e conteúdos exclusivos</p>
                   <Link
                     href="/courses"
                     className="inline-flex items-center px-4 py-2 bg-[#009999] text-white rounded-lg hover:bg-[#007a7a] transition-colors"
                   >
-                    Explorar Conteúdos
+                    Explorar Produtos
                   </Link>
+                </div>
+              )}
+
+              {/* Hidden Products Section */}
+              {hiddenProductsList.length > 0 && (
+                <div className="mt-8 pt-8 border-t border-gray-200">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                    Conteúdo Oculto ({hiddenProductsList.length})
+                  </h3>
+                  <div className="space-y-2">
+                    {hiddenProductsList.map((product) => (
+                      <div
+                        key={product.product_id}
+                        className="flex items-center justify-between p-4 bg-gray-50 rounded-lg"
+                      >
+                        <div className="flex items-center gap-3 flex-1 min-w-0">
+                          <BookOpen className="h-5 w-5 text-gray-400 flex-shrink-0" />
+                          <span className="text-sm text-gray-600 truncate">{product.title}</span>
+                        </div>
+                        <button
+                          onClick={() => handleRestoreProduct(product.product_id)}
+                          className="ml-4 text-xs text-[#009999] hover:text-[#007a7a] font-medium whitespace-nowrap"
+                        >
+                          Restaurar
+                        </button>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
             </div>

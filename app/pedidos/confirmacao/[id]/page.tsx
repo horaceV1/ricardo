@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { CheckCircle, Package, User as UserIcon, Calendar, ArrowRight } from 'lucide-react'
+import { CheckCircle, Package, User as UserIcon, Calendar, ArrowRight, Download, FileText, BookOpen, PlayCircle } from 'lucide-react'
 import Link from 'next/link'
 
 interface OrderItem {
@@ -12,6 +12,7 @@ interface OrderItem {
     number: string
     currency_code: string
   }
+  purchased_entity_id?: string
 }
 
 interface Order {
@@ -30,11 +31,33 @@ interface Order {
   }
 }
 
+interface PurchasedProduct {
+  product_id: string
+  title: string
+  variation_id: string
+  digital_media: Array<{
+    fid: string
+    filename: string
+    filesize: number
+    mime_type: string
+    url: string
+    title: string
+  }>
+  has_downloads: boolean
+  curso?: {
+    id: string
+    nid: string
+    title: string
+    path: string
+  }
+}
+
 export default function OrderConfirmationPage() {
   const params = useParams()
   const router = useRouter()
   const [order, setOrder] = useState<Order | null>(null)
   const [loading, setLoading] = useState(true)
+  const [purchasedProducts, setPurchasedProducts] = useState<PurchasedProduct[]>([])
 
   const formatPrice = (number: string, currencyCode: string) => {
     return new Intl.NumberFormat('pt-PT', {
@@ -53,14 +76,26 @@ export default function OrderConfirmationPage() {
     })
   }
 
+  const formatFileSize = (bytes: number) => {
+    if (bytes < 1024) return bytes + ' B'
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB'
+    return (bytes / (1024 * 1024)).toFixed(1) + ' MB'
+  }
+
   useEffect(() => {
     const fetchOrder = async () => {
       try {
+        // Get JWT token from localStorage
+        const tokensStr = localStorage.getItem('drupal_auth_tokens')
+        const tokens = tokensStr ? JSON.parse(tokensStr) : null
+        const token = tokens?.access_token
+
         const baseUrl = process.env.NEXT_PUBLIC_DRUPAL_BASE_URL || 'https://darkcyan-stork-408379.hostingersite.com'
         const response = await fetch(`${baseUrl}/api/order/${params.id}`, {
           credentials: 'include',
           headers: {
             'Content-Type': 'application/json',
+            ...(token && { 'Authorization': `Bearer ${token}` }),
           },
         })
 
@@ -82,6 +117,42 @@ export default function OrderConfirmationPage() {
       fetchOrder()
     }
   }, [params.id, router])
+
+  // Fetch purchased products with download links
+  useEffect(() => {
+    const fetchPurchases = async () => {
+      try {
+        // Get JWT token from localStorage
+        const tokensStr = localStorage.getItem('drupal_auth_tokens')
+        const tokens = tokensStr ? JSON.parse(tokensStr) : null
+        const token = tokens?.access_token
+
+        const baseUrl = process.env.NEXT_PUBLIC_DRUPAL_BASE_URL || 'https://darkcyan-stork-408379.hostingersite.com'
+        const response = await fetch(`${baseUrl}/api/auth/purchases`, {
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token && { 'Authorization': `Bearer ${token}` }),
+          },
+        })
+
+        if (response.ok) {
+          const data = await response.json()
+          console.log('Purchased products:', data)
+          setPurchasedProducts(data.data || [])
+        }
+      } catch (error) {
+        console.error('Error fetching purchases:', error)
+      }
+    }
+
+    if (order) {
+      // Wait a moment for order processing to complete
+      setTimeout(() => {
+        fetchPurchases()
+      }, 1000)
+    }
+  }, [order])
 
   if (loading) {
     return (
@@ -140,19 +211,73 @@ export default function OrderConfirmationPage() {
               Itens do Pedido
             </h2>
             <div className="space-y-4">
-              {order.order_items.map((item, index) => (
-                <div key={index} className="flex items-start justify-between py-4 border-b border-gray-100 last:border-0">
-                  <div className="flex-1">
-                    <h3 className="font-semibold text-gray-900">{item.title}</h3>
-                    <p className="text-sm text-gray-600 mt-1">Quantidade: {item.quantity}</p>
+              {order.order_items.map((item, index) => {
+                // Find matching purchased product
+                const product = purchasedProducts.find(p => p.title === item.title)
+                
+                return (
+                  <div key={index} className="py-4 border-b border-gray-100 last:border-0">
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="flex-1">
+                        <h3 className="font-semibold text-gray-900">{item.title}</h3>
+                        <p className="text-sm text-gray-600 mt-1">Quantidade: {item.quantity}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-bold text-gray-900">
+                          {formatPrice(item.total_price.number, item.total_price.currency_code)}
+                        </p>
+                      </div>
+                    </div>
+                    
+                    {/* Course Access Button */}
+                    {product && product.curso && (
+                      <div className="mt-4">
+                        <Link
+                          href={`/area-aluno/curso/${product.curso.id}`}
+                          className="flex items-center justify-center gap-3 px-6 py-4 bg-gradient-to-r from-[#009999] to-[#007a7a] text-white rounded-lg hover:shadow-lg transition-all font-semibold group"
+                        >
+                          <PlayCircle className="h-5 w-5 group-hover:scale-110 transition-transform" />
+                          Acessar Curso: {product.curso.title}
+                          <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
+                        </Link>
+                      </div>
+                    )}
+                    
+                    {/* Download Section */}
+                    {product && product.has_downloads && (
+                      <div className="mt-4 p-4 bg-gradient-to-r from-[#009999]/10 to-[#007a7a]/10 rounded-lg border border-[#009999]/20">
+                        <div className="flex items-center gap-2 mb-3">
+                          <FileText className="h-5 w-5 text-[#009999]" />
+                          <h4 className="font-semibold text-gray-900">Conteúdo Digital Disponível</h4>
+                        </div>
+                        <div className="space-y-2">
+                          {product.digital_media.map((file, fileIndex) => (
+                            <a
+                              key={fileIndex}
+                              href={file.url}
+                              download
+                              className="flex items-center justify-between p-3 bg-white hover:bg-gray-50 rounded-lg border border-gray-200 hover:border-[#009999] transition-all group"
+                            >
+                              <div className="flex items-center gap-3">
+                                <div className="p-2 bg-[#009999]/10 rounded-lg group-hover:bg-[#009999] transition-colors">
+                                  <Download className="h-4 w-4 text-[#009999] group-hover:text-white transition-colors" />
+                                </div>
+                                <div>
+                                  <p className="font-medium text-gray-900 text-sm">{file.title || file.filename}</p>
+                                  <p className="text-xs text-gray-500">{formatFileSize(file.filesize)}</p>
+                                </div>
+                              </div>
+                              <span className="text-xs font-medium text-[#009999] group-hover:text-[#007a7a]">
+                                Download
+                              </span>
+                            </a>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
-                  <div className="text-right">
-                    <p className="font-bold text-gray-900">
-                      {formatPrice(item.total_price.number, item.total_price.currency_code)}
-                    </p>
-                  </div>
-                </div>
-              ))}
+                )
+              })}
             </div>
           </div>
 
@@ -171,9 +296,21 @@ export default function OrderConfirmationPage() {
         <div className="bg-gradient-to-br from-[#009999] to-[#007a7a] rounded-2xl shadow-sm p-8 text-white mb-6">
           <h2 className="text-2xl font-bold mb-4">Próximos Passos</h2>
           <ul className="space-y-3">
+            {purchasedProducts.some(p => p.curso) && (
+              <li className="flex items-start gap-3">
+                <BookOpen className="h-6 w-6 flex-shrink-0 mt-0.5" />
+                <span className="font-semibold">Acesse seu curso clicando no botão "Acessar Curso" acima</span>
+              </li>
+            )}
+            {purchasedProducts.some(p => p.has_downloads) && (
+              <li className="flex items-start gap-3">
+                <CheckCircle className="h-6 w-6 flex-shrink-0 mt-0.5" />
+                <span>Faça o download do seu conteúdo digital acima</span>
+              </li>
+            )}
             <li className="flex items-start gap-3">
               <CheckCircle className="h-6 w-6 flex-shrink-0 mt-0.5" />
-              <span>Acesse seus cursos na área "Minha Conta"</span>
+              <span>Acesse seus produtos a qualquer momento na Área do Aluno</span>
             </li>
             <li className="flex items-start gap-3">
               <CheckCircle className="h-6 w-6 flex-shrink-0 mt-0.5" />
@@ -189,18 +326,19 @@ export default function OrderConfirmationPage() {
         {/* Action Buttons */}
         <div className="flex flex-col sm:flex-row gap-4">
           <Link
-            href="/conta"
+            href="/area-aluno"
             className="flex-1 flex items-center justify-center gap-2 px-6 py-4 bg-gradient-to-r from-[#009999] to-[#007a7a] text-white rounded-lg hover:shadow-lg transition-all font-semibold"
           >
-            <UserIcon className="h-5 w-5" />
-            Ir para Minha Conta
+            <BookOpen className="h-5 w-5" />
+            Ir para Área do Aluno
             <ArrowRight className="h-5 w-5" />
           </Link>
           <Link
-            href="/courses"
+            href="/conta"
             className="flex-1 flex items-center justify-center gap-2 px-6 py-4 bg-white text-[#009999] border-2 border-[#009999] rounded-lg hover:bg-[#009999] hover:text-white transition-all font-semibold"
           >
-            Explorar Mais Cursos
+            <UserIcon className="h-5 w-5" />
+            Minha Conta
           </Link>
         </div>
       </div>

@@ -31,37 +31,52 @@ export default function BlogPage() {
   const fetchBlogPosts = async () => {
     try {
       const baseUrl = process.env.NEXT_PUBLIC_DRUPAL_BASE_URL || 'https://darkcyan-stork-408379.hostingersite.com'
+      // Simplified: fetch without nested includes to avoid timeouts
       const response = await fetch(
-        `${baseUrl}/jsonapi/node/article?include=field_image,uid,field_tags&sort=-created&fields[node--article]=title,body,created,path,field_image,uid,field_tags&fields[file--file]=uri,url&fields[user--user]=display_name&fields[taxonomy_term--tags]=name`
+        `${baseUrl}/jsonapi/node/curso?sort=-created&fields[node--curso]=title,corpo,created,path,imagem,drupal_internal__nid`
       )
       const data = await response.json()
 
-      const posts: BlogPost[] = data.data.map((post: any) => {
-        const image = data.included?.find(
-          (inc: any) => inc.type === 'file--file' && inc.id === post.relationships.field_image?.data?.id
-        )
-        const author = data.included?.find(
-          (inc: any) => inc.type === 'user--user' && inc.id === post.relationships.uid?.data?.id
-        )
-        const tags = post.relationships.field_tags?.data?.map((tagRef: any) => {
-          const tag = data.included?.find((inc: any) => inc.type === 'taxonomy_term--tags' && inc.id === tagRef.id)
-          return tag?.attributes?.name || ''
-        }).filter(Boolean) || []
+      const posts: BlogPost[] = await Promise.all(data.data.map(async (post: any) => {
+        // Extract summary from corpo field (first 150 chars of processed HTML)
+        const corpoText = post.attributes.corpo?.processed || ''
+        const plainText = corpoText.replace(/<[^>]*>/g, '')
+        const summary = plainText.substring(0, 150) + (plainText.length > 150 ? '...' : '')
+
+        // Fetch image from media entity if exists
+        let imageUrl = ''
+        let imageAlt = post.attributes.title
+        
+        if (post.relationships.imagem?.data?.id) {
+          try {
+            const mediaResponse = await fetch(
+              `${baseUrl}/jsonapi/media/image/${post.relationships.imagem.data.id}?include=field_media_image&fields[file--file]=uri`
+            )
+            const mediaData = await mediaResponse.json()
+            const fileEntity = mediaData.included?.find((inc: any) => inc.type === 'file--file')
+            if (fileEntity) {
+              imageUrl = baseUrl + fileEntity.attributes.uri.url
+              imageAlt = mediaData.data.attributes.name || imageAlt
+            }
+          } catch (e) {
+            console.error('Error fetching media:', e)
+          }
+        }
 
         return {
           id: post.id,
           title: post.attributes.title,
-          summary: post.attributes.body?.summary || '',
+          summary: summary,
           created: post.attributes.created,
-          path: post.attributes.path?.alias || `/blog/${post.id}`,
+          path: post.attributes.path?.alias || `/blog/${post.attributes.drupal_internal__nid}`,
           image: {
-            url: image?.attributes?.uri?.url || image?.attributes?.url || '',
-            alt: post.relationships.field_image?.data?.meta?.alt || post.attributes.title,
+            url: imageUrl,
+            alt: imageAlt,
           },
-          author: author?.attributes?.display_name || 'Admin',
-          tags,
+          author: 'Admin',
+          tags: [],
         }
-      })
+      }))
 
       setPosts(posts)
     } catch (error) {

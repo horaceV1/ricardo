@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { Calendar, User, Tag, ArrowLeft, Share2 } from 'lucide-react'
-import DynamicFormWrapper from '@/components/forms/DynamicFormWrapper'
+import { DynamicForm } from '@/components/forms/DynamicForm'
 
 interface BlogPost {
   id: string
@@ -26,6 +26,7 @@ export default function BlogPostPage({ params }: { params: { slug: string[] } })
   const [post, setPost] = useState<BlogPost | null>(null)
   const [loading, setLoading] = useState(true)
   const [relatedPosts, setRelatedPosts] = useState<any[]>([])
+  const [dynamicForms, setDynamicForms] = useState<any[]>([])
 
   useEffect(() => {
     fetchAllPostsAndFind()
@@ -35,29 +36,44 @@ export default function BlogPostPage({ params }: { params: { slug: string[] } })
     try {
       const baseUrl = process.env.NEXT_PUBLIC_DRUPAL_BASE_URL || 'https://darkcyan-stork-408379.hostingersite.com'
       
-      // Fetch all posts to find the one with matching path
+      // Simplified: fetch without nested includes to avoid timeouts
       const response = await fetch(
-        `${baseUrl}/jsonapi/node/article?include=field_image,uid,field_tags,field_dynamic_form&fields[node--article]=drupal_internal__nid,title,body,created,path,field_image,uid,field_tags,field_dynamic_form&fields[file--file]=uri,url&fields[user--user]=display_name&fields[taxonomy_term--tags]=name&fields[dynamic_form--dynamic_form]=drupal_internal__id,name,fields`
+        `${baseUrl}/jsonapi/node/curso?fields[node--curso]=drupal_internal__nid,title,corpo,created,path,imagem,field_dynamic_form`
       )
       const data = await response.json()
 
       // Construct the path from slug
       const fullPath = `/blog/${params.slug.join('/')}`
       
-      // Find the post with matching path
-      const postData = data.data.find((p: any) => p.attributes.path?.alias === fullPath)
+      // Find the post with matching path or nid
+      let postData = data.data.find((p: any) => p.attributes.path?.alias === fullPath)
+      
+      // If no alias match, try matching by nid from slug
+      if (!postData && params.slug.length === 1 && !isNaN(Number(params.slug[0]))) {
+        const nid = Number(params.slug[0])
+        postData = data.data.find((p: any) => p.attributes.drupal_internal__nid === nid)
+      }
 
       if (postData) {
-        const image = data.included?.find(
-          (inc: any) => inc.type === 'file--file' && inc.id === postData.relationships.field_image?.data?.id
-        )
-        const author = data.included?.find(
-          (inc: any) => inc.type === 'user--user' && inc.id === postData.relationships.uid?.data?.id
-        )
-        const tags = postData.relationships.field_tags?.data?.map((tagRef: any) => {
-          const tag = data.included?.find((inc: any) => inc.type === 'taxonomy_term--tags' && inc.id === tagRef.id)
-          return tag?.attributes?.name || ''
-        }).filter(Boolean) || []
+        // Fetch image from media entity if exists
+        let imageUrl = ''
+        let imageAlt = postData.attributes.title
+        
+        if (postData.relationships.imagem?.data?.id) {
+          try {
+            const mediaResponse = await fetch(
+              `${baseUrl}/jsonapi/media/image/${postData.relationships.imagem.data.id}?include=field_media_image&fields[file--file]=uri`
+            )
+            const mediaData = await mediaResponse.json()
+            const fileEntity = mediaData.included?.find((inc: any) => inc.type === 'file--file')
+            if (fileEntity) {
+              imageUrl = baseUrl + fileEntity.attributes.uri.url
+              imageAlt = mediaData.data.attributes.name || imageAlt
+            }
+          } catch (e) {
+            console.error('Error fetching media:', e)
+          }
+        }
 
         // Get dynamic form ID - use internal ID from meta as the API expects it
         const dynamicFormId = postData.relationships.field_dynamic_form?.data?.meta?.drupal_internal__target_id || null
@@ -66,15 +82,15 @@ export default function BlogPostPage({ params }: { params: { slug: string[] } })
           id: postData.id,
           nid: postData.attributes.drupal_internal__nid,
           title: postData.attributes.title,
-          body: postData.attributes.body?.processed || postData.attributes.body?.value || '',
+          body: postData.attributes.corpo?.processed || postData.attributes.corpo?.value || '',
           created: postData.attributes.created,
           path: postData.attributes.path?.alias || '',
           image: {
-            url: image?.attributes?.uri?.url || image?.attributes?.url || '',
-            alt: postData.relationships.field_image?.data?.meta?.alt || postData.attributes.title,
+            url: imageUrl,
+            alt: imageAlt,
           },
-          author: author?.attributes?.display_name || 'Admin',
-          tags,
+          author: 'Admin',
+          tags: [],
           dynamicFormId: dynamicFormId,
         })
 
@@ -82,11 +98,30 @@ export default function BlogPostPage({ params }: { params: { slug: string[] } })
         if (tags.length > 0) {
           fetchRelatedPosts(tags[0], postData.id, data.data)
         }
+
+        // Fetch dynamic forms from Layout Builder
+        fetchDynamicForms(postData.attributes.drupal_internal__nid)
       }
     } catch (error) {
       console.error('Error fetching blog post:', error)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const fetchDynamicForms = async (nid: number) => {
+    try {
+      const baseUrl = process.env.NEXT_PUBLIC_DRUPAL_BASE_URL || 'https://darkcyan-stork-408379.hostingersite.com'
+      const response = await fetch(`${baseUrl}/api/article-layout/${nid}`)
+      
+      if (response.ok) {
+        const data = await response.json()
+        if (data.forms && Array.isArray(data.forms) && data.forms.length > 0) {
+          setDynamicForms(data.forms)
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching dynamic forms:', error)
     }
   }
 
@@ -259,11 +294,17 @@ export default function BlogPostPage({ params }: { params: { slug: string[] } })
             dangerouslySetInnerHTML={{ __html: post.body }}
           />
 
-          {/* Dynamic Form */}
-          {post.dynamicFormId && (
-            <div className="mt-16 pt-12 border-t border-gray-200">
-              <h2 className="text-3xl font-bold text-gray-900 mb-8">Entre em Contato</h2>
-              <DynamicFormWrapper formId={post.dynamicFormId} />
+          {/* Dynamic Forms */}
+          {dynamicForms.length > 0 && (
+            <div className="mt-16 pt-12 border-t border-gray-200 space-y-12">
+              {dynamicForms.map((form, index) => (
+                <DynamicForm 
+                  key={index}
+                  formId={form.form_id || form.id}
+                  formTitle={form.label}
+                  fields={form.fields}
+                />
+              ))}
             </div>
           )}
         </div>

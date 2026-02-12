@@ -8,7 +8,7 @@ import { useRouter } from 'next/navigation'
 import { useState, useEffect } from 'react'
 
 export default function CheckoutPage() {
-  const { cart, loading } = useCart()
+  const { cart, loading, refreshCart } = useCart()
   const { user, isAuthenticated } = useAuth()
   const router = useRouter()
   const [processing, setProcessing] = useState(false)
@@ -51,25 +51,69 @@ export default function CheckoutPage() {
     if (paypalLoaded && cart && window.paypal) {
       window.paypal.Buttons({
         createOrder: async () => {
-          // Create order on backend
-          const baseUrl = process.env.NEXT_PUBLIC_DRUPAL_BASE_URL || 'https://darkcyan-stork-408379.hostingersite.com'
-          const response = await fetch(`${baseUrl}/api/checkout/paypal/create-order`, {
-            method: 'POST',
-            credentials: 'include',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              order_id: cart.order_id,
-            }),
-          })
+          try {
+            // Get JWT token from localStorage
+            const tokensStr = localStorage.getItem('drupal_auth_tokens')
+            const tokens = tokensStr ? JSON.parse(tokensStr) : null
+            const token = tokens?.access_token
 
-          const data = await response.json()
-          return data.paypal_order_id
+            if (!token) {
+              console.error('No authentication token found')
+              throw new Error('Authentication required')
+            }
+
+            // Create order on backend
+            const baseUrl = process.env.NEXT_PUBLIC_DRUPAL_BASE_URL || 'https://darkcyan-stork-408379.hostingersite.com'
+            const response = await fetch(`${baseUrl}/api/checkout/paypal/create-order`, {
+              method: 'POST',
+              credentials: 'include',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
+              },
+              body: JSON.stringify({
+                order_id: cart.order_id,
+              }),
+            })
+
+            // Get response text first to debug
+            const responseText = await response.text()
+            console.log('Create order response status:', response.status)
+            console.log('Create order response text:', responseText)
+
+            if (!response.ok) {
+              console.error('Error creating PayPal order:', responseText)
+              throw new Error(responseText || 'Failed to create order')
+            }
+
+            try {
+              // Try to parse as JSON
+              const orderId = JSON.parse(responseText)
+              console.log('PayPal Order ID:', orderId)
+              return orderId
+            } catch (parseError) {
+              console.error('Failed to parse response as JSON:', parseError)
+              console.error('Response was:', responseText)
+              throw new Error('Invalid response from server')
+            }
+          } catch (error) {
+            console.error('Error in createOrder:', error)
+            throw error
+          }
         },
         onApprove: async (data: any) => {
           setProcessing(true)
           try {
+            // Get JWT token from localStorage
+            const tokensStr = localStorage.getItem('drupal_auth_tokens')
+            const tokens = tokensStr ? JSON.parse(tokensStr) : null
+            const token = tokens?.access_token
+
+            if (!token) {
+              console.error('No authentication token found')
+              throw new Error('Authentication required')
+            }
+
             // Capture payment on backend
             const baseUrl = process.env.NEXT_PUBLIC_DRUPAL_BASE_URL || 'https://darkcyan-stork-408379.hostingersite.com'
             const response = await fetch(`${baseUrl}/api/checkout/paypal/capture-order`, {
@@ -77,6 +121,7 @@ export default function CheckoutPage() {
               credentials: 'include',
               headers: {
                 'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
               },
               body: JSON.stringify({
                 paypal_order_id: data.orderID,
@@ -86,7 +131,12 @@ export default function CheckoutPage() {
 
             const result = await response.json()
             if (result.success) {
+              // Clear cart by refreshing it - Drupal will create a new cart
+              await refreshCart()
+              // Redirect to confirmation page
               router.push(`/pedidos/confirmacao/${cart.order_id}`)
+            } else {
+              throw new Error('Payment capture failed')
             }
           } catch (error) {
             console.error('Error capturing payment:', error)
@@ -101,7 +151,7 @@ export default function CheckoutPage() {
         },
       }).render('#paypal-button-container')
     }
-  }, [paypalLoaded, cart, router])
+  }, [paypalLoaded, cart, router, refreshCart])
 
   if (loading || !cart || !user) {
     return (

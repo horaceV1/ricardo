@@ -30,11 +30,42 @@ interface EnrolledCourse {
   certificateAvailable: boolean
 }
 
+interface CourseArticle {
+  id: string
+  type: string
+  attributes: {
+    title: string
+    created: string
+    changed: string
+    body?: {
+      value: string
+      summary: string
+    }
+  }
+  relationships?: {
+    curso?: {
+      data: { id: string; type: string } | null
+    }
+  }
+}
+
+interface PurchasedProduct {
+  product_id: string
+  title: string
+  curso?: {
+    id: string
+    nid: string
+    title: string
+    path: string
+  }
+}
+
 export default function StudentAreaPage() {
   const router = useRouter()
   const { user, isAuthenticated, isLoading } = useAuth()
   const [courses, setCourses] = useState<EnrolledCourse[]>([])
   const [loadingCourses, setLoadingCourses] = useState(true)
+  const [purchasedCursoIds, setPurchasedCursoIds] = useState<Set<string>>(new Set())
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -44,51 +75,142 @@ export default function StudentAreaPage() {
 
   useEffect(() => {
     if (user) {
-      // Simulate loading enrolled courses
-      // In production, fetch from Drupal API
-      setTimeout(() => {
-        setCourses([
-          {
-            id: '1',
-            title: 'Gestão Empresarial Avançada',
-            image: '/images/curso-1.jpg',
-            totalChapters: 12,
-            completedChapters: 7,
-            currentChapter: 8,
-            progress: 58,
-            lastAccessed: '2026-02-01T14:30:00',
-            totalDuration: '8h 30min',
-            certificateAvailable: false,
-          },
-          {
-            id: '2',
-            title: 'Estratégias de Marketing Digital',
-            image: '/images/curso-2.jpg',
-            totalChapters: 10,
-            completedChapters: 3,
-            currentChapter: 4,
-            progress: 30,
-            lastAccessed: '2026-01-28T10:15:00',
-            totalDuration: '6h 45min',
-            certificateAvailable: false,
-          },
-          {
-            id: '3',
-            title: 'Finanças para Empreendedores',
-            image: '/images/curso-3.jpg',
-            totalChapters: 8,
-            completedChapters: 8,
-            currentChapter: 8,
-            progress: 100,
-            lastAccessed: '2026-01-25T16:20:00',
-            totalDuration: '5h 20min',
-            certificateAvailable: true,
-          },
-        ])
-        setLoadingCourses(false)
-      }, 500)
+      fetchPurchasedCursos()
     }
   }, [user])
+
+  const fetchPurchasedCursos = async () => {
+    try {
+      // Get JWT token from localStorage
+      const tokensStr = localStorage.getItem('drupal_auth_tokens')
+      const tokens = tokensStr ? JSON.parse(tokensStr) : null
+      const token = tokens?.access_token
+
+      const baseUrl = process.env.NEXT_PUBLIC_DRUPAL_BASE_URL || 'https://darkcyan-stork-408379.hostingersite.com'
+      const response = await fetch(`${baseUrl}/api/auth/purchases`, {
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token && { 'Authorization': `Bearer ${token}` }),
+        },
+      })
+
+      if (!response.ok) {
+        console.error('[Area Aluno] Failed to fetch purchases, status:', response.status)
+        throw new Error('Failed to fetch purchases')
+      }
+
+      const data = await response.json()
+      const purchases: PurchasedProduct[] = data.data || []
+      
+      console.log('[Area Aluno] Purchases response:', purchases)
+      console.log('[Area Aluno] Purchases response:', purchases)
+      console.log('[Area Aluno] Number of purchases:', purchases.length)
+      
+      // Extract curso UUIDs from purchased products
+      const cursoIds = new Set<string>()
+      purchases.forEach(product => {
+        console.log('[Area Aluno] Processing product:', product.title, 'curso:', product.curso)
+        if (product.curso?.id) {
+          cursoIds.add(product.curso.id)
+          console.log('[Area Aluno] Added curso ID:', product.curso.id, 'Title:', product.curso.title)
+        } else {
+          console.log('[Area Aluno] Product has NO curso linked:', product.title)
+        }
+      })
+      
+      console.log('[Area Aluno] Extracted curso IDs:', Array.from(cursoIds))
+      
+      setPurchasedCursoIds(cursoIds)
+      
+      // Only fetch courses if user has purchases
+      if (cursoIds.size > 0) {
+        console.log('[Area Aluno] User has purchases, fetching courses')
+        fetchCourses(cursoIds)
+      } else {
+        // No purchases, set empty courses and stop loading
+        console.log('[Area Aluno] No purchases found, showing empty state')
+        setCourses([])
+        setLoadingCourses(false)
+      }
+    } catch (error) {
+      console.error('Error fetching purchases:', error)
+      setCourses([])
+      setLoadingCourses(false)
+    }
+  }
+
+  const fetchCourses = async (purchasedIds: Set<string>) => {
+    try {
+      setLoadingCourses(true)
+      
+      // Safety check: if no purchased IDs, return empty
+      if (purchasedIds.size === 0) {
+        setCourses([])
+        setLoadingCourses(false)
+        return
+      }
+      
+      const baseUrl = 'https://darkcyan-stork-408379.hostingersite.com'
+      
+      // Fetch all articles to find parent and children
+      const response = await fetch(
+        `${baseUrl}/jsonapi/node/article`,
+        {
+          headers: {
+            'Content-Type': 'application/vnd.api+json',
+          },
+        }
+      )
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch courses')
+      }
+
+      const data = await response.json()
+      const articles: CourseArticle[] = data.data
+
+      // Find parent courses (those that are NOT children of others)
+      const parentCourses = articles.filter(article => {
+        return !article.relationships?.curso?.data
+      })
+
+      // Filter to only show purchased courses
+      const purchasedParentCourses = parentCourses.filter(course => {
+        return purchasedIds.has(course.id)
+      })
+
+      // Transform to EnrolledCourse format
+      const transformedCourses: EnrolledCourse[] = purchasedParentCourses.map(course => {
+        // Count how many articles have this course as parent
+        const childrenCount = articles.filter(a => 
+          a.relationships?.curso?.data?.id === course.id
+        ).length
+        
+        return {
+          id: course.id,
+          title: course.attributes.title,
+          totalChapters: childrenCount,
+          completedChapters: 0, // This would come from user progress data
+          currentChapter: 1,
+          progress: 0, // This would come from user progress data
+          lastAccessed: course.attributes.changed,
+          totalDuration: `${childrenCount * 30}min`, // Estimate 30min per chapter
+          certificateAvailable: false,
+        }
+      })
+
+      // Filter to only show courses with children
+      const coursesWithChildren = transformedCourses.filter(c => c.totalChapters > 0)
+      setCourses(coursesWithChildren)
+    } catch (error) {
+      console.error('Error fetching courses:', error)
+      // Fallback to empty array on error
+      setCourses([])
+    } finally {
+      setLoadingCourses(false)
+    }
+  }
 
   if (isLoading || !user) {
     return (
@@ -291,10 +413,13 @@ export default function StudentAreaPage() {
 
                       {/* Actions */}
                       <div className="flex flex-wrap gap-3">
-                        <button className="flex items-center gap-2 bg-[#009999] hover:bg-[#007a7a] text-white px-6 py-2.5 rounded-lg font-semibold transition-colors">
+                        <Link
+                          href={`/area-aluno/curso/${course.id}`}
+                          className="flex items-center gap-2 bg-[#009999] hover:bg-[#007a7a] text-white px-6 py-2.5 rounded-lg font-semibold transition-colors"
+                        >
                           <PlayCircle className="h-5 w-5" />
                           {course.progress === 100 ? 'Revisar Curso' : 'Continuar Aprendendo'}
-                        </button>
+                        </Link>
                         
                         {course.certificateAvailable && (
                           <button className="flex items-center gap-2 bg-yellow-500 hover:bg-yellow-600 text-white px-6 py-2.5 rounded-lg font-semibold transition-colors">
@@ -303,9 +428,12 @@ export default function StudentAreaPage() {
                           </button>
                         )}
 
-                        <button className="flex items-center gap-2 border-2 border-gray-300 hover:border-[#009999] text-gray-700 hover:text-[#009999] px-6 py-2.5 rounded-lg font-semibold transition-colors">
+                        <Link
+                          href={`/area-aluno/curso/${course.id}`}
+                          className="flex items-center gap-2 border-2 border-gray-300 hover:border-[#009999] text-gray-700 hover:text-[#009999] px-6 py-2.5 rounded-lg font-semibold transition-colors"
+                        >
                           Ver Detalhes
-                        </button>
+                        </Link>
                       </div>
                     </div>
                   </div>
