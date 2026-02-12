@@ -76,7 +76,7 @@ export default async function Home() {
               <div>
                 <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full mb-6">
                   <Star className="w-4 h-4 text-[#ff8c00]" fill="currentColor" />
-                  <span className="text-sm font-semibold">Soluções Premium para Empresários</span>
+                  <span className="text-sm font-semibold">Formações Premium para Empresários</span>
                 </div>
                 
                 <h1 className="text-5xl md:text-6xl lg:text-7xl font-black mb-6 leading-tight">
@@ -93,7 +93,7 @@ export default async function Home() {
                     href="/courses"
                     className="bg-[#ff8c00] text-white px-8 py-4 rounded-lg hover:bg-[#cc7000] transition-all inline-flex items-center justify-center gap-2 font-bold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
                   >
-                    Conheça Nossas Soluções
+                    Conheça Nossas Formações
                     <ArrowRight className="w-5 h-5" />
                   </Link>
                   <Link
@@ -214,7 +214,7 @@ export default async function Home() {
           <AnimatedSection animation="fadeIn">
             <div className="text-center mb-12">
               <h2 className="text-4xl md:text-5xl font-black mb-4 text-gray-900">
-                Nossas <span className="text-[#009999]">Soluções</span>
+                Nossas <span className="text-[#009999]">Formações</span>
               </h2>
               <p className="text-xl text-gray-600 max-w-3xl mx-auto mb-6">
                 Programas de consultoria e desenvolvimento empresarial sob medida
@@ -223,7 +223,7 @@ export default async function Home() {
                 href="/courses"
                 className="inline-flex items-center gap-2 text-[#009999] hover:text-[#007a7a] font-bold text-lg transition-colors"
               >
-                Ver Todas as Soluções
+                Ver Todas as Formações
                 <ArrowRight className="w-5 h-5" />
               </Link>
             </div>
@@ -238,7 +238,7 @@ export default async function Home() {
               ))
             ) : (
               <div className="col-span-full text-center py-12">
-                <p className="text-gray-600 text-lg mb-4">Nossas soluções serão disponibilizadas em breve.</p>
+                <p className="text-gray-600 text-lg mb-4">Nossas formações serão disponibilizadas em breve.</p>
               </div>
             )}
           </div>

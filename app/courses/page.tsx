@@ -4,7 +4,7 @@ import type { Metadata } from "next"
 import type { DrupalNode } from "next-drupal"
 
 export const metadata: Metadata = {
-  title: "Nossas Soluções - Clínica do Empresário",
+  title: "Nossas Formações - Clínica do Empresário",
   description: "Programas de consultoria e desenvolvimento empresarial personalizados para o crescimento do seu negócio.",
 }
 

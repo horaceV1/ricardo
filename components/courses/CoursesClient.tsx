@@ -37,7 +37,7 @@ export function CoursesClient({ initialCourses }: CoursesClientProps) {
       <div className="bg-gradient-to-r from-[#009999] to-[#005c5c] text-white py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <FadeIn direction="down">
-            <h1 className="text-4xl md:text-5xl font-black mb-4">Nossas Soluções</h1>
+            <h1 className="text-4xl md:text-5xl font-black mb-4">Nossas Formações</h1>
             <p className="text-xl text-[#b3e6e6]">
               Programas personalizados para o crescimento do seu negócio
             </p>
@@ -55,7 +55,7 @@ export function CoursesClient({ initialCourses }: CoursesClientProps) {
                 <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
                 <input
                   type="text"
-                  placeholder="Buscar soluções..."
+                  placeholder="Buscar formações..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#009999]"
@@ -127,7 +127,7 @@ export function CoursesClient({ initialCourses }: CoursesClientProps) {
             <p className="text-gray-600">
               Mostrando <span className="font-semibold">
                 {filteredCourses.length}
-              </span> soluções
+              </span> formações
             </p>
           </div>
         </FadeIn>
