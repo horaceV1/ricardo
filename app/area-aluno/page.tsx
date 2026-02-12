@@ -156,9 +156,9 @@ export default function StudentAreaPage() {
       
       const baseUrl = 'https://darkcyan-stork-408379.hostingersite.com'
       
-      // Fetch all articles to find parent and children
+      // Fetch all cursos to find parent and children
       const response = await fetch(
-        `${baseUrl}/jsonapi/node/article?include=field_parent`,
+        `${baseUrl}/jsonapi/node/cursos?include=field_parent`,
         {
           headers: {
             'Content-Type': 'application/vnd.api+json',

@@ -133,7 +133,7 @@ export default function CourseViewerPage() {
       
       // Fetch the parent course node
       const parentResponse = await fetch(
-        `${baseUrl}/jsonapi/node/article/${params.id}`,
+        `${baseUrl}/jsonapi/node/cursos/${params.id}`,
         {
           headers: {
             'Content-Type': 'application/vnd.api+json',
@@ -148,9 +148,9 @@ export default function CourseViewerPage() {
       const parentData = await parentResponse.json()
       const parent = parentData.data
 
-      // Fetch all articles to find children
+      // Fetch all cursos to find children
       const allArticlesResponse = await fetch(
-        `${baseUrl}/jsonapi/node/article?include=field_parent`,
+        `${baseUrl}/jsonapi/node/cursos?include=field_parent`,
         {
           headers: {
             'Content-Type': 'application/vnd.api+json',
