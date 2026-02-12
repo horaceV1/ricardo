@@ -150,7 +150,7 @@ export default function CourseViewerPage() {
 
       // Fetch all articles to find children
       const allArticlesResponse = await fetch(
-        `${baseUrl}/jsonapi/node/article`,
+        `${baseUrl}/jsonapi/node/article?include=field_parent`,
         {
           headers: {
             'Content-Type': 'application/vnd.api+json',
@@ -165,17 +165,27 @@ export default function CourseViewerPage() {
       const allArticlesData = await allArticlesResponse.json()
       const allArticles = allArticlesData.data
       
-      // Find children that reference this parent
+      console.log('[Course Viewer] Looking for children of course:', params.id)
+      console.log('[Course Viewer] Total articles:', allArticles.length)
+      
+      // Find children that reference this parent (check both field_parent and curso)
       const children: CourseNode[] = allArticles
-        .filter((article: any) => 
-          article.relationships?.curso?.data?.id === params.id
-        )
+        .filter((article: any) => {
+          const parentId = article.relationships?.field_parent?.data?.id || article.relationships?.curso?.data?.id
+          const isChild = parentId === params.id
+          if (isChild) {
+            console.log('[Course Viewer] Found child:', article.attributes.title)
+          }
+          return isChild
+        })
         .map((article: any) => ({
           nid: article.id,
           title: article.attributes.title,
           body: article.attributes.body,
           created: article.attributes.created,
         }))
+
+      console.log('[Course Viewer] Found', children.length, 'children for course:', parent.attributes.title)
 
       setCourseData({
         parent: {

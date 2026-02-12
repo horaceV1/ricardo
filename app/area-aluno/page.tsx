@@ -43,6 +43,9 @@ interface CourseArticle {
     }
   }
   relationships?: {
+    field_parent?: {
+      data: { id: string; type: string } | null
+    }
     curso?: {
       data: { id: string; type: string } | null
     }
@@ -155,7 +158,7 @@ export default function StudentAreaPage() {
       
       // Fetch all articles to find parent and children
       const response = await fetch(
-        `${baseUrl}/jsonapi/node/article`,
+        `${baseUrl}/jsonapi/node/article?include=field_parent`,
         {
           headers: {
             'Content-Type': 'application/vnd.api+json',
@@ -170,22 +173,42 @@ export default function StudentAreaPage() {
       const data = await response.json()
       const articles: CourseArticle[] = data.data
 
+      console.log('[Area Aluno] Fetched articles:', articles.length)
+      console.log('[Area Aluno] Sample article structure:', articles[0])
+      console.log('[Area Aluno] Looking for curso IDs:', Array.from(purchasedIds))
+
       // Find parent courses (those that are NOT children of others)
+      // Check both field_parent and curso relationships
       const parentCourses = articles.filter(article => {
-        return !article.relationships?.curso?.data
+        const hasNoParent = !article.relationships?.field_parent?.data && !article.relationships?.curso?.data
+        return hasNoParent
       })
+
+      console.log('[Area Aluno] Found parent courses:', parentCourses.length)
 
       // Filter to only show purchased courses
       const purchasedParentCourses = parentCourses.filter(course => {
-        return purchasedIds.has(course.id)
+        const isPurchased = purchasedIds.has(course.id)
+        if (isPurchased) {
+          console.log('[Area Aluno] Matched purchased course:', course.attributes.title, course.id)
+        }
+        return isPurchased
       })
+
+      console.log('[Area Aluno] Purchased parent courses:', purchasedParentCourses.length)
+
+      console.log('[Area Aluno] Purchased parent courses:', purchasedParentCourses.length)
 
       // Transform to EnrolledCourse format
       const transformedCourses: EnrolledCourse[] = purchasedParentCourses.map(course => {
         // Count how many articles have this course as parent
-        const childrenCount = articles.filter(a => 
-          a.relationships?.curso?.data?.id === course.id
-        ).length
+        // Check both field_parent and curso relationships
+        const childrenCount = articles.filter(a => {
+          const parentId = a.relationships?.field_parent?.data?.id || a.relationships?.curso?.data?.id
+          return parentId === course.id
+        }).length
+        
+        console.log('[Area Aluno] Course:', course.attributes.title, 'has', childrenCount, 'children')
         
         return {
           id: course.id,
@@ -200,9 +223,12 @@ export default function StudentAreaPage() {
         }
       })
 
-      // Filter to only show courses with children
+      // Filter to only show courses with children (or show all purchased courses)
       const coursesWithChildren = transformedCourses.filter(c => c.totalChapters > 0)
-      setCourses(coursesWithChildren)
+      console.log('[Area Aluno] Courses with children:', coursesWithChildren.length)
+      
+      // If no courses have children, show all purchased courses anyway
+      setCourses(coursesWithChildren.length > 0 ? coursesWithChildren : transformedCourses)
     } catch (error) {
       console.error('Error fetching courses:', error)
       // Fallback to empty array on error
