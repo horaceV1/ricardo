@@ -106,23 +106,30 @@ export default function StudentAreaPage() {
       const data = await response.json()
       const purchases: PurchasedProduct[] = data.data || []
       
-      console.log('[Area Aluno] Purchases response:', purchases)
-      console.log('[Area Aluno] Purchases response:', purchases)
+      console.log('=== AREA ALUNO DEBUG ===')
+      console.log('[Area Aluno] Full API response:', JSON.stringify(data, null, 2))
       console.log('[Area Aluno] Number of purchases:', purchases.length)
       
       // Extract curso UUIDs from purchased products
       const cursoIds = new Set<string>()
       purchases.forEach(product => {
-        console.log('[Area Aluno] Processing product:', product.title, 'curso:', product.curso)
+        console.log('[Area Aluno] Processing product:', {
+          title: product.title,
+          product_id: product.product_id,
+          has_curso: !!product.curso,
+          curso: product.curso
+        })
+        
         if (product.curso?.id) {
           cursoIds.add(product.curso.id)
-          console.log('[Area Aluno] Added curso ID:', product.curso.id, 'Title:', product.curso.title)
+          console.log('[Area Aluno] ✓ Added curso ID:', product.curso.id, 'Title:', product.curso.title)
         } else {
-          console.log('[Area Aluno] Product has NO curso linked:', product.title)
+          console.log('[Area Aluno] ✗ Product has NO curso linked:', product.title)
         }
       })
       
-      console.log('[Area Aluno] Extracted curso IDs:', Array.from(cursoIds))
+      console.log('[Area Aluno] Total curso IDs extracted:', cursoIds.size)
+      console.log('[Area Aluno] Curso IDs:', Array.from(cursoIds))
       
       setPurchasedCursoIds(cursoIds)
       
@@ -173,9 +180,10 @@ export default function StudentAreaPage() {
       const data = await response.json()
       const articles: CourseArticle[] = data.data
 
-      console.log('[Area Aluno] Fetched articles:', articles.length)
-      console.log('[Area Aluno] Sample article structure:', articles[0])
-      console.log('[Area Aluno] Looking for curso IDs:', Array.from(purchasedIds))
+      console.log('[Area Aluno] Fetched cursos from API:', articles.length)
+      console.log('[Area Aluno] Sample curso:', articles[0])
+      console.log('[Area Aluno] All curso UUIDs:', articles.map(a => ({ id: a.id, title: a.attributes.title })))
+      console.log('[Area Aluno] Looking for these purchased curso IDs:', Array.from(purchasedIds))
 
       // Find parent courses (those that are NOT children of others)
       // Check both field_parent and curso relationships
@@ -185,17 +193,21 @@ export default function StudentAreaPage() {
       })
 
       console.log('[Area Aluno] Found parent courses:', parentCourses.length)
+      console.log('[Area Aluno] Parent course details:', parentCourses.map(p => ({ id: p.id, title: p.attributes.title })))
 
       // Filter to only show purchased courses
       const purchasedParentCourses = parentCourses.filter(course => {
         const isPurchased = purchasedIds.has(course.id)
-        if (isPurchased) {
-          console.log('[Area Aluno] Matched purchased course:', course.attributes.title, course.id)
-        }
+        console.log('[Area Aluno] Checking if curso is purchased:', {
+          curso_id: course.id,
+          curso_title: course.attributes.title,
+          is_in_purchased_set: isPurchased
+        })
         return isPurchased
       })
 
-      console.log('[Area Aluno] Purchased parent courses:', purchasedParentCourses.length)
+      console.log('[Area Aluno] Purchased parent courses found:', purchasedParentCourses.length)
+      console.log('[Area Aluno] Purchased courses:', purchasedParentCourses.map(c => c.attributes.title))
 
       console.log('[Area Aluno] Purchased parent courses:', purchasedParentCourses.length)
 
