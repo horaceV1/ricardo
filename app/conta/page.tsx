@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useAuth } from '@/contexts/AuthContext'
 import RecentActivity from '@/components/forms/RecentActivity'
-import { User, Mail, Shield, Calendar, LogOut, Loader2, ShoppingBag, Settings, BookOpen, Download, FileText, Trash2, X } from 'lucide-react'
+import { User, Mail, Shield, Calendar, LogOut, Loader2, ShoppingBag, Settings, BookOpen, Download, FileText, Trash2, X, PlayCircle, ChevronRight } from 'lucide-react'
 
 interface PurchasedProduct {
   product_id: string
@@ -31,6 +31,12 @@ interface PurchasedProduct {
     title: string
   }>
   has_downloads: boolean
+  curso?: {
+    id: string
+    nid: string
+    title: string
+    path: string
+  }
 }
 
 export default function AccountPage() {
@@ -59,10 +65,14 @@ export default function AccountPage() {
     if (user) {
       setLoadingPurchases(true)
       const baseUrl = process.env.NEXT_PUBLIC_DRUPAL_BASE_URL || 'https://darkcyan-stork-408379.hostingersite.com'
+      const tokensStr = localStorage.getItem('drupal_auth_tokens')
+      const tokens = tokensStr ? JSON.parse(tokensStr) : null
+      const token = tokens?.access_token
       fetch(`${baseUrl}/api/auth/purchases`, {
         credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
+          ...(token && { 'Authorization': `Bearer ${token}` }),
         },
       })
         .then(res => res.json())
@@ -276,7 +286,7 @@ export default function AccountPage() {
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-2xl font-bold text-gray-900">Meu Conteúdo</h2>
                 <Link 
-                  href="/courses"
+                  href="/area-aluno"
                   className="text-[#009999] hover:text-[#007a7a] transition-colors text-sm font-medium"
                 >
                   Ver Todos
@@ -290,7 +300,44 @@ export default function AccountPage() {
                 </div>
               ) : visibleProducts.length > 0 ? (
                 <div className="space-y-4">
-                  {visibleProducts.map((product) => (
+                  {/* Courses Quick Access */}
+                  {visibleProducts.some(p => p.curso) && (
+                    <div className="mb-6">
+                      <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3">Meus Cursos</h3>
+                      <div className="space-y-2">
+                        {visibleProducts
+                          .filter(p => p.curso)
+                          .map(product => (
+                            <Link
+                              key={product.product_id}
+                              href={`/area-aluno/curso/${product.curso!.id}`}
+                              className="flex items-center gap-4 p-4 bg-gradient-to-r from-[#009999]/5 to-transparent border border-[#009999]/20 rounded-xl hover:border-[#009999] hover:shadow-md transition-all group"
+                            >
+                              <div className="flex-shrink-0 w-11 h-11 bg-[#009999] rounded-lg flex items-center justify-center group-hover:scale-105 transition-transform">
+                                <PlayCircle className="w-6 h-6 text-white" />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <h4 className="font-semibold text-gray-900 group-hover:text-[#009999] transition-colors line-clamp-1">
+                                  {product.curso!.title}
+                                </h4>
+                                <p className="text-xs text-gray-500 mt-0.5">
+                                  Comprado em {new Date(product.purchased_date).toLocaleDateString('pt-PT')}
+                                </p>
+                              </div>
+                              <ChevronRight className="h-5 w-5 text-gray-400 group-hover:text-[#009999] transition-colors flex-shrink-0" />
+                            </Link>
+                          ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Products with Downloads */}
+                  {visibleProducts.some(p => p.has_downloads) && (
+                    <div>
+                      <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3">Produtos Adquiridos</h3>
+                    </div>
+                  )}
+                  {visibleProducts.filter(p => p.has_downloads || !p.curso).map((product) => (
                     <div 
                       key={product.product_id}
                       className={`block p-5 border border-gray-200 rounded-lg hover:border-[#009999] hover:shadow-md transition-all relative ${
@@ -315,7 +362,7 @@ export default function AccountPage() {
                             {product.title}
                           </h3>
                           <p className="text-sm text-gray-600 line-clamp-2 mb-2">
-                            {product.body?.summary || 'Artigo exclusivo'}
+                            {product.body?.summary || 'Conteúdo exclusivo'}
                           </p>
                           <span className="text-xs text-gray-500">
                             Comprado em {new Date(product.purchased_date).toLocaleDateString('pt-PT')}
