@@ -44,6 +44,9 @@ export function HeaderNav() {
             <Link href="/blog" className="text-gray-700 hover:text-[#009999] font-semibold no-underline transition-colors">
               Blog
             </Link>
+            <Link href="/incentivos" className="text-gray-700 hover:text-[#009999] font-semibold no-underline transition-colors">
+              Incentivos
+            </Link>
             <Link href="/about" className="text-gray-700 hover:text-[#009999] font-semibold no-underline transition-colors">
               Sobre
             </Link>
@@ -157,6 +160,9 @@ export function HeaderNav() {
               </Link>
               <Link href="/blog" className="text-gray-700 hover:text-[#009999] font-semibold no-underline transition-colors">
                 Blog
+              </Link>
+              <Link href="/incentivos" className="text-gray-700 hover:text-[#009999] font-semibold no-underline transition-colors">
+                Incentivos
               </Link>
               <Link href="/about" className="text-gray-700 hover:text-[#009999] font-semibold no-underline transition-colors">
                 Sobre

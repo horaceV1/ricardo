@@ -33,24 +33,58 @@ export default function IncentivoPostPage({ params }: { params: { slug: string[]
     try {
       const baseUrl = process.env.NEXT_PUBLIC_DRUPAL_BASE_URL || 'https://darkcyan-stork-408379.hostingersite.com'
       
+      // Simplified: fetch without nested includes to avoid timeouts
       const response = await fetch(
-        `${baseUrl}/jsonapi/node/article?include=imagem,uid&fields[node--article]=drupal_internal__nid,title,body,created,path,imagem,uid&fields[media--image]=field_media_image&fields[file--file]=uri,url&fields[user--user]=display_name`
+        `${baseUrl}/jsonapi/node/article?fields[node--article]=drupal_internal__nid,title,body,created,path,imagem,uid`
       )
       const data = await response.json()
 
       const fullPath = `/incentivos/${params.slug.join('/')}`
-      const postData = data.data.find((p: any) => p.attributes.path?.alias === fullPath)
+      let postData = data.data.find((p: any) => p.attributes.path?.alias === fullPath)
+
+      // Fallback: match by NID from slug
+      if (!postData) {
+        const slugParts = params.slug
+        const possibleNid = slugParts[slugParts.length - 1]
+        if (possibleNid && !isNaN(Number(possibleNid))) {
+          postData = data.data.find((p: any) => p.attributes.drupal_internal__nid === Number(possibleNid))
+        }
+      }
 
       if (postData) {
-        const mediaImage = data.included?.find(
-          (inc: any) => inc.type === 'media--image' && inc.id === postData.relationships.imagem?.data?.id
-        )
-        const image = mediaImage ? data.included?.find(
-          (inc: any) => inc.type === 'file--file' && inc.id === mediaImage.relationships?.field_media_image?.data?.id
-        ) : null
-        const author = data.included?.find(
-          (inc: any) => inc.type === 'user--user' && inc.id === postData.relationships.uid?.data?.id
-        )
+        // Fetch image from media entity if exists
+        let imageUrl = ''
+        let imageAlt = postData.attributes.title
+
+        if (postData.relationships?.imagem?.data?.id) {
+          try {
+            const mediaResponse = await fetch(
+              `${baseUrl}/jsonapi/media/image/${postData.relationships.imagem.data.id}?include=field_media_image&fields[file--file]=uri`
+            )
+            const mediaData = await mediaResponse.json()
+            const fileEntity = mediaData.included?.find((inc: any) => inc.type === 'file--file')
+            if (fileEntity) {
+              imageUrl = baseUrl + fileEntity.attributes.uri.url
+              imageAlt = mediaData.data.attributes?.name || imageAlt
+            }
+          } catch (e) {
+            console.error('Error fetching media for incentivo:', e)
+          }
+        }
+
+        // Fetch author name if exists
+        let authorName = 'Admin'
+        if (postData.relationships?.uid?.data?.id) {
+          try {
+            const userResponse = await fetch(
+              `${baseUrl}/jsonapi/user/user/${postData.relationships.uid.data.id}?fields[user--user]=display_name`
+            )
+            const userData = await userResponse.json()
+            authorName = userData.data?.attributes?.display_name || 'Admin'
+          } catch (e) {
+            console.error('Error fetching author:', e)
+          }
+        }
 
         setPost({
           id: postData.id,
@@ -60,10 +94,10 @@ export default function IncentivoPostPage({ params }: { params: { slug: string[]
           created: postData.attributes.created,
           path: postData.attributes.path?.alias || '',
           image: {
-            url: image?.attributes?.uri?.url || image?.attributes?.url || '',
-            alt: postData.relationships.imagem?.data?.meta?.alt || postData.attributes.title,
+            url: imageUrl,
+            alt: imageAlt,
           },
-          author: author?.attributes?.display_name || 'Admin',
+          author: authorName,
         })
 
         fetchDynamicForms(postData.attributes.drupal_internal__nid)
@@ -123,8 +157,6 @@ export default function IncentivoPostPage({ params }: { params: { slug: string[]
     )
   }
 
-  const baseUrl = process.env.NEXT_PUBLIC_DRUPAL_BASE_URL || 'https://darkcyan-stork-408379.hostingersite.com'
-
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Back Button */}
@@ -144,7 +176,7 @@ export default function IncentivoPostPage({ params }: { params: { slug: string[]
       {post.image.url && (
         <div className="relative h-96 md:h-[500px] bg-gray-900">
           <Image
-            src={`${baseUrl}${post.image.url}`}
+            src={post.image.url}
             alt={post.image.alt}
             fill
             className="object-cover opacity-90"

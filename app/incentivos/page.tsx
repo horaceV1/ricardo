@@ -24,8 +24,9 @@ async function getIncentivos(): Promise<Incentivo[]> {
   try {
     const baseUrl = process.env.NEXT_PUBLIC_DRUPAL_BASE_URL || 'https://darkcyan-stork-408379.hostingersite.com'
     
+    // Simplified: fetch without nested includes to avoid timeouts
     const response = await fetch(
-      `${baseUrl}/jsonapi/node/article?include=imagem&sort=-created&fields[node--article]=drupal_internal__nid,title,body,created,path,imagem&fields[media--image]=field_media_image&fields[file--file]=uri,url`,
+      `${baseUrl}/jsonapi/node/article?sort=-created&fields[node--article]=drupal_internal__nid,title,body,created,path,imagem`,
       {
         next: { revalidate: 60 },
       }
@@ -38,27 +39,45 @@ async function getIncentivos(): Promise<Incentivo[]> {
 
     const data = await response.json()
 
-    return data.data.map((item: any) => {
-      const mediaImage = data.included?.find(
-        (inc: any) => inc.type === 'media--image' && inc.id === item.relationships?.imagem?.data?.id
-      )
-      const image = mediaImage ? data.included?.find(
-        (inc: any) => inc.type === 'file--file' && inc.id === mediaImage.relationships?.field_media_image?.data?.id
-      ) : null
+    const incentivos: Incentivo[] = await Promise.all(
+      data.data.map(async (item: any) => {
+        // Extract summary from body field
+        const bodyHtml = item.attributes.body?.processed || item.attributes.body?.value || ''
 
-      return {
-        id: item.id,
-        nid: item.attributes.drupal_internal__nid,
-        title: item.attributes.title,
-        body: item.attributes.body?.processed || item.attributes.body?.value || '',
-        created: item.attributes.created,
-        path: item.attributes.path?.alias || `/node/${item.attributes.drupal_internal__nid}`,
-        image: image ? {
-          url: image.attributes.uri?.url || image.attributes.url || '',
-          alt: item.relationships?.field_image?.data?.meta?.alt || item.attributes.title,
-        } : undefined,
-      }
-    })
+        // Fetch image from media entity if exists
+        let image: { url: string; alt: string } | undefined = undefined
+
+        if (item.relationships?.imagem?.data?.id) {
+          try {
+            const mediaResponse = await fetch(
+              `${baseUrl}/jsonapi/media/image/${item.relationships.imagem.data.id}?include=field_media_image&fields[file--file]=uri`
+            )
+            const mediaData = await mediaResponse.json()
+            const fileEntity = mediaData.included?.find((inc: any) => inc.type === 'file--file')
+            if (fileEntity) {
+              image = {
+                url: baseUrl + fileEntity.attributes.uri.url,
+                alt: mediaData.data.attributes?.name || item.attributes.title,
+              }
+            }
+          } catch (e) {
+            console.error('Error fetching media for incentivo:', e)
+          }
+        }
+
+        return {
+          id: item.id,
+          nid: item.attributes.drupal_internal__nid,
+          title: item.attributes.title,
+          body: bodyHtml,
+          created: item.attributes.created,
+          path: item.attributes.path?.alias || `/node/${item.attributes.drupal_internal__nid}`,
+          image,
+        }
+      })
+    )
+
+    return incentivos
   } catch (error) {
     console.error('Error fetching incentivos:', error)
     return []
@@ -67,7 +86,6 @@ async function getIncentivos(): Promise<Incentivo[]> {
 
 export default async function IncentivosPage() {
   const incentivos = await getIncentivos()
-  const baseUrl = process.env.NEXT_PUBLIC_DRUPAL_BASE_URL || 'https://darkcyan-stork-408379.hostingersite.com'
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-white to-gray-50">
@@ -109,7 +127,7 @@ export default async function IncentivosPage() {
                 {incentivo.image?.url && (
                   <div className="relative h-48 overflow-hidden bg-gray-200">
                     <Image
-                      src={`${baseUrl}${incentivo.image.url}`}
+                      src={incentivo.image.url}
                       alt={incentivo.image.alt}
                       fill
                       className="object-cover group-hover:scale-110 transition-transform duration-500"
