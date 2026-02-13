@@ -165,7 +165,7 @@ export default function StudentAreaPage() {
       
       // Fetch all cursos to find parent and children
       const response = await fetch(
-        `${baseUrl}/jsonapi/node/cursos?include=field_parent`,
+        `${baseUrl}/jsonapi/node/cursos`,
         {
           headers: {
             'Content-Type': 'application/vnd.api+json',

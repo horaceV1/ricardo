@@ -150,7 +150,7 @@ export default function CourseViewerPage() {
 
       // Fetch all cursos to find children
       const allArticlesResponse = await fetch(
-        `${baseUrl}/jsonapi/node/cursos?include=field_parent`,
+        `${baseUrl}/jsonapi/node/cursos`,
         {
           headers: {
             'Content-Type': 'application/vnd.api+json',
