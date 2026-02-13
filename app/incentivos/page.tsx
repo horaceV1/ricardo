@@ -13,6 +13,7 @@ interface Incentivo {
     url: string
     alt: string
   }
+  dynamicFormIds: string[]
 }
 
 export const metadata = {
@@ -26,7 +27,7 @@ async function getIncentivos(): Promise<Incentivo[]> {
     
     // Simplified: fetch without nested includes to avoid timeouts
     const response = await fetch(
-      `${baseUrl}/jsonapi/node/article?sort=-created&fields[node--article]=drupal_internal__nid,title,body,created,path,imagem`,
+      `${baseUrl}/jsonapi/node/article?sort=-created&fields[node--article]=drupal_internal__nid,title,body,created,path,imagem,field_dynamic_form`,
       {
         next: { revalidate: 60 },
       }
@@ -65,14 +66,21 @@ async function getIncentivos(): Promise<Incentivo[]> {
           }
         }
 
+        // Extract dynamic form IDs from the relationship
+        const formRefs = item.relationships?.field_dynamic_form?.data || []
+        const dynamicFormIds = (Array.isArray(formRefs) ? formRefs : [formRefs])
+          .filter((ref: any) => ref?.meta?.drupal_internal__target_id)
+          .map((ref: any) => ref.meta.drupal_internal__target_id)
+
         return {
           id: item.id,
           nid: item.attributes.drupal_internal__nid,
           title: item.attributes.title,
           body: bodyHtml,
           created: item.attributes.created,
-          path: item.attributes.path?.alias || `/node/${item.attributes.drupal_internal__nid}`,
+          path: `/incentivos/${item.attributes.drupal_internal__nid}`,
           image,
+          dynamicFormIds,
         }
       })
     )
@@ -120,7 +128,7 @@ export default async function IncentivosPage() {
             {incentivos.map((incentivo) => (
               <Link
                 key={incentivo.id}
-                href={`/incentivos${incentivo.path}`}
+                href={incentivo.path}
                 className="group bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2"
               >
                 {/* Image */}
@@ -165,10 +173,17 @@ export default async function IncentivosPage() {
 
                 {/* Badge */}
                 <div className="px-6 pb-6">
-                  <span className="inline-flex items-center gap-2 px-4 py-2 bg-green-50 text-green-700 rounded-full text-xs font-semibold">
-                    <CheckCircle className="h-4 w-4" />
-                    Candidatura Disponível
-                  </span>
+                  {incentivo.dynamicFormIds.length > 0 ? (
+                    <span className="inline-flex items-center gap-2 px-4 py-2 bg-green-50 text-green-700 rounded-full text-xs font-semibold">
+                      <CheckCircle className="h-4 w-4" />
+                      Candidatura Disponível
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-700 rounded-full text-xs font-semibold">
+                      <FileText className="h-4 w-4" />
+                      Informação
+                    </span>
+                  )}
                 </div>
               </Link>
             ))}

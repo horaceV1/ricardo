@@ -6,6 +6,19 @@ import { Calendar, User, ArrowLeft, FileText, CheckCircle } from 'lucide-react'
 import Link from 'next/link'
 import { DynamicForm } from '@/components/forms/DynamicForm'
 
+interface FormField {
+  label: string
+  type: "texto" | "documento" | "imagem"
+  required: boolean
+  link?: string
+}
+
+interface DynamicFormData {
+  id: string
+  label: string
+  fields: FormField[]
+}
+
 interface IncentivoPost {
   id: string
   nid: number
@@ -18,12 +31,13 @@ interface IncentivoPost {
     alt: string
   }
   author: string
+  dynamicFormIds: string[]
 }
 
 export default function IncentivoPostPage({ params }: { params: { slug: string[] } }) {
   const [post, setPost] = useState<IncentivoPost | null>(null)
   const [loading, setLoading] = useState(true)
-  const [dynamicForms, setDynamicForms] = useState<any[]>([])
+  const [dynamicForms, setDynamicForms] = useState<DynamicFormData[]>([])
 
   useEffect(() => {
     fetchPostAndFind()
@@ -33,21 +47,38 @@ export default function IncentivoPostPage({ params }: { params: { slug: string[]
     try {
       const baseUrl = process.env.NEXT_PUBLIC_DRUPAL_BASE_URL || 'https://darkcyan-stork-408379.hostingersite.com'
       
-      // Simplified: fetch without nested includes to avoid timeouts
+      // Fetch articles including field_dynamic_form relationship
       const response = await fetch(
-        `${baseUrl}/jsonapi/node/article?fields[node--article]=drupal_internal__nid,title,body,created,path,imagem,uid`
+        `${baseUrl}/jsonapi/node/article?fields[node--article]=drupal_internal__nid,title,body,created,path,imagem,uid,field_dynamic_form`
       )
       const data = await response.json()
 
-      const fullPath = `/incentivos/${params.slug.join('/')}`
-      let postData = data.data.find((p: any) => p.attributes.path?.alias === fullPath)
+      const slugStr = params.slug.join('/')
+      let postData = null
 
-      // Fallback: match by NID from slug
+      // Primary: match by NID (links are now /incentivos/{nid})
+      if (!isNaN(Number(slugStr))) {
+        postData = data.data.find((p: any) => p.attributes.drupal_internal__nid === Number(slugStr))
+      }
+
+      // Fallback: try matching by path alias (various patterns)
       if (!postData) {
-        const slugParts = params.slug
-        const possibleNid = slugParts[slugParts.length - 1]
-        if (possibleNid && !isNaN(Number(possibleNid))) {
-          postData = data.data.find((p: any) => p.attributes.drupal_internal__nid === Number(possibleNid))
+        const possiblePaths = [
+          `/${slugStr}`,
+          `/blog/${slugStr}`,
+          `/incentivos/${slugStr}`,
+        ]
+        postData = data.data.find((p: any) => {
+          const alias = p.attributes.path?.alias
+          return alias && possiblePaths.includes(alias)
+        })
+      }
+
+      // Last fallback: NID from last slug segment
+      if (!postData) {
+        const lastSegment = params.slug[params.slug.length - 1]
+        if (lastSegment && !isNaN(Number(lastSegment))) {
+          postData = data.data.find((p: any) => p.attributes.drupal_internal__nid === Number(lastSegment))
         }
       }
 
@@ -86,6 +117,12 @@ export default function IncentivoPostPage({ params }: { params: { slug: string[]
           }
         }
 
+        // Extract dynamic form IDs from field_dynamic_form relationship
+        const formRefs = postData.relationships?.field_dynamic_form?.data || []
+        const dynamicFormIds = (Array.isArray(formRefs) ? formRefs : [formRefs])
+          .filter((ref: any) => ref?.meta?.drupal_internal__target_id)
+          .map((ref: any) => ref.meta.drupal_internal__target_id as string)
+
         setPost({
           id: postData.id,
           nid: postData.attributes.drupal_internal__nid,
@@ -98,9 +135,13 @@ export default function IncentivoPostPage({ params }: { params: { slug: string[]
             alt: imageAlt,
           },
           author: authorName,
+          dynamicFormIds,
         })
 
-        fetchDynamicForms(postData.attributes.drupal_internal__nid)
+        // Fetch the actual dynamic form configurations
+        if (dynamicFormIds.length > 0) {
+          fetchDynamicForms(baseUrl, dynamicFormIds)
+        }
       }
     } catch (error) {
       console.error('Error fetching incentivo post:', error)
@@ -109,17 +150,29 @@ export default function IncentivoPostPage({ params }: { params: { slug: string[]
     }
   }
 
-  const fetchDynamicForms = async (nid: number) => {
+  const fetchDynamicForms = async (baseUrl: string, formIds: string[]) => {
     try {
-      const baseUrl = process.env.NEXT_PUBLIC_DRUPAL_BASE_URL || 'https://darkcyan-stork-408379.hostingersite.com'
-      const response = await fetch(`${baseUrl}/api/article-layout/${nid}`)
-      
-      if (response.ok) {
-        const data = await response.json()
-        if (data.forms && Array.isArray(data.forms) && data.forms.length > 0) {
-          setDynamicForms(data.forms)
+      const forms: DynamicFormData[] = []
+
+      for (const formId of formIds) {
+        try {
+          const response = await fetch(`${baseUrl}/api/dynamic-form/${formId}`)
+          if (response.ok) {
+            const formData = await response.json()
+            if (formData && !formData.error && formData.fields) {
+              forms.push({
+                id: formData.id || formId,
+                label: formData.label || 'Formulário',
+                fields: formData.fields || [],
+              })
+            }
+          }
+        } catch (e) {
+          console.error(`Error fetching form ${formId}:`, e)
         }
       }
+
+      setDynamicForms(forms)
     } catch (error) {
       console.error('Error fetching dynamic forms:', error)
     }
@@ -172,8 +225,8 @@ export default function IncentivoPostPage({ params }: { params: { slug: string[]
         </div>
       </div>
 
-      {/* Hero Image */}
-      {post.image.url && (
+      {/* Hero section - with or without image */}
+      {post.image.url ? (
         <div className="relative h-96 md:h-[500px] bg-gray-900">
           <Image
             src={post.image.url}
@@ -200,34 +253,54 @@ export default function IncentivoPostPage({ params }: { params: { slug: string[]
             </div>
           </div>
         </div>
+      ) : (
+        <div className="bg-gradient-to-r from-[#009999] to-[#007a7a] text-white py-16">
+          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+            <h1 className="text-4xl md:text-5xl font-black mb-4">{post.title}</h1>
+            <div className="flex flex-wrap items-center gap-6 text-white/80">
+              <div className="flex items-center gap-2">
+                <Calendar className="w-5 h-5" />
+                <span>{formatDate(post.created)}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <User className="w-5 h-5" />
+                <span>{post.author}</span>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Content */}
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <article className="bg-white rounded-2xl shadow-lg p-8 md:p-12">
-          <div
-            className="prose prose-lg max-w-none prose-headings:text-gray-900 prose-a:text-[#009999] prose-a:no-underline hover:prose-a:underline prose-strong:text-gray-900 prose-img:rounded-xl"
-            dangerouslySetInnerHTML={{ __html: post.body }}
-          />
-        </article>
+        {/* Article Body */}
+        {post.body && (
+          <article className="bg-white rounded-2xl shadow-lg p-8 md:p-12">
+            <div
+              className="prose prose-lg max-w-none prose-headings:text-gray-900 prose-a:text-[#009999] prose-a:no-underline hover:prose-a:underline prose-strong:text-gray-900 prose-img:rounded-xl"
+              dangerouslySetInnerHTML={{ __html: post.body }}
+            />
+          </article>
+        )}
 
         {/* Dynamic Forms */}
         {dynamicForms.length > 0 && (
-          <div className="mt-12 bg-gradient-to-br from-[#009999]/5 to-[#007a7a]/5 rounded-2xl p-8">
-            <div className="flex items-center gap-3 mb-8">
-              <FileText className="h-8 w-8 text-[#009999]" />
-              <h2 className="text-3xl font-bold text-gray-900">Formulário de Candidatura</h2>
-            </div>
-            <div className="space-y-8">
-              {dynamicForms.map((form, index) => (
-                <DynamicForm 
-                  key={index}
-                  formId={form.form_id || form.id}
-                  formTitle={form.label}
-                  fields={form.fields}
-                />
-              ))}
-            </div>
+          <div className="mt-12">
+            {dynamicForms.map((form, index) => (
+              <div key={form.id || index} className="mb-8">
+                <div className="bg-gradient-to-br from-[#009999]/5 to-[#007a7a]/5 rounded-2xl p-8 border border-[#009999]/10">
+                  <div className="flex items-center gap-3 mb-6">
+                    <FileText className="h-7 w-7 text-[#009999]" />
+                    <h2 className="text-2xl font-bold text-gray-900">Formulário de Candidatura</h2>
+                  </div>
+                  <DynamicForm 
+                    formId={form.id}
+                    formTitle={form.label}
+                    fields={form.fields}
+                  />
+                </div>
+              </div>
+            ))}
           </div>
         )}
 
