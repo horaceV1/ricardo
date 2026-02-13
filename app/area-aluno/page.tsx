@@ -37,17 +37,15 @@ interface CourseArticle {
     title: string
     created: string
     changed: string
-    body?: {
+    body_curso?: {
       value: string
       summary: string
+      processed: string
     }
   }
   relationships?: {
-    field_parent?: {
-      data: { id: string; type: string } | null
-    }
-    curso?: {
-      data: { id: string; type: string } | null
+    cursos_ref?: {
+      data: { id: string; type: string; meta?: { weight: number } } | null
     }
   }
 }
@@ -186,9 +184,9 @@ export default function StudentAreaPage() {
       console.log('[Area Aluno] Looking for these purchased curso IDs:', Array.from(purchasedIds))
 
       // Find parent courses (those that are NOT children of others)
-      // Check both field_parent and curso relationships
+      // Parent courses have no cursos_ref (entity_hierarchy field)
       const parentCourses = articles.filter(article => {
-        const hasNoParent = !article.relationships?.field_parent?.data && !article.relationships?.curso?.data
+        const hasNoParent = !article.relationships?.cursos_ref?.data
         return hasNoParent
       })
 
@@ -213,10 +211,9 @@ export default function StudentAreaPage() {
 
       // Transform to EnrolledCourse format
       const transformedCourses: EnrolledCourse[] = purchasedParentCourses.map(course => {
-        // Count how many articles have this course as parent
-        // Check both field_parent and curso relationships
+        // Count how many articles have this course as parent (via cursos_ref entity hierarchy)
         const childrenCount = articles.filter(a => {
-          const parentId = a.relationships?.field_parent?.data?.id || a.relationships?.curso?.data?.id
+          const parentId = a.relationships?.cursos_ref?.data?.id
           return parentId === course.id
         }).length
         
@@ -400,7 +397,7 @@ export default function StudentAreaPage() {
                           <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600">
                             <div className="flex items-center gap-1.5">
                               <PlayCircle className="h-4 w-4" />
-                              <span>Capítulo {course.currentChapter} de {course.totalChapters}</span>
+                              <span>Módulo {course.currentChapter} de {course.totalChapters}</span>
                             </div>
                             <div className="flex items-center gap-1.5">
                               <Clock className="h-4 w-4" />
@@ -442,7 +439,7 @@ export default function StudentAreaPage() {
                           />
                         </div>
                         <div className="flex items-center justify-between mt-2 text-xs text-gray-600">
-                          <span>{course.completedChapters} de {course.totalChapters} capítulos concluídos</span>
+                          <span>{course.completedChapters} de {course.totalChapters} módulos concluídos</span>
                           {course.progress === 100 && (
                             <CheckCircle className="h-4 w-4 text-green-500" />
                           )}

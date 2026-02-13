@@ -168,20 +168,26 @@ export default function CourseViewerPage() {
       console.log('[Course Viewer] Looking for children of course:', params.id)
       console.log('[Course Viewer] Total articles:', allArticles.length)
       
-      // Find children that reference this parent (check both field_parent and curso)
+      // Find children that reference this parent via cursos_ref (entity_hierarchy)
       const children: CourseNode[] = allArticles
         .filter((article: any) => {
-          const parentId = article.relationships?.field_parent?.data?.id || article.relationships?.curso?.data?.id
+          const parentId = article.relationships?.cursos_ref?.data?.id
           const isChild = parentId === params.id
           if (isChild) {
             console.log('[Course Viewer] Found child:', article.attributes.title)
           }
           return isChild
         })
+        .sort((a: any, b: any) => {
+          // Sort by weight from entity_hierarchy
+          const weightA = a.relationships?.cursos_ref?.data?.meta?.weight ?? 0
+          const weightB = b.relationships?.cursos_ref?.data?.meta?.weight ?? 0
+          return weightA - weightB
+        })
         .map((article: any) => ({
           nid: article.id,
           title: article.attributes.title,
-          body: article.attributes.body,
+          body: article.attributes.body_curso,
           created: article.attributes.created,
         }))
 
@@ -191,7 +197,7 @@ export default function CourseViewerPage() {
         parent: {
           nid: parent.id,
           title: parent.attributes.title,
-          body: parent.attributes.body,
+          body: parent.attributes.body_curso,
           created: parent.attributes.created,
           children: children,
         },
@@ -339,7 +345,7 @@ export default function CourseViewerPage() {
               <div className="flex-1">
                 <div className="flex items-center gap-2 mb-2">
                   <span className="text-sm font-medium bg-white/20 px-3 py-1 rounded-full">
-                    Capítulo {currentPage + 1}
+                    Módulo {currentPage + 1}
                   </span>
                   {currentPage === courseData.children.length - 1 && (
                     <span className="text-sm font-medium bg-green-500/80 px-3 py-1 rounded-full flex items-center gap-1">
@@ -365,7 +371,7 @@ export default function CourseViewerPage() {
             {!currentContent?.body && (
               <div className="text-center py-12 text-gray-500">
                 <BookOpen className="h-12 w-12 mx-auto mb-4 text-gray-400" />
-                <p>Este capítulo não tem conteúdo disponível.</p>
+                <p>Este módulo não tem conteúdo disponível.</p>
               </div>
             )}
           </div>
@@ -426,7 +432,7 @@ export default function CourseViewerPage() {
                     Você completou este curso!
                   </span>
                 ) : (
-                  `${courseData.children.length - currentPage - 1} capítulo${
+                  `${courseData.children.length - currentPage - 1} módulo${
                     courseData.children.length - currentPage - 1 !== 1 ? 's' : ''
                   } restante${courseData.children.length - currentPage - 1 !== 1 ? 's' : ''}`
                 )}
