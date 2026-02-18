@@ -13,7 +13,12 @@ import {
   Loader2,
   ArrowLeft,
   Home,
-  Trophy
+  Trophy,
+  AlertCircle,
+  Send,
+  XCircle,
+  RotateCcw,
+  HelpCircle
 } from 'lucide-react'
 
 interface CourseNode {
@@ -56,6 +61,49 @@ interface CourseProgress {
   changed: string
 }
 
+interface QuizQuestion {
+  id: number
+  type: 'multiple_choice' | 'text_response'
+  question: string
+  required: boolean
+  points: number
+  options?: string[]
+  allow_multiple?: boolean
+  max_length?: number
+  placeholder?: string
+  validation_type?: string
+  min_length?: number
+}
+
+interface QuizData {
+  course_uuid: string
+  course_title: string
+  quiz_enabled: boolean
+  passing_score: number
+  total_questions: number
+  total_points: number
+  questions: QuizQuestion[]
+}
+
+interface QuizResult {
+  question_id: number
+  is_correct: boolean
+  points_earned: number
+  points_possible: number
+  explanation?: string
+  correct_answer?: number
+  correct_answers?: string[]
+}
+
+interface QuizSubmitResponse {
+  score: number
+  passing_score: number
+  passed: boolean
+  points_earned: number
+  points_total: number
+  results: QuizResult[]
+}
+
 export default function CourseViewerPage() {
   const params = useParams()
   const router = useRouter()
@@ -68,6 +116,11 @@ export default function CourseViewerPage() {
   const [courseCompleted, setCourseCompleted] = useState(false)
   const [completing, setCompleting] = useState(false)
   const [showCompletionModal, setShowCompletionModal] = useState(false)
+  const [quizData, setQuizData] = useState<QuizData | null>(null)
+  const [quizAnswers, setQuizAnswers] = useState<Record<number, any>>({})
+  const [quizResults, setQuizResults] = useState<QuizSubmitResponse | null>(null)
+  const [submittingQuiz, setSubmittingQuiz] = useState(false)
+  const [loadingQuiz, setLoadingQuiz] = useState(false)
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -303,6 +356,67 @@ export default function CourseViewerPage() {
     }
   }
 
+  const fetchQuizForModule = async (moduleUuid: string) => {
+    try {
+      setLoadingQuiz(true)
+      setQuizData(null)
+      setQuizResults(null)
+      setQuizAnswers({})
+      const baseUrl = process.env.NEXT_PUBLIC_DRUPAL_BASE_URL || 'https://darkcyan-stork-408379.hostingersite.com'
+      const res = await fetch(`${baseUrl}/api/course/${moduleUuid}/quiz`)
+      if (res.ok) {
+        const data = await res.json()
+        if (data.data?.quiz_enabled) {
+          setQuizData(data.data)
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching quiz:', error)
+    } finally {
+      setLoadingQuiz(false)
+    }
+  }
+
+  const handleQuizAnswer = (questionId: number, answer: any) => {
+    setQuizAnswers(prev => ({ ...prev, [questionId]: answer }))
+  }
+
+  const handleSubmitQuiz = async () => {
+    if (!quizData || !courseData) return
+    setSubmittingQuiz(true)
+    try {
+      const token = getAuthToken()
+      const baseUrl = process.env.NEXT_PUBLIC_DRUPAL_BASE_URL || 'https://darkcyan-stork-408379.hostingersite.com'
+      const currentModule = courseData.children[currentPage]
+      const answers = quizData.questions.map(q => ({
+        question_id: q.id,
+        answer: quizAnswers[q.id] ?? '',
+      }))
+      const res = await fetch(`${baseUrl}/api/course/${currentModule.nid}/quiz/submit`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token && { 'Authorization': `Bearer ${token}` }),
+        },
+        body: JSON.stringify({ answers }),
+      })
+      if (res.ok) {
+        const data = await res.json()
+        setQuizResults(data.data)
+      }
+    } catch (error) {
+      console.error('Error submitting quiz:', error)
+    } finally {
+      setSubmittingQuiz(false)
+    }
+  }
+
+  const handleRetryQuiz = () => {
+    setQuizResults(null)
+    setQuizAnswers({})
+  }
+
   const handlePrevious = () => {
     if (currentPage > 0) {
       setCurrentPage(currentPage - 1)
@@ -315,10 +429,14 @@ export default function CourseViewerPage() {
     }
   }
 
-  // Track progress when navigating modules
+  // Track progress and fetch quiz when navigating modules
   useEffect(() => {
     if (courseData && !courseCompleted) {
       updateCourseProgress(currentPage, 'in_progress')
+    }
+    // Fetch quiz for current module
+    if (courseData && courseData.children[currentPage]) {
+      fetchQuizForModule(courseData.children[currentPage].nid)
     }
   }, [currentPage, courseData])
 
@@ -473,13 +591,259 @@ export default function CourseViewerPage() {
               />
             )}
 
-            {!currentContent?.body && (
+            {!currentContent?.body && !quizData && (
               <div className="text-center py-12 text-gray-500">
                 <BookOpen className="h-12 w-12 mx-auto mb-4 text-gray-400" />
                 <p>Este módulo não tem conteúdo disponível.</p>
               </div>
             )}
           </div>
+
+          {/* Quiz Section */}
+          {loadingQuiz && (
+            <div className="px-8 pb-8">
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="h-6 w-6 animate-spin text-[#009999] mr-2" />
+                <span className="text-gray-500">A carregar quiz...</span>
+              </div>
+            </div>
+          )}
+
+          {quizData && !loadingQuiz && (
+            <div className="px-8 pb-8">
+              <div className="border-t border-gray-200 pt-8">
+                {/* Quiz Header */}
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="h-10 w-10 bg-[#009999]/10 rounded-lg flex items-center justify-center">
+                    <HelpCircle className="h-5 w-5 text-[#009999]" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold text-gray-900">Quiz do Módulo</h3>
+                    <p className="text-sm text-gray-500">
+                      {quizData.total_questions} pergunta{quizData.total_questions !== 1 ? 's' : ''} · {quizData.total_points} ponto{quizData.total_points !== 1 ? 's' : ''} · Nota mínima: {quizData.passing_score}%
+                    </p>
+                  </div>
+                </div>
+
+                {/* Quiz Results Banner */}
+                {quizResults && (
+                  <div className={`mb-6 p-4 rounded-xl border-2 ${
+                    quizResults.passed
+                      ? 'bg-green-50 border-green-200'
+                      : 'bg-red-50 border-red-200'
+                  }`}>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        {quizResults.passed ? (
+                          <CheckCircle className="h-8 w-8 text-green-600" />
+                        ) : (
+                          <XCircle className="h-8 w-8 text-red-600" />
+                        )}
+                        <div>
+                          <p className={`font-bold text-lg ${quizResults.passed ? 'text-green-800' : 'text-red-800'}`}>
+                            {quizResults.passed ? 'Aprovado!' : 'Não aprovado'}
+                          </p>
+                          <p className={`text-sm ${quizResults.passed ? 'text-green-600' : 'text-red-600'}`}>
+                            Pontuação: {quizResults.score}% ({quizResults.points_earned}/{quizResults.points_total} pontos)
+                          </p>
+                        </div>
+                      </div>
+                      {!quizResults.passed && (
+                        <button
+                          onClick={handleRetryQuiz}
+                          className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors"
+                        >
+                          <RotateCcw className="h-4 w-4" />
+                          Tentar novamente
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Questions */}
+                <div className="space-y-6">
+                  {quizData.questions.map((question, qIdx) => {
+                    const result = quizResults?.results?.find(r => r.question_id === question.id)
+                    const isAnswered = quizAnswers[question.id] !== undefined && quizAnswers[question.id] !== ''
+
+                    return (
+                      <div
+                        key={question.id}
+                        className={`p-5 rounded-xl border-2 transition-colors ${
+                          result
+                            ? result.is_correct
+                              ? 'border-green-200 bg-green-50/50'
+                              : 'border-red-200 bg-red-50/50'
+                            : isAnswered
+                            ? 'border-[#009999]/30 bg-[#009999]/5'
+                            : 'border-gray-200 bg-white'
+                        }`}
+                      >
+                        {/* Question header */}
+                        <div className="flex items-start gap-3 mb-4">
+                          <span className={`flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-sm font-bold ${
+                            result
+                              ? result.is_correct
+                                ? 'bg-green-500 text-white'
+                                : 'bg-red-500 text-white'
+                              : 'bg-gray-200 text-gray-700'
+                          }`}>
+                            {qIdx + 1}
+                          </span>
+                          <div className="flex-1">
+                            <p className="font-semibold text-gray-900">{question.question}</p>
+                            <div className="flex items-center gap-3 mt-1">
+                              <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded">
+                                {question.type === 'multiple_choice' ? 'Escolha múltipla' : 'Resposta de texto'}
+                              </span>
+                              <span className="text-xs text-gray-500">
+                                {question.points} ponto{question.points !== 1 ? 's' : ''}
+                              </span>
+                              {question.required && (
+                                <span className="text-xs text-red-500">* Obrigatória</span>
+                              )}
+                            </div>
+                          </div>
+                          {result && (
+                            result.is_correct
+                              ? <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0" />
+                              : <XCircle className="h-5 w-5 text-red-500 flex-shrink-0" />
+                          )}
+                        </div>
+
+                        {/* Multiple Choice Options */}
+                        {question.type === 'multiple_choice' && question.options && (
+                          <div className="space-y-2 ml-10">
+                            {question.options.map((option, optIdx) => {
+                              const isSelected = question.allow_multiple
+                                ? (quizAnswers[question.id] || []).includes(String(optIdx))
+                                : String(quizAnswers[question.id]) === String(optIdx)
+                              const isCorrectOption = result && (
+                                question.allow_multiple
+                                  ? (result.correct_answers || []).includes(String(optIdx))
+                                  : result.correct_answer === optIdx
+                              )
+
+                              return (
+                                <label
+                                  key={optIdx}
+                                  className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-all ${
+                                    quizResults
+                                      ? isCorrectOption
+                                        ? 'bg-green-100 border border-green-300'
+                                        : isSelected && !isCorrectOption
+                                        ? 'bg-red-100 border border-red-300'
+                                        : 'bg-white border border-gray-200'
+                                      : isSelected
+                                      ? 'bg-[#009999]/10 border border-[#009999]/40'
+                                      : 'bg-white border border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                                  } ${quizResults ? 'pointer-events-none' : ''}`}
+                                >
+                                  <input
+                                    type={question.allow_multiple ? 'checkbox' : 'radio'}
+                                    name={`quiz-q-${question.id}`}
+                                    value={optIdx}
+                                    checked={isSelected}
+                                    disabled={!!quizResults}
+                                    onChange={() => {
+                                      if (question.allow_multiple) {
+                                        const current = quizAnswers[question.id] || []
+                                        const strIdx = String(optIdx)
+                                        if (current.includes(strIdx)) {
+                                          handleQuizAnswer(question.id, current.filter((v: string) => v !== strIdx))
+                                        } else {
+                                          handleQuizAnswer(question.id, [...current, strIdx])
+                                        }
+                                      } else {
+                                        handleQuizAnswer(question.id, String(optIdx))
+                                      }
+                                    }}
+                                    className="accent-[#009999]"
+                                  />
+                                  <span className="font-medium text-sm text-gray-500 w-6">{String.fromCharCode(65 + optIdx)}.</span>
+                                  <span className="text-gray-800">{option}</span>
+                                  {quizResults && isCorrectOption && (
+                                    <CheckCircle className="h-4 w-4 text-green-500 ml-auto" />
+                                  )}
+                                </label>
+                              )
+                            })}
+                          </div>
+                        )}
+
+                        {/* Text Response */}
+                        {question.type === 'text_response' && (
+                          <div className="ml-10">
+                            <textarea
+                              value={quizAnswers[question.id] || ''}
+                              onChange={(e) => handleQuizAnswer(question.id, e.target.value)}
+                              disabled={!!quizResults}
+                              placeholder={question.placeholder || 'Escreva a sua resposta...'}
+                              maxLength={question.max_length || 500}
+                              rows={3}
+                              className={`w-full p-3 border-2 rounded-lg resize-none transition-colors focus:outline-none focus:ring-0 ${
+                                quizResults
+                                  ? result?.is_correct
+                                    ? 'border-green-300 bg-green-50'
+                                    : 'border-red-300 bg-red-50'
+                                  : 'border-gray-200 focus:border-[#009999] bg-white'
+                              }`}
+                            />
+                            <div className="flex justify-between mt-1">
+                              <span className="text-xs text-gray-400">
+                                {question.validation_type === 'min_length' && question.min_length
+                                  ? `Mínimo ${question.min_length} caracteres`
+                                  : question.validation_type === 'none'
+                                  ? 'Resposta livre'
+                                  : ''}
+                              </span>
+                              <span className="text-xs text-gray-400">
+                                {(quizAnswers[question.id] || '').length}/{question.max_length || 500}
+                              </span>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Explanation (shown after submit) */}
+                        {result?.explanation && (
+                          <div className="ml-10 mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                            <div className="flex items-start gap-2">
+                              <AlertCircle className="h-4 w-4 text-blue-500 mt-0.5 flex-shrink-0" />
+                              <p className="text-sm text-blue-800">{result.explanation}</p>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )
+                  })}
+                </div>
+
+                {/* Submit Quiz Button */}
+                {!quizResults && (
+                  <div className="mt-6 flex justify-center">
+                    <button
+                      onClick={handleSubmitQuiz}
+                      disabled={submittingQuiz}
+                      className="flex items-center gap-2 px-8 py-3 bg-gradient-to-r from-[#009999] to-[#007a7a] text-white rounded-xl font-semibold hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {submittingQuiz ? (
+                        <>
+                          <Loader2 className="h-5 w-5 animate-spin" />
+                          A submeter...
+                        </>
+                      ) : (
+                        <>
+                          <Send className="h-5 w-5" />
+                          Submeter Respostas
+                        </>
+                      )}
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* Navigation Footer */}
           <div className="border-t border-gray-200 bg-gray-50 p-6">
