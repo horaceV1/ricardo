@@ -159,76 +159,80 @@ export default function StudentAreaPage() {
         return
       }
       
-      const baseUrl = 'https://darkcyan-stork-408379.hostingersite.com'
+      const baseUrl = process.env.NEXT_PUBLIC_DRUPAL_BASE_URL || 'https://darkcyan-stork-408379.hostingersite.com'
       
-      // Fetch all cursos to find parent and children
-      const response = await fetch(
-        `${baseUrl}/jsonapi/node/cursos`,
-        {
-          headers: {
-            'Content-Type': 'application/vnd.api+json',
-          },
-        }
-      )
+      // Fetch all cursos and course progress in parallel
+      const tokensStr = localStorage.getItem('drupal_auth_tokens')
+      const tokens = tokensStr ? JSON.parse(tokensStr) : null
+      const token = tokens?.access_token
 
-      if (!response.ok) {
+      const [coursesResponse, progressResponse] = await Promise.all([
+        fetch(`${baseUrl}/jsonapi/node/cursos`, {
+          headers: { 'Content-Type': 'application/vnd.api+json' },
+        }),
+        fetch(`${baseUrl}/api/auth/course-progress`, {
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token && { 'Authorization': `Bearer ${token}` }),
+          },
+        }),
+      ])
+
+      if (!coursesResponse.ok) {
         throw new Error('Failed to fetch courses')
       }
 
-      const data = await response.json()
+      const data = await coursesResponse.json()
       const articles: CourseArticle[] = data.data
 
+      // Parse progress data
+      let progressMap = new Map<string, { status: string; current_module: number; total_modules: number; progress_percent: number }>()
+      if (progressResponse.ok) {
+        const progressData = await progressResponse.json()
+        const progressList = progressData.data || []
+        progressList.forEach((p: any) => {
+          progressMap.set(p.course_uuid, p)
+        })
+      }
+
       console.log('[Area Aluno] Fetched cursos from API:', articles.length)
-      console.log('[Area Aluno] Sample curso:', articles[0])
-      console.log('[Area Aluno] All curso UUIDs:', articles.map(a => ({ id: a.id, title: a.attributes.title })))
-      console.log('[Area Aluno] Looking for these purchased curso IDs:', Array.from(purchasedIds))
+      console.log('[Area Aluno] Progress records:', progressMap.size)
 
       // Find parent courses (those that are NOT children of others)
-      // Parent courses have no cursos_ref (entity_hierarchy field)
       const parentCourses = articles.filter(article => {
         const hasNoParent = !article.relationships?.cursos_ref?.data
         return hasNoParent
       })
 
-      console.log('[Area Aluno] Found parent courses:', parentCourses.length)
-      console.log('[Area Aluno] Parent course details:', parentCourses.map(p => ({ id: p.id, title: p.attributes.title })))
-
       // Filter to only show purchased courses
-      const purchasedParentCourses = parentCourses.filter(course => {
-        const isPurchased = purchasedIds.has(course.id)
-        console.log('[Area Aluno] Checking if curso is purchased:', {
-          curso_id: course.id,
-          curso_title: course.attributes.title,
-          is_in_purchased_set: isPurchased
-        })
-        return isPurchased
-      })
-
-      console.log('[Area Aluno] Purchased parent courses found:', purchasedParentCourses.length)
-      console.log('[Area Aluno] Purchased courses:', purchasedParentCourses.map(c => c.attributes.title))
+      const purchasedParentCourses = parentCourses.filter(course => purchasedIds.has(course.id))
 
       console.log('[Area Aluno] Purchased parent courses:', purchasedParentCourses.length)
 
       // Transform to EnrolledCourse format
       const transformedCourses: EnrolledCourse[] = purchasedParentCourses.map(course => {
-        // Count how many articles have this course as parent (via cursos_ref entity hierarchy)
         const childrenCount = articles.filter(a => {
           const parentId = a.relationships?.cursos_ref?.data?.id
           return parentId === course.id
         }).length
         
-        console.log('[Area Aluno] Course:', course.attributes.title, 'has', childrenCount, 'children')
+        // Get progress from API
+        const courseProgress = progressMap.get(course.id)
+        const isCompleted = courseProgress?.status === 'completed'
+        const progressPercent = courseProgress?.progress_percent ?? 0
+        const currentModule = courseProgress?.current_module ?? 0
         
         return {
           id: course.id,
           title: course.attributes.title,
           totalChapters: childrenCount,
-          completedChapters: 0, // This would come from user progress data
-          currentChapter: 1,
-          progress: 0, // This would come from user progress data
+          completedChapters: isCompleted ? childrenCount : currentModule,
+          currentChapter: currentModule + 1,
+          progress: progressPercent,
           lastAccessed: course.attributes.changed,
-          totalDuration: `${childrenCount * 30}min`, // Estimate 30min per chapter
-          certificateAvailable: false,
+          totalDuration: `${childrenCount * 30}min`,
+          certificateAvailable: isCompleted,
         }
       })
 

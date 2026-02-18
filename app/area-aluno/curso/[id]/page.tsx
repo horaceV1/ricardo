@@ -12,7 +12,8 @@ import {
   Clock,
   Loader2,
   ArrowLeft,
-  Home
+  Home,
+  Trophy
 } from 'lucide-react'
 
 interface CourseNode {
@@ -35,11 +36,24 @@ interface CourseHierarchy {
 
 interface PurchasedProduct {
   product_id: string
+  title?: string
   curso?: {
     id: string
     nid: string
     title: string
   }
+}
+
+interface CourseProgress {
+  course_uuid: string
+  course_nid: number
+  status: string
+  current_module: number
+  total_modules: number
+  progress_percent: number
+  completed_at: string | null
+  created: string
+  changed: string
 }
 
 export default function CourseViewerPage() {
@@ -51,6 +65,9 @@ export default function CourseViewerPage() {
   const [currentPage, setCurrentPage] = useState(0)
   const [hasAccess, setHasAccess] = useState<boolean>(false)
   const [checkingAccess, setCheckingAccess] = useState(true)
+  const [courseCompleted, setCourseCompleted] = useState(false)
+  const [completing, setCompleting] = useState(false)
+  const [showCompletionModal, setShowCompletionModal] = useState(false)
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -212,6 +229,80 @@ export default function CourseViewerPage() {
     }
   }
 
+  const getAuthToken = () => {
+    const tokensStr = localStorage.getItem('drupal_auth_tokens')
+    const tokens = tokensStr ? JSON.parse(tokensStr) : null
+    return tokens?.access_token
+  }
+
+  const fetchCourseProgress = async (courseUuid: string) => {
+    try {
+      const token = getAuthToken()
+      const baseUrl = process.env.NEXT_PUBLIC_DRUPAL_BASE_URL || 'https://darkcyan-stork-408379.hostingersite.com'
+      const res = await fetch(`${baseUrl}/api/auth/course-progress?course_uuid=${courseUuid}`, {
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token && { 'Authorization': `Bearer ${token}` }),
+        },
+      })
+      if (res.ok) {
+        const data = await res.json()
+        if (data.data) {
+          const progress: CourseProgress = data.data
+          if (progress.status === 'completed') {
+            setCourseCompleted(true)
+          }
+          // Restore the user's last position if they haven't completed the course
+          if (progress.status === 'in_progress' && progress.current_module > 0) {
+            setCurrentPage(progress.current_module)
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching course progress:', error)
+    }
+  }
+
+  const updateCourseProgress = async (moduleIndex: number, status: string = 'in_progress') => {
+    try {
+      if (!courseData) return
+      const token = getAuthToken()
+      const baseUrl = process.env.NEXT_PUBLIC_DRUPAL_BASE_URL || 'https://darkcyan-stork-408379.hostingersite.com'
+      await fetch(`${baseUrl}/api/auth/course-progress`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token && { 'Authorization': `Bearer ${token}` }),
+        },
+        body: JSON.stringify({
+          course_uuid: params.id,
+          course_nid: 0,
+          current_module: moduleIndex,
+          total_modules: courseData.children.length,
+          status,
+        }),
+      })
+    } catch (error) {
+      console.error('Error updating course progress:', error)
+    }
+  }
+
+  const handleCompleteCourse = async () => {
+    if (!courseData) return
+    setCompleting(true)
+    try {
+      await updateCourseProgress(courseData.children.length - 1, 'completed')
+      setCourseCompleted(true)
+      setShowCompletionModal(true)
+    } catch (error) {
+      console.error('Error completing course:', error)
+    } finally {
+      setCompleting(false)
+    }
+  }
+
   const handlePrevious = () => {
     if (currentPage > 0) {
       setCurrentPage(currentPage - 1)
@@ -223,6 +314,20 @@ export default function CourseViewerPage() {
       setCurrentPage(currentPage + 1)
     }
   }
+
+  // Track progress when navigating modules
+  useEffect(() => {
+    if (courseData && !courseCompleted) {
+      updateCourseProgress(currentPage, 'in_progress')
+    }
+  }, [currentPage, courseData])
+
+  // Fetch existing progress when course data loads
+  useEffect(() => {
+    if (courseData && params.id) {
+      fetchCourseProgress(params.id as string)
+    }
+  }, [courseData])
 
   const getCurrentContent = () => {
     if (!courseData) return null
@@ -409,27 +514,55 @@ export default function CourseViewerPage() {
                 ))}
               </div>
 
-              <button
-                onClick={handleNext}
-                disabled={currentPage === courseData.children.length - 1}
-                className={`flex items-center gap-2 px-6 py-3 rounded-lg font-semibold transition-all ${
-                  currentPage === courseData.children.length - 1
-                    ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                    : 'bg-gradient-to-r from-[#009999] to-[#007a7a] text-white hover:shadow-lg'
-                }`}
-              >
-                Próximo
-                <ChevronRight className="h-5 w-5" />
-              </button>
+              {currentPage === courseData.children.length - 1 ? (
+                // Last module: show completion button
+                courseCompleted ? (
+                  <div className="flex items-center gap-2 px-6 py-3 rounded-lg font-semibold bg-green-100 text-green-700 border-2 border-green-500">
+                    <CheckCircle className="h-5 w-5" />
+                    Curso Concluído
+                  </div>
+                ) : (
+                  <button
+                    onClick={handleCompleteCourse}
+                    disabled={completing}
+                    className="flex items-center gap-2 px-6 py-3 rounded-lg font-semibold transition-all bg-gradient-to-r from-green-600 to-green-700 text-white hover:shadow-lg hover:from-green-700 hover:to-green-800 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {completing ? (
+                      <>
+                        <Loader2 className="h-5 w-5 animate-spin" />
+                        A concluir...
+                      </>
+                    ) : (
+                      <>
+                        <Trophy className="h-5 w-5" />
+                        Concluir Curso
+                      </>
+                    )}
+                  </button>
+                )
+              ) : (
+                <button
+                  onClick={handleNext}
+                  className="flex items-center gap-2 px-6 py-3 rounded-lg font-semibold transition-all bg-gradient-to-r from-[#009999] to-[#007a7a] text-white hover:shadow-lg"
+                >
+                  Próximo
+                  <ChevronRight className="h-5 w-5" />
+                </button>
+              )}
             </div>
 
             {/* Page Info */}
             <div className="mt-4 text-center">
               <p className="text-sm text-gray-600">
-                {currentPage === courseData.children.length - 1 ? (
+                {courseCompleted ? (
                   <span className="flex items-center justify-center gap-2 text-green-600 font-medium">
                     <CheckCircle className="h-4 w-4" />
-                    Você completou este curso!
+                    Parabéns! Você concluiu este curso!
+                  </span>
+                ) : currentPage === courseData.children.length - 1 ? (
+                  <span className="flex items-center justify-center gap-2 text-amber-600 font-medium">
+                    <Trophy className="h-4 w-4" />
+                    Último módulo — clique em &quot;Concluir Curso&quot; para finalizar
                   </span>
                 ) : (
                   `${courseData.children.length - currentPage - 1} módulo${
@@ -441,6 +574,44 @@ export default function CourseViewerPage() {
           </div>
         </div>
       </div>
+
+      {/* Completion Modal */}
+      {showCompletionModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-8 text-center animate-in fade-in zoom-in duration-300">
+            <div className="h-20 w-20 bg-gradient-to-br from-green-400 to-green-600 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg">
+              <Trophy className="h-10 w-10 text-white" />
+            </div>
+            <h2 className="text-3xl font-bold text-gray-900 mb-3">
+              Parabéns! 🎉
+            </h2>
+            <p className="text-gray-600 mb-2 text-lg">
+              Você concluiu o curso
+            </p>
+            <p className="text-[#009999] font-bold text-xl mb-6">
+              {courseData.parent.title}
+            </p>
+            <p className="text-gray-500 mb-8 text-sm">
+              O seu progresso foi guardado. Pode voltar a rever o conteúdo a qualquer momento.
+            </p>
+            <div className="flex flex-col gap-3">
+              <Link
+                href="/area-aluno"
+                className="inline-flex items-center justify-center gap-2 bg-gradient-to-r from-[#009999] to-[#007a7a] text-white px-6 py-3 rounded-lg font-semibold hover:shadow-lg transition-all"
+              >
+                <Home className="h-5 w-5" />
+                Voltar à Área do Aluno
+              </Link>
+              <button
+                onClick={() => setShowCompletionModal(false)}
+                className="inline-flex items-center justify-center gap-2 border-2 border-gray-300 text-gray-700 hover:border-[#009999] hover:text-[#009999] px-6 py-3 rounded-lg font-semibold transition-all"
+              >
+                Continuar a Rever
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
