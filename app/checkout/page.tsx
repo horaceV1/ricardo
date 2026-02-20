@@ -5,7 +5,7 @@ import { useAuth } from '@/contexts/AuthContext'
 import { ArrowLeft, CreditCard, User as UserIcon, Smartphone, Building2, Wallet, Clock, CheckCircle2, AlertCircle, Copy, Check, Loader2 } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, Suspense } from 'react'
 
 type PaymentMethod = 'multibanco' | 'mbway' | 'creditcard' | 'paypal'
 
@@ -25,6 +25,22 @@ interface MbwayDetails {
 }
 
 export default function CheckoutPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gray-50 py-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-center py-20">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#009999]"></div>
+          </div>
+        </div>
+      </div>
+    }>
+      <CheckoutContent />
+    </Suspense>
+  )
+}
+
+function CheckoutContent() {
   const { cart, loading, refreshCart } = useCart()
   const { user, isAuthenticated } = useAuth()
   const router = useRouter()
