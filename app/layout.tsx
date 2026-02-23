@@ -79,13 +79,13 @@ export default function RootLayout({
               </div>
             </div>
             {/* Institutional PRR / Açores Banner */}
-            <div className="mt-10 bg-white rounded-lg mx-4 sm:mx-6 lg:mx-auto max-w-7xl px-4 py-4">
+            <div className="mt-10 mx-auto max-w-4xl px-6 sm:px-10 lg:px-16">
               <Image
                 src="/BARRA_ACORES_PRR.png"
                 alt="Barra Açores - Plano de Recuperação e Resiliência"
                 width={6846}
                 height={711}
-                className="w-full h-auto object-contain"
+                className="w-full h-auto object-contain opacity-90"
                 priority={false}
               />
             </div>
