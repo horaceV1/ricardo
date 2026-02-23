@@ -185,6 +185,7 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
                 formId={form.id}
                 formTitle={form.label}
                 fields={form.fields}
+                requireAuth={form.require_auth || false}
               />
             ))}
           </div>

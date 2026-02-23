@@ -1,7 +1,9 @@
 "use client"
 
 import { useState } from "react"
-import { FileUp, Send, CheckCircle, AlertCircle } from "lucide-react"
+import { FileUp, Send, CheckCircle, AlertCircle, Lock } from "lucide-react"
+import { useAuth } from "@/contexts/AuthContext"
+import Link from "next/link"
 
 interface FormField {
   label: string
@@ -15,9 +17,11 @@ interface DynamicFormProps {
   formTitle: string
   fields: FormField[]
   className?: string
+  requireAuth?: boolean
 }
 
-export function DynamicForm({ formId, formTitle, fields, className = "" }: DynamicFormProps) {
+export function DynamicForm({ formId, formTitle, fields, className = "", requireAuth = false }: DynamicFormProps) {
+  const { isAuthenticated } = useAuth()
   const [formData, setFormData] = useState<Record<string, string | File | null>>({
     email: "",
   })
@@ -138,6 +142,56 @@ export function DynamicForm({ formId, formTitle, fields, className = "" }: Dynam
 
   return (
     <div className={`bg-gradient-to-br from-[#009999]/5 to-[#005c5c]/5 rounded-2xl p-8 md:p-10 border border-[#009999]/10 ${className}`}>
+      {/* Auth gate overlay */}
+      {requireAuth && !isAuthenticated ? (
+        <div className="relative">
+          {/* Blurred form preview behind */}
+          <div className="opacity-20 blur-sm pointer-events-none select-none" aria-hidden="true">
+            <div className="max-w-2xl mx-auto">
+              <h3 className="text-2xl md:text-3xl font-black text-gray-900 mb-2">
+                {formTitle}
+              </h3>
+              <p className="text-gray-600 mb-6">
+                Preencha o formulário abaixo para se candidatar
+              </p>
+              <div className="space-y-6">
+                <div className="h-12 bg-gray-200 rounded-lg"></div>
+                <div className="h-12 bg-gray-200 rounded-lg"></div>
+                <div className="h-12 bg-gray-200 rounded-lg"></div>
+                <div className="h-14 bg-[#4051B5]/30 rounded-lg"></div>
+              </div>
+            </div>
+          </div>
+          {/* Overlay message */}
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl p-8 md:p-10 text-center max-w-md mx-4">
+              <div className="w-16 h-16 bg-[#009999]/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Lock className="w-8 h-8 text-[#009999]" />
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">
+                Conteúdo exclusivo
+              </h3>
+              <p className="text-gray-600 mb-6">
+                Para aceder a este formulário, precisa de iniciar sessão ou criar uma conta.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                <Link
+                  href="/conta"
+                  className="px-6 py-3 bg-gradient-to-r from-[#009999] to-[#007a7a] text-white font-semibold rounded-lg hover:shadow-lg transition-all text-center"
+                >
+                  Iniciar Sessão
+                </Link>
+                <Link
+                  href="/conta"
+                  className="px-6 py-3 border-2 border-[#009999] text-[#009999] font-semibold rounded-lg hover:bg-[#009999]/5 transition-all text-center"
+                >
+                  Criar Conta
+                </Link>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : (
       <div className="max-w-2xl mx-auto">
         <h3 className="text-2xl md:text-3xl font-black text-gray-900 mb-2">
           {formTitle}
@@ -283,6 +337,7 @@ export function DynamicForm({ formId, formTitle, fields, className = "" }: Dynam
           </button>
         </form>
       </div>
+      )}
     </div>
   )
 }

@@ -17,6 +17,7 @@ interface DynamicFormData {
   id: string
   label: string
   fields: FormField[]
+  requireAuth: boolean
 }
 
 interface IncentivoPost {
@@ -164,6 +165,7 @@ export default function IncentivoPostPage({ params }: { params: { slug: string[]
                 id: formData.id || formId,
                 label: formData.label || 'Formulário',
                 fields: formData.fields || [],
+                requireAuth: formData.require_auth || false,
               })
             }
           }
@@ -297,6 +299,7 @@ export default function IncentivoPostPage({ params }: { params: { slug: string[]
                     formId={form.id}
                     formTitle={form.label}
                     fields={form.fields}
+                    requireAuth={form.requireAuth}
                   />
                 </div>
               </div>

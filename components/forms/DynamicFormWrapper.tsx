@@ -14,6 +14,7 @@ interface DynamicFormData {
   id: string
   title: string
   fields: FormField[]
+  requireAuth: boolean
 }
 
 interface DynamicFormWrapperProps {
@@ -57,6 +58,7 @@ export default function DynamicFormWrapper({ formId, className }: DynamicFormWra
           id: form.id || formId.toString(),
           title: form.label || 'Formulário',
           fields,
+          requireAuth: form.require_auth || false,
         })
       } catch (err) {
         console.error('Error fetching form:', err)
@@ -94,6 +96,7 @@ export default function DynamicFormWrapper({ formId, className }: DynamicFormWra
       formId={formData.id}
       formTitle={formData.title}
       fields={formData.fields}
+      requireAuth={formData.requireAuth}
       className={className}
     />
   )

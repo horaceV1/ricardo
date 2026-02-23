@@ -303,6 +303,7 @@ export default function BlogPostPage({ params }: { params: { slug: string[] } })
                   formId={form.form_id || form.id}
                   formTitle={form.label}
                   fields={form.fields}
+                  requireAuth={form.require_auth || false}
                 />
               ))}
             </div>
