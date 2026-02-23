@@ -19,8 +19,8 @@ export function absoluteUrl(input: string) {
 }
 
 export function formatPrice(price: number): string {
-  return new Intl.NumberFormat("en-US", {
+  return new Intl.NumberFormat("pt-PT", {
     style: "currency",
-    currency: "USD",
+    currency: "EUR",
   }).format(price)
 }
