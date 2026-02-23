@@ -5,6 +5,7 @@ import { RecaptchaProvider } from "@/components/providers/RecaptchaProvider"
 import { AuthProvider } from "@/contexts/AuthContext"
 import { CartProvider } from "@/contexts/CartContext"
 import { CookieConsent } from "@/components/ui/CookieConsent"
+import Image from "next/image"
 import type { Metadata } from "next"
 import type { ReactNode } from "react"
 
@@ -76,6 +77,17 @@ export default function RootLayout({
               <div className="border-t border-gray-700 mt-8 pt-8 text-center text-gray-300">
                 <p>&copy; 2026 Clínica do Empresário. Todos os direitos reservados.</p>
               </div>
+            </div>
+            {/* Institutional PRR / Açores Banner */}
+            <div className="mt-10 bg-white rounded-lg mx-4 sm:mx-6 lg:mx-auto max-w-7xl px-4 py-4">
+              <Image
+                src="/BARRA_ACORES_PRR.png"
+                alt="Barra Açores - Plano de Recuperação e Resiliência"
+                width={6846}
+                height={711}
+                className="w-full h-auto object-contain"
+                priority={false}
+              />
             </div>
           </footer>
           <CookieConsent />
