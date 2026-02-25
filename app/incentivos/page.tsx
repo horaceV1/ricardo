@@ -1,6 +1,6 @@
 import Image from "next/image"
 import Link from "next/link"
-import { FileText, Calendar, ArrowRight, CheckCircle } from "lucide-react"
+import { FileText, ArrowRight, CheckCircle } from "lucide-react"
 
 interface Incentivo {
   id: string
@@ -145,17 +145,6 @@ export default async function IncentivosPage() {
 
                 {/* Content */}
                 <div className="p-6">
-                  <div className="flex items-center gap-2 text-sm text-gray-500 mb-3">
-                    <Calendar className="h-4 w-4" />
-                    <span>
-                      {new Date(incentivo.created).toLocaleDateString('pt-BR', {
-                        day: '2-digit',
-                        month: 'long',
-                        year: 'numeric',
-                      })}
-                    </span>
-                  </div>
-
                   <h2 className="text-xl font-bold text-gray-900 mb-3 group-hover:text-[#009999] transition-colors line-clamp-2">
                     {incentivo.title}
                   </h2>

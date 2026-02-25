@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Image from 'next/image'
-import { Calendar, User, ArrowLeft, FileText, CheckCircle } from 'lucide-react'
+import { User, ArrowLeft, FileText, CheckCircle } from 'lucide-react'
 import Link from 'next/link'
 import { DynamicForm } from '@/components/forms/DynamicForm'
 
@@ -180,14 +180,6 @@ export default function IncentivoPostPage({ params }: { params: { slug: string[]
     }
   }
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('pt-BR', {
-      day: '2-digit',
-      month: 'long',
-      year: 'numeric',
-    })
-  }
-
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -244,10 +236,6 @@ export default function IncentivoPostPage({ params }: { params: { slug: string[]
               <h1 className="text-4xl md:text-5xl font-black text-white mb-4">{post.title}</h1>
               <div className="flex flex-wrap items-center gap-6 text-white/90">
                 <div className="flex items-center gap-2">
-                  <Calendar className="w-5 h-5" />
-                  <span>{formatDate(post.created)}</span>
-                </div>
-                <div className="flex items-center gap-2">
                   <User className="w-5 h-5" />
                   <span>{post.author}</span>
                 </div>
@@ -260,10 +248,6 @@ export default function IncentivoPostPage({ params }: { params: { slug: string[]
           <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
             <h1 className="text-4xl md:text-5xl font-black mb-4">{post.title}</h1>
             <div className="flex flex-wrap items-center gap-6 text-white/80">
-              <div className="flex items-center gap-2">
-                <Calendar className="w-5 h-5" />
-                <span>{formatDate(post.created)}</span>
-              </div>
               <div className="flex items-center gap-2">
                 <User className="w-5 h-5" />
                 <span>{post.author}</span>
