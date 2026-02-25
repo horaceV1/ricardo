@@ -1,7 +1,13 @@
 "use client"
 
 import { useEffect, useState } from 'react'
-import { Clock, CheckCircle, XCircle, AlertCircle, FileText, Calendar, Trash2, Loader2 } from 'lucide-react'
+import { Clock, CheckCircle, XCircle, AlertCircle, FileText, Calendar, Trash2, Loader2, ChevronDown, ChevronUp, MessageSquare } from 'lucide-react'
+
+interface FieldApproval {
+  status: 'pending' | 'approved' | 'denied'
+  note: string
+  date: number | null
+}
 
 interface Activity {
   id: number
@@ -15,6 +21,7 @@ interface Activity {
   approval_note?: string
   approval_date?: number
   approval_date_formatted?: string
+  field_approvals?: Record<string, FieldApproval>
 }
 
 interface RecentActivityProps {
@@ -29,6 +36,7 @@ export default function RecentActivity({ limit, showHeader = true }: RecentActiv
   const [deletingId, setDeletingId] = useState<number | null>(null)
   const [showClearAllConfirm, setShowClearAllConfirm] = useState(false)
   const [clearingAll, setClearingAll] = useState(false)
+  const [expandedId, setExpandedId] = useState<number | null>(null)
 
   useEffect(() => {
     fetchActivities()
@@ -322,63 +330,149 @@ export default function RecentActivity({ limit, showHeader = true }: RecentActiv
       )}
 
       <div className="divide-y divide-gray-100">
-        {activities.map((activity) => (
-          <div
-            key={activity.id}
-            className="p-6 hover:bg-gray-50 transition-colors duration-200"
-          >
-            <div className="flex items-start justify-between gap-4">
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-3 mb-2">
-                  <h3 className="text-lg font-semibold text-gray-900 truncate">
-                    {activity.form_name}
-                  </h3>
-                  {getStatusBadge(activity.status, activity.status_label)}
-                </div>
+        {activities.map((activity) => {
+          const fieldApprovals = activity.field_approvals || {}
+          const hasFieldApprovals = Object.keys(fieldApprovals).length > 0
+          const isExpanded = expandedId === activity.id
 
-                <div className="flex items-center gap-4 text-sm text-gray-600 mb-3">
-                  <div className="flex items-center gap-1.5">
-                    <Calendar className="h-4 w-4" />
-                    <span>Enviado: {activity.submitted_date_formatted}</span>
-                  </div>
-                  {activity.approval_date_formatted && (
-                    <div className="flex items-center gap-1.5">
-                      <CheckCircle className="h-4 w-4" />
-                      <span>Avaliado: {activity.approval_date_formatted}</span>
+          return (
+            <div
+              key={activity.id}
+              className="hover:bg-gray-50/50 transition-colors duration-200"
+            >
+              {/* Main row */}
+              <div className="p-5 sm:p-6">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-3 mb-2 flex-wrap">
+                      <h3 className="text-lg font-semibold text-gray-900 truncate">
+                        {activity.form_name}
+                      </h3>
+                      {getStatusBadge(activity.status, activity.status_label)}
                     </div>
-                  )}
-                </div>
 
-                {activity.approval_note && (
-                  <div className="mt-3 p-4 bg-gray-50 rounded-lg border border-gray-200">
-                    <p className="text-sm font-semibold text-gray-700 mb-1">
-                      Nota do Administrador:
-                    </p>
-                    <p className="text-sm text-gray-700 whitespace-pre-wrap">
-                      {activity.approval_note}
-                    </p>
+                    <div className="flex items-center gap-4 text-sm text-gray-500">
+                      <div className="flex items-center gap-1.5">
+                        <Calendar className="h-3.5 w-3.5" />
+                        <span>Enviado: {activity.submitted_date_formatted}</span>
+                      </div>
+                    </div>
+
+                    {/* Per-field approval summary pills */}
+                    {hasFieldApprovals && (
+                      <div className="mt-3 flex flex-wrap gap-1.5">
+                        {Object.entries(fieldApprovals).map(([label, approval]) => (
+                          <span
+                            key={label}
+                            className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium ${
+                              approval.status === 'approved'
+                                ? 'bg-green-50 text-green-700'
+                                : approval.status === 'denied'
+                                ? 'bg-red-50 text-red-700'
+                                : 'bg-gray-100 text-gray-600'
+                            }`}
+                          >
+                            {approval.status === 'approved' ? (
+                              <CheckCircle className="h-3 w-3" />
+                            ) : approval.status === 'denied' ? (
+                              <XCircle className="h-3 w-3" />
+                            ) : (
+                              <Clock className="h-3 w-3" />
+                            )}
+                            {label}
+                          </span>
+                        ))}
+                      </div>
+                    )}
                   </div>
-                )}
+
+                  <div className="flex items-center gap-1 flex-shrink-0">
+                    {hasFieldApprovals && (
+                      <button
+                        onClick={() => setExpandedId(isExpanded ? null : activity.id)}
+                        className="p-2 text-gray-500 hover:text-[#009999] hover:bg-[#009999]/10 rounded-lg transition-colors"
+                        title="Ver detalhes"
+                      >
+                        {isExpanded ? (
+                          <ChevronUp className="h-5 w-5" />
+                        ) : (
+                          <ChevronDown className="h-5 w-5" />
+                        )}
+                      </button>
+                    )}
+                    <button
+                      onClick={() => deleteSubmission(activity.id)}
+                      disabled={deletingId === activity.id}
+                      className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      title="Excluir submissão"
+                    >
+                      {deletingId === activity.id ? (
+                        <Loader2 className="h-5 w-5 animate-spin" />
+                      ) : (
+                        <Trash2 className="h-5 w-5" />
+                      )}
+                    </button>
+                  </div>
+                </div>
               </div>
 
-              <div className="flex items-center gap-2 flex-shrink-0">
-                {getStatusIcon(activity.status)}
-                <button
-                  onClick={() => deleteSubmission(activity.id)}
-                  disabled={deletingId === activity.id}
-                  className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                  title="Excluir submissão"
-                >
-                  {deletingId === activity.id ? (
-                    <Loader2 className="h-5 w-5 animate-spin" />
-                  ) : (
-                    <Trash2 className="h-5 w-5" />
-                  )}
-                </button>
-              </div>
+              {/* Expanded per-field details */}
+              {isExpanded && hasFieldApprovals && (
+                <div className="px-5 sm:px-6 pb-5 sm:pb-6">
+                  <div className="bg-gray-50 rounded-xl border border-gray-200 overflow-hidden">
+                    <div className="px-4 py-3 bg-gray-100/80 border-b border-gray-200">
+                      <h4 className="text-sm font-semibold text-gray-700">
+                        Estado de cada documento
+                      </h4>
+                    </div>
+                    <div className="divide-y divide-gray-200">
+                      {Object.entries(fieldApprovals).map(([label, approval]) => (
+                        <div key={label} className="px-4 py-3">
+                          <div className="flex items-center justify-between gap-3">
+                            <div className="flex items-center gap-2 min-w-0">
+                              <FileText className="h-4 w-4 text-gray-400 flex-shrink-0" />
+                              <span className="text-sm font-medium text-gray-800 truncate">{label}</span>
+                            </div>
+                            <span
+                              className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold flex-shrink-0 ${
+                                approval.status === 'approved'
+                                  ? 'bg-green-100 text-green-800'
+                                  : approval.status === 'denied'
+                                  ? 'bg-red-100 text-red-800'
+                                  : 'bg-orange-100 text-orange-800'
+                              }`}
+                            >
+                              {approval.status === 'approved' ? (
+                                <CheckCircle className="h-3.5 w-3.5" />
+                              ) : approval.status === 'denied' ? (
+                                <XCircle className="h-3.5 w-3.5" />
+                              ) : (
+                                <Clock className="h-3.5 w-3.5" />
+                              )}
+                              {approval.status === 'approved'
+                                ? 'Aprovado'
+                                : approval.status === 'denied'
+                                ? 'Negado'
+                                : 'Pendente'}
+                            </span>
+                          </div>
+                          {approval.note && (
+                            <div className="mt-2 ml-6 flex items-start gap-1.5">
+                              <MessageSquare className="h-3.5 w-3.5 text-gray-400 mt-0.5 flex-shrink-0" />
+                              <p className="text-xs text-gray-600 italic">
+                                {approval.note}
+                              </p>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
-          </div>
-        ))}
+          )
+        })}
       </div>
 
       {activities.length > 0 && limit && (
