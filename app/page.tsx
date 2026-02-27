@@ -197,35 +197,18 @@ export default async function Home() {
     getHomepageData(),
     (async () => {
       try {
-        const curso1 = await drupal.getResource<DrupalNode>(
-          "commerce_product--media",
-          "72d8b57c-9575-4eb5-abbe-8be6f36e2e5f",
-          {
-            params: {
-              "fields[commerce_product--media]": "title,body,path,images,variations",
-              include: "images,variations",
-            },
-            next: { revalidate: 3600 },
-          }
-        )
-
         const products = await drupal.getResourceCollection<DrupalNode[]>(
           "commerce_product--media",
           {
             params: {
               "filter[status]": 1,
-              "filter[id][operator]": "NOT IN",
-              "filter[id][value]": ["72d8b57c-9575-4eb5-abbe-8be6f36e2e5f"],
-              "fields[commerce_product--media]": "title,body,path,images,variations",
-              include: "images,variations",
+              include: "images,variations,default_variation",
               sort: "-created",
-              "page[limit]": 2,
+              "page[limit]": 3,
             },
-            next: { revalidate: 3600 },
+            next: { revalidate: 60 },
           }
         )
-
-        if (curso1) return [curso1, ...(products || [])]
         return products || []
       } catch {
         return []

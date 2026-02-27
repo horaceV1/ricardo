@@ -20,7 +20,7 @@ export default async function CoursesPage() {
           sort: "-created",
         },
         next: {
-          revalidate: 3600,
+          revalidate: 60,
         },
       }
     ).catch((error) => {
@@ -36,7 +36,7 @@ export default async function CoursesPage() {
           sort: "-created",
         },
         next: {
-          revalidate: 3600,
+          revalidate: 60,
         },
       }
     ).catch((error) => {
