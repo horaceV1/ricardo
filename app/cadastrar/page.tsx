@@ -122,7 +122,13 @@ export default function RegisterPage() {
         body: JSON.stringify({ email: formData.mail }),
       })
 
-      const result = await response.json()
+      let result
+      try {
+        result = await response.json()
+      } catch {
+        setError('Erro ao processar resposta do servidor.')
+        return
+      }
 
       if (!response.ok) {
         setError(result.error || 'Falha ao enviar código de verificação')
@@ -130,7 +136,8 @@ export default function RegisterPage() {
       }
 
       setVerificationStep('verify')
-    } catch {
+    } catch (err) {
+      console.error('Send verification code error:', err)
       setError('Erro de rede. Tente novamente.')
     } finally {
       setSendingCode(false)
