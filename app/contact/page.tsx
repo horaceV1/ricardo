@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { AnimatedSection } from "@/components/animations/AnimatedSection"
-import { Send, CheckCircle, AlertCircle, MapPin, Phone, Mail, Clock } from "lucide-react"
+import { Send, CheckCircle, AlertCircle, MapPin, Phone, Mail, Clock, ChevronDown } from "lucide-react"
 
 /* ── Types matching the Drupal /api/contact-page response ── */
 interface ContactPageData {
@@ -112,6 +112,37 @@ const fallbackData: ContactPageData = {
     button_text: "+351 211 164 404",
     button_link: "tel:+351211164404",
   },
+}
+
+/* ── FAQ Accordion Item ── */
+function FaqAccordionItem({ question, answer }: { question: string; answer: string }) {
+  const [isOpen, setIsOpen] = useState(false)
+
+  return (
+    <div className="border border-gray-200 rounded-lg overflow-hidden bg-white transition-shadow hover:shadow-sm">
+      <button
+        type="button"
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-full flex items-center justify-between gap-3 px-4 py-3 text-left cursor-pointer"
+      >
+        <span className="text-sm font-semibold text-gray-900">{question}</span>
+        <ChevronDown
+          className={`w-4 h-4 text-[#009999] flex-shrink-0 transition-transform duration-200 ${
+            isOpen ? 'rotate-180' : ''
+          }`}
+        />
+      </button>
+      <div
+        className={`grid transition-all duration-200 ease-in-out ${
+          isOpen ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
+        }`}
+      >
+        <div className="overflow-hidden">
+          <p className="text-sm text-gray-600 px-4 pb-3 leading-relaxed">{answer}</p>
+        </div>
+      </div>
+    </div>
+  )
 }
 
 export default function ContactPage() {
@@ -470,12 +501,9 @@ export default function ContactPage() {
                 <h3 className="text-lg font-bold text-gray-900 mb-4">
                   {pageData.faq.title}
                 </h3>
-                <div className="space-y-4">
+                <div className="space-y-3">
                   {pageData.faq.items.map((item) => (
-                    <div key={item.question}>
-                      <p className="text-sm font-semibold text-gray-900">{item.question}</p>
-                      <p className="text-sm text-gray-600 mt-1">{item.answer}</p>
-                    </div>
+                    <FaqAccordionItem key={item.question} question={item.question} answer={item.answer} />
                   ))}
                 </div>
               </div>
