@@ -16,6 +16,7 @@ export default function EditProfilePage() {
     field_first_name: '',
     field_last_name: '',
     field_phone: '',
+    field_nif: '',
     field_address: '',
     field_city: '',
     field_postal_code: '',
@@ -57,6 +58,7 @@ export default function EditProfilePage() {
           field_first_name: userData.field_first_name || '',
           field_last_name: userData.field_last_name || '',
           field_phone: userData.field_phone || '',
+          field_nif: userData.field_nif || '',
           field_address: userData.field_address || '',
           field_city: userData.field_city || '',
           field_postal_code: userData.field_postal_code || '',
@@ -108,9 +110,18 @@ export default function EditProfilePage() {
   }
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target
+
+    // NIF: only allow digits, max 9
+    if (name === 'field_nif') {
+      const digits = value.replace(/\D/g, '').slice(0, 9)
+      setFormData(prev => ({ ...prev, field_nif: digits }))
+      return
+    }
+
     setFormData(prev => ({
       ...prev,
-      [e.target.name]: e.target.value,
+      [name]: value,
     }))
   }
 
@@ -219,6 +230,36 @@ export default function EditProfilePage() {
               placeholder="+351 123 456 789"
               disabled={isLoading}
             />
+          </div>
+
+          {/* NIF */}
+          <div>
+            <label htmlFor="field_nif" className="block text-sm font-medium text-gray-700 mb-2">
+              NIF <span className="text-gray-400 text-xs font-normal">(opcional)</span>
+            </label>
+            <input
+              id="field_nif"
+              name="field_nif"
+              type="text"
+              inputMode="numeric"
+              value={formData.field_nif}
+              onChange={handleChange}
+              className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#009999] focus:border-transparent ${
+                formData.field_nif && formData.field_nif.length !== 9
+                  ? 'border-red-300 bg-red-50'
+                  : formData.field_nif.length === 9
+                  ? 'border-green-300 bg-green-50'
+                  : 'border-gray-300'
+              }`}
+              placeholder="123456789"
+              disabled={isLoading}
+              maxLength={9}
+            />
+            {formData.field_nif && formData.field_nif.length !== 9 && (
+              <p className="mt-1 text-xs text-red-500">
+                O NIF deve conter exatamente 9 dígitos ({formData.field_nif.length}/9)
+              </p>
+            )}
           </div>
 
           {/* Address */}

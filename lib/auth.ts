@@ -15,6 +15,7 @@ export interface DrupalUser {
   field_first_name?: string
   field_last_name?: string
   field_phone?: string
+  field_nif?: string
   field_address?: string
   field_city?: string
   field_postal_code?: string
@@ -48,6 +49,7 @@ export interface RegisterData {
   field_city?: string
   field_postal_code?: string
   field_country?: string
+  field_nif?: string
 }
 
 /**
@@ -147,6 +149,7 @@ export async function register(userData: RegisterData): Promise<DrupalUser> {
       field_city: userData.field_city,
       field_postal_code: userData.field_postal_code,
       field_country: userData.field_country,
+      field_nif: userData.field_nif,
     }),
   })
 
