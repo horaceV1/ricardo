@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 60" fill="none">
+  <rect width="100" height="60" rx="6" fill="#1A1F36"/>
+  <rect x="15" y="12" width="4" height="36" rx="1" fill="#E31937"/>
+  <rect x="22" y="12" width="4" height="36" rx="1" fill="#E31937"/>
+  <rect x="29" y="12" width="4" height="36" rx="1" fill="#00629B"/>
+  <rect x="36" y="12" width="4" height="36" rx="1" fill="#00629B"/>
+  <rect x="43" y="12" width="4" height="36" rx="1" fill="#00629B"/>
+  <text x="54" y="28" font-family="Arial, Helvetica, sans-serif" font-size="8" font-weight="700" fill="#FFFFFF" letter-spacing="0.5">MULTI</text>
+  <text x="54" y="40" font-family="Arial, Helvetica, sans-serif" font-size="8" font-weight="700" fill="#FFFFFF" letter-spacing="0.5">BANCO</text>
+</svg>

@@ -74,7 +74,32 @@ export default function RootLayout({
                   </ul>
                 </div>
               </div>
-              <div className="border-t border-gray-700 mt-8 pt-8 text-center text-gray-300">
+              {/* Payment Methods */}
+              <div className="border-t border-gray-700 mt-8 pt-8">
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                  <p className="text-sm text-gray-400">Métodos de pagamento aceites:</p>
+                  <div className="flex items-center gap-3">
+                    <div className="bg-white/10 backdrop-blur-sm rounded-md p-1.5 hover:bg-white/20 transition-colors" title="Visa">
+                      <Image src="/payment-icons/visa.svg" alt="Visa" width={48} height={30} className="h-[28px] w-auto" />
+                    </div>
+                    <div className="bg-white/10 backdrop-blur-sm rounded-md p-1.5 hover:bg-white/20 transition-colors" title="Mastercard">
+                      <Image src="/payment-icons/mastercard.svg" alt="Mastercard" width={48} height={30} className="h-[28px] w-auto" />
+                    </div>
+                    <div className="bg-white/10 backdrop-blur-sm rounded-md p-1.5 hover:bg-white/20 transition-colors" title="PayPal">
+                      <Image src="/payment-icons/paypal.svg" alt="PayPal" width={48} height={30} className="h-[28px] w-auto" />
+                    </div>
+                    <div className="bg-white/10 backdrop-blur-sm rounded-md p-1.5 hover:bg-white/20 transition-colors" title="Multibanco">
+                      <Image src="/payment-icons/multibanco.svg" alt="Multibanco" width={48} height={30} className="h-[28px] w-auto" />
+                    </div>
+                    <div className="bg-white/10 backdrop-blur-sm rounded-md p-1.5 hover:bg-white/20 transition-colors" title="MB WAY">
+                      <Image src="/payment-icons/mbway.svg" alt="MB WAY" width={48} height={30} className="h-[28px] w-auto" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Copyright */}
+              <div className="border-t border-gray-700/50 mt-6 pt-6 text-center text-gray-300">
                 <p>&copy; 2026 Clínica do Empresário. Todos os direitos reservados.</p>
               </div>
             </div>
