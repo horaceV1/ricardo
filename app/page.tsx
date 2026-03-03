@@ -1,4 +1,4 @@
-import { ArrowRight, Award, Users, Target, TrendingUp, CheckCircle, Star } from "lucide-react"
+import { ArrowRight, Award, Users, Target, TrendingUp, Star } from "lucide-react"
 import Link from "next/link"
 import { drupal } from "@/lib/drupal"
 import { CourseCard } from "@/components/courses/CourseCard"
@@ -19,6 +19,33 @@ const featureColors = [
   { bg: 'bg-[#009999]', card: 'from-[#e6f7f7] to-white', border: 'hover:border-[#009999]' },
   { bg: 'bg-[#ff8c00]', card: 'from-[#fff5e6] to-white', border: 'hover:border-[#ff8c00]' },
 ]
+
+/**
+ * Renders CKEditor5 rich text HTML preserving fonts, colors, sizes.
+ * Strips wrapping <p> tags when used inline (e.g. inside headings).
+ */
+function RichText({ html, className, as: Tag = 'div', inline = false }: {
+  html: string
+  className?: string
+  as?: keyof JSX.IntrinsicElements
+  inline?: boolean
+}) {
+  if (!html) return null
+  // For inline usage, strip outer <p>...</p> wrapper to avoid block-level element inside inline context
+  let processed = html
+  if (inline) {
+    processed = processed.replace(/^<p>/, '').replace(/<\/p>\s*$/, '')
+  }
+  return <Tag className={`drupal-content ${className || ''}`} dangerouslySetInnerHTML={{ __html: processed }} />
+}
+
+/**
+ * Strips all HTML tags from a string for use in plain text contexts.
+ */
+function stripHtml(html: string): string {
+  if (!html) return ''
+  return html.replace(/<[^>]*>/g, '').trim()
+}
 
 interface HomepageData {
   hero: {
@@ -216,19 +243,8 @@ export default async function Home() {
     })(),
   ])
 
-  // Split section titles to highlight the last word in teal
-  const splitTitle = (title: string) => {
-    const parts = title.split(' ')
-    const last = parts.pop() || ''
-    return { first: parts.join(' '), last }
-  }
-
-  const featuresTitle = splitTitle(hp.features.title)
-  const formationsTitle = splitTitle(hp.formations.title)
-  const testimonialsTitle = splitTitle(hp.testimonials.title)
-
-  // Filter out empty testimonials
-  const validTestimonials = hp.testimonials.items.filter(t => t.text && t.name)
+  // Filter out empty testimonials (text is now HTML, strip tags to check)
+  const validTestimonials = hp.testimonials.items.filter(t => stripHtml(t.text) && t.name)
 
   return (
     <div className="overflow-x-hidden">
@@ -245,16 +261,14 @@ export default async function Home() {
               <div>
                 <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full mb-6">
                   <Star className="w-4 h-4 text-[#ff8c00]" fill="currentColor" />
-                  <span className="text-sm font-semibold">{hp.hero.badge}</span>
+                  <RichText html={hp.hero.badge} as="span" inline className="text-sm font-semibold" />
                 </div>
 
                 <h1 className="text-5xl md:text-6xl lg:text-7xl font-black mb-6 leading-tight">
-                  {renderHeroTitle(hp.hero.title, hp.hero.highlight)}
+                  {stripHtml(hp.hero.title) ? renderHeroTitle(stripHtml(hp.hero.title), hp.hero.highlight) : renderHeroTitle(defaults.hero.title, defaults.hero.highlight)}
                 </h1>
 
-                <p className="text-xl md:text-2xl text-[#b3e6e6] mb-8 leading-relaxed">
-                  {hp.hero.subtitle}
-                </p>
+                <RichText html={hp.hero.subtitle} as="div" className="text-xl md:text-2xl text-[#b3e6e6] mb-8 leading-relaxed" />
 
                 <div className="flex flex-col sm:flex-row gap-4 mb-12">
                   <Link
@@ -305,12 +319,8 @@ export default async function Home() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <AnimatedSection animation="fadeIn">
             <div className="text-center mb-16">
-              <h2 className="text-4xl md:text-5xl font-black mb-4 text-gray-900">
-                {featuresTitle.first} <span className="text-[#009999]">{featuresTitle.last}</span>
-              </h2>
-              <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-                {hp.features.subtitle}
-              </p>
+              <RichText html={hp.features.title} as="h2" inline className="text-4xl md:text-5xl font-black mb-4 text-gray-900" />
+              <RichText html={hp.features.subtitle} as="div" className="text-xl text-gray-600 max-w-3xl mx-auto" />
             </div>
           </AnimatedSection>
 
@@ -324,10 +334,8 @@ export default async function Home() {
                     <div className={`${color.bg} w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform shadow-lg`}>
                       <Icon className="w-8 h-8 text-white" />
                     </div>
-                    <h3 className="text-xl font-bold mb-2 text-gray-900">{feature.title}</h3>
-                    <p className="text-gray-600 text-sm leading-relaxed">
-                      {feature.description}
-                    </p>
+                    <RichText html={feature.title} as="h3" inline className="text-xl font-bold mb-2 text-gray-900" />
+                    <RichText html={feature.description} as="div" className="text-gray-600 text-sm leading-relaxed" />
                   </div>
                 </AnimatedSection>
               )
@@ -341,12 +349,8 @@ export default async function Home() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <AnimatedSection animation="fadeIn">
             <div className="text-center mb-12">
-              <h2 className="text-4xl md:text-5xl font-black mb-4 text-gray-900">
-                {formationsTitle.first} <span className="text-[#009999]">{formationsTitle.last}</span>
-              </h2>
-              <p className="text-xl text-gray-600 max-w-3xl mx-auto mb-6">
-                {hp.formations.subtitle}
-              </p>
+              <RichText html={hp.formations.title} as="h2" inline className="text-4xl md:text-5xl font-black mb-4 text-gray-900" />
+              <RichText html={hp.formations.subtitle} as="div" className="text-xl text-gray-600 max-w-3xl mx-auto mb-6" />
               <Link
                 href="/courses"
                 className="inline-flex items-center gap-2 text-[#009999] hover:text-[#007a7a] font-bold text-lg transition-colors"
@@ -379,12 +383,8 @@ export default async function Home() {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <AnimatedSection animation="fadeIn">
               <div className="text-center mb-16">
-                <h2 className="text-4xl md:text-5xl font-black mb-4 text-gray-900">
-                  {testimonialsTitle.first} <span className="text-[#009999]">{testimonialsTitle.last}</span>
-                </h2>
-                <p className="text-xl text-gray-600">
-                  {hp.testimonials.subtitle}
-                </p>
+                <RichText html={hp.testimonials.title} as="h2" inline className="text-4xl md:text-5xl font-black mb-4 text-gray-900" />
+                <RichText html={hp.testimonials.subtitle} as="div" className="text-xl text-gray-600" />
               </div>
             </AnimatedSection>
 
@@ -397,9 +397,9 @@ export default async function Home() {
                         <Star key={star} className="w-5 h-5 text-[#ff8c00]" fill="currentColor" />
                       ))}
                     </div>
-                    <p className="text-gray-700 mb-6 leading-relaxed italic">
-                      &ldquo;{testimonial.text}&rdquo;
-                    </p>
+                    <div className="text-gray-700 mb-6 leading-relaxed italic">
+                      &ldquo;<RichText html={testimonial.text} as="span" inline />&rdquo;
+                    </div>
                     <div className="flex items-center gap-4">
                       <div className="w-12 h-12 bg-[#009999] rounded-full flex items-center justify-center text-white font-bold text-lg">
                         {testimonial.name.charAt(0)}
@@ -426,12 +426,8 @@ export default async function Home() {
 
         <div className="relative max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <AnimatedSection animation="scale">
-            <h2 className="text-4xl md:text-5xl font-black mb-6">
-              {hp.cta.title}
-            </h2>
-            <p className="text-xl text-[#b3e6e6] mb-8 max-w-2xl mx-auto">
-              {hp.cta.subtitle}
-            </p>
+            <RichText html={hp.cta.title} as="h2" inline className="text-4xl md:text-5xl font-black mb-6" />
+            <RichText html={hp.cta.subtitle} as="div" className="text-xl text-[#b3e6e6] mb-8 max-w-2xl mx-auto" />
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link
                 href={hp.cta.button.link}

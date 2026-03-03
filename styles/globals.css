@@ -18,3 +18,44 @@
     opacity: 1;
   }
 }
+
+/*
+ * Drupal CKEditor5 rich text content styles.
+ * Ensures font-family, font-size, color, and background-color
+ * from inline style attributes are honoured in the frontend.
+ */
+.drupal-content p {
+  margin: 0;
+}
+
+.drupal-content p + p {
+  margin-top: 0.5em;
+}
+
+/* Inherit parent text color/size unless overridden by inline styles */
+.drupal-content span {
+  /* Allow CKEditor5 inline styles to take effect */
+}
+
+/* Preserve list styles inside rich text */
+.drupal-content ul {
+  list-style-type: disc;
+  padding-left: 1.5em;
+}
+
+.drupal-content ol {
+  list-style-type: decimal;
+  padding-left: 1.5em;
+}
+
+/* Preserve links */
+.drupal-content a {
+  color: #009999;
+  text-decoration: underline;
+}
+
+/* CKEditor5 font size classes (used when pixel sizes are configured) */
+.drupal-content .text-tiny { font-size: 0.7em; }
+.drupal-content .text-small { font-size: 0.85em; }
+.drupal-content .text-big { font-size: 1.4em; }
+.drupal-content .text-huge { font-size: 1.8em; }
