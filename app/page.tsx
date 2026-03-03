@@ -31,10 +31,11 @@ function RichText({ html, className, as: Tag = 'div', inline = false }: {
   inline?: boolean
 }) {
   if (!html) return null
-  // For inline usage, strip outer <p>...</p> wrapper to avoid block-level element inside inline context
-  let processed = html
+  let processed = html.trim()
   if (inline) {
-    processed = processed.replace(/^<p>/, '').replace(/<\/p>\s*$/, '')
+    // Strip all <p> and </p> tags to avoid nesting block elements inside
+    // inline/heading contexts (h1, h2, h3, span, etc.)
+    processed = processed.replace(/<\/?p>/g, '')
   }
   return <Tag className={`drupal-content ${className || ''}`} dangerouslySetInnerHTML={{ __html: processed }} />
 }
@@ -264,9 +265,13 @@ export default async function Home() {
                   <RichText html={hp.hero.badge} as="span" inline className="text-sm font-semibold" />
                 </div>
 
-                <h1 className="text-5xl md:text-6xl lg:text-7xl font-black mb-6 leading-tight">
-                  {stripHtml(hp.hero.title) ? renderHeroTitle(stripHtml(hp.hero.title), hp.hero.highlight) : renderHeroTitle(defaults.hero.title, defaults.hero.highlight)}
-                </h1>
+                {hp.hero.title ? (
+                  <RichText html={hp.hero.title} as="h1" inline className="text-5xl md:text-6xl lg:text-7xl font-black mb-6 leading-tight" />
+                ) : (
+                  <h1 className="text-5xl md:text-6xl lg:text-7xl font-black mb-6 leading-tight">
+                    {renderHeroTitle(defaults.hero.title, defaults.hero.highlight)}
+                  </h1>
+                )}
 
                 <RichText html={hp.hero.subtitle} as="div" className="text-xl md:text-2xl text-[#b3e6e6] mb-8 leading-relaxed" />
 
