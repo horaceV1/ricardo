@@ -152,22 +152,22 @@ export function HeaderNav() {
         {mobileMenuOpen && (
           <div className="md:hidden py-4 border-t border-gray-200">
             <nav className="flex flex-col gap-4">
-              <Link href="/" className="text-gray-700 hover:text-[#009999] font-semibold no-underline transition-colors">
+              <Link href="/" className="text-gray-700 hover:text-[#009999] font-semibold no-underline transition-colors" onClick={() => setMobileMenuOpen(false)}>
                 Início
               </Link>
-              <Link href="/courses" className="text-gray-700 hover:text-[#009999] font-semibold no-underline transition-colors">
+              <Link href="/courses" className="text-gray-700 hover:text-[#009999] font-semibold no-underline transition-colors" onClick={() => setMobileMenuOpen(false)}>
                 Formações
               </Link>
-              <Link href="/blog" className="text-gray-700 hover:text-[#009999] font-semibold no-underline transition-colors">
+              <Link href="/blog" className="text-gray-700 hover:text-[#009999] font-semibold no-underline transition-colors" onClick={() => setMobileMenuOpen(false)}>
                 Blog
               </Link>
-              <Link href="/incentivos" className="text-gray-700 hover:text-[#009999] font-semibold no-underline transition-colors">
+              <Link href="/incentivos" className="text-gray-700 hover:text-[#009999] font-semibold no-underline transition-colors" onClick={() => setMobileMenuOpen(false)}>
                 Incentivos
               </Link>
-              <Link href="/about" className="text-gray-700 hover:text-[#009999] font-semibold no-underline transition-colors">
+              <Link href="/about" className="text-gray-700 hover:text-[#009999] font-semibold no-underline transition-colors" onClick={() => setMobileMenuOpen(false)}>
                 Sobre
               </Link>
-              <Link href="/contact" className="text-gray-700 hover:text-[#009999] font-semibold no-underline transition-colors">
+              <Link href="/contact" className="text-gray-700 hover:text-[#009999] font-semibold no-underline transition-colors" onClick={() => setMobileMenuOpen(false)}>
                 Contato
               </Link>
               <div className="flex flex-col gap-2 pt-4 border-t border-gray-200">
