@@ -230,7 +230,7 @@ export default async function Home() {
           {
             params: {
               "filter[status]": 1,
-              include: "images,variations,default_variation",
+              include: "images,variations,default_variation,field_categoria,field_nivel",
               sort: "-created",
               "page[limit]": 3,
             },

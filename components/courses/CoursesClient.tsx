@@ -7,23 +7,33 @@ import { FadeIn } from "@/components/animations/FadeIn"
 import { StaggerChildren, StaggerItem } from "@/components/animations/StaggerChildren"
 import { DrupalNode } from "next-drupal"
 
-interface CoursesClientProps {
-  initialCourses: DrupalNode[]
+interface TaxonomyTerm {
+  id: string
+  name: string
 }
 
-export function CoursesClient({ initialCourses }: CoursesClientProps) {
+interface CoursesClientProps {
+  initialCourses: DrupalNode[]
+  categories?: TaxonomyTerm[]
+  levels?: TaxonomyTerm[]
+}
+
+export function CoursesClient({ initialCourses, categories = [], levels = [] }: CoursesClientProps) {
   const [selectedCategory, setSelectedCategory] = useState("All")
   const [selectedLevel, setSelectedLevel] = useState("All")
   const [searchQuery, setSearchQuery] = useState("")
   const [showFilters, setShowFilters] = useState(false)
 
-  const categories = ["All", "Consultoria Estratégica", "Gestão Financeira", "Marketing", "Vendas", "Recursos Humanos"]
-  const levels = ["All", "Iniciante", "Intermediário", "Avançado"]
+  const categoryNames = ["All", ...categories.map(c => c.name)]
+  const levelNames = ["All", ...levels.map(l => l.name)]
 
   const filteredCourses = initialCourses.filter((course) => {
-    const matchesCategory =
-      selectedCategory === "All" || course.field_category?.name === selectedCategory
-    const matchesLevel = selectedLevel === "All" || course.field_level === selectedLevel
+    // Get the category and level names from the included taxonomy term relationships
+    const courseCategoryName = course.field_categoria?.name || course.field_categoria?.attributes?.name || null
+    const courseLevelName = course.field_nivel?.name || course.field_nivel?.attributes?.name || null
+
+    const matchesCategory = selectedCategory === "All" || courseCategoryName === selectedCategory
+    const matchesLevel = selectedLevel === "All" || courseLevelName === selectedLevel
     const matchesSearch =
       course.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       course.body?.summary?.toLowerCase().includes(searchQuery.toLowerCase())
@@ -81,17 +91,17 @@ export function CoursesClient({ initialCourses }: CoursesClientProps) {
                     Categoria
                   </label>
                   <div className="flex flex-wrap gap-2">
-                    {categories.map((category) => (
+                    {categoryNames.map((name) => (
                       <button
-                        key={category}
-                        onClick={() => setSelectedCategory(category)}
+                        key={name}
+                        onClick={() => setSelectedCategory(name)}
                         className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                          selectedCategory === category
+                          selectedCategory === name
                             ? "bg-[#009999] text-white"
                             : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                         }`}
                       >
-                        {category}
+                        {name}
                       </button>
                     ))}
                   </div>
@@ -101,17 +111,17 @@ export function CoursesClient({ initialCourses }: CoursesClientProps) {
                 <div>
                   <label className="block text-sm font-semibold mb-2 text-gray-700">Nível</label>
                   <div className="flex flex-wrap gap-2">
-                    {levels.map((level) => (
+                    {levelNames.map((name) => (
                       <button
-                        key={level}
-                        onClick={() => setSelectedLevel(level)}
+                        key={name}
+                        onClick={() => setSelectedLevel(name)}
                         className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                          selectedLevel === level
+                          selectedLevel === name
                             ? "bg-[#009999] text-white"
                             : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                         }`}
                       >
-                        {level}
+                        {name}
                       </button>
                     ))}
                   </div>

@@ -35,8 +35,10 @@ export function CourseCard({ course }: CourseCardProps) {
   const students = course.field_students || 100
   const duration = course.field_duration || "Self-paced"
   const lessons = course.field_lessons || 10
-  const level = course.field_level || "Beginner"
-  const category = course.field_category?.name || course.type?.replace('node--', '').replace('commerce_product--', '') || "General"
+  
+  // Read category and level from included taxonomy term relationships
+  const level = course.field_nivel?.name || course.field_nivel?.attributes?.name || ""
+  const category = course.field_categoria?.name || course.field_categoria?.attributes?.name || ""
   
   // Get image - products use 'images', nodes use 'field_image'
   const image = isProduct ? course.images?.[0] : course.field_image
@@ -87,12 +89,16 @@ export function CourseCard({ course }: CourseCardProps) {
               />
             )}
             <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-            <div className="absolute top-4 right-4 bg-[#009999] text-white px-4 py-1.5 rounded-full shadow-lg">
-              <span className="text-sm font-bold">{level}</span>
-            </div>
-            <div className="absolute top-4 left-4 bg-white/95 backdrop-blur-sm px-3 py-1.5 rounded-full shadow-lg">
-              <span className="text-sm font-bold text-[#009999]">{category}</span>
-            </div>
+            {level && (
+              <div className="absolute top-4 right-4 bg-[#009999] text-white px-4 py-1.5 rounded-full shadow-lg">
+                <span className="text-sm font-bold">{level}</span>
+              </div>
+            )}
+            {category && (
+              <div className="absolute top-4 left-4 bg-white/95 backdrop-blur-sm px-3 py-1.5 rounded-full shadow-lg">
+                <span className="text-sm font-bold text-[#009999]">{category}</span>
+              </div>
+            )}
           </div>
 
           <div className="p-6 flex-1 flex flex-col">
