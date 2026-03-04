@@ -1,6 +1,6 @@
 import Image from "next/image"
 import Link from "next/link"
-import { FileText, ArrowRight, CheckCircle } from "lucide-react"
+import { FileText, ArrowRight, CheckCircle, Clock, XCircle } from "lucide-react"
 
 interface Incentivo {
   id: string
@@ -14,6 +14,7 @@ interface Incentivo {
     alt: string
   }
   dynamicFormIds: string[]
+  disponibilidade?: string
 }
 
 export const metadata = {
@@ -27,7 +28,7 @@ async function getIncentivos(): Promise<Incentivo[]> {
     
     // Simplified: fetch without nested includes to avoid timeouts
     const response = await fetch(
-      `${baseUrl}/jsonapi/node/article?sort=-created&fields[node--article]=drupal_internal__nid,title,body,created,path,imagem,field_dynamic_form`,
+      `${baseUrl}/jsonapi/node/article?sort=-created&fields[node--article]=drupal_internal__nid,title,body,created,path,imagem,field_dynamic_form,field_disponibilidade&include=field_disponibilidade`,
       {
         next: { revalidate: 60 },
       }
@@ -72,6 +73,16 @@ async function getIncentivos(): Promise<Incentivo[]> {
           .filter((ref: any) => ref?.meta?.drupal_internal__target_id)
           .map((ref: any) => ref.meta.drupal_internal__target_id)
 
+        // Extract disponibilidade term name from included data
+        let disponibilidade: string | undefined
+        const dispRef = item.relationships?.field_disponibilidade?.data
+        if (dispRef?.id) {
+          const term = data.included?.find((inc: any) => inc.type === 'taxonomy_term--disponibilidade_incentivos' && inc.id === dispRef.id)
+          if (term) {
+            disponibilidade = term.attributes.name
+          }
+        }
+
         return {
           id: item.id,
           nid: item.attributes.drupal_internal__nid,
@@ -81,6 +92,7 @@ async function getIncentivos(): Promise<Incentivo[]> {
           path: `/incentivos/${item.attributes.drupal_internal__nid}`,
           image,
           dynamicFormIds,
+          disponibilidade,
         }
       })
     )
@@ -160,19 +172,41 @@ export default async function IncentivosPage() {
                   </div>
                 </div>
 
-                {/* Badge */}
+                {/* Disponibilidade Badge */}
                 <div className="px-6 pb-6">
-                  {incentivo.dynamicFormIds.length > 0 ? (
-                    <span className="inline-flex items-center gap-2 px-4 py-2 bg-green-50 text-green-700 rounded-full text-xs font-semibold">
-                      <CheckCircle className="h-4 w-4" />
-                      Candidatura Disponível
-                    </span>
-                  ) : (
-                    <span className="inline-flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-700 rounded-full text-xs font-semibold">
-                      <FileText className="h-4 w-4" />
-                      Informação
-                    </span>
-                  )}
+                  {(() => {
+                    const disp = incentivo.disponibilidade?.toLowerCase() || ''
+                    if (disp.includes('indispon')) {
+                      return (
+                        <span className="inline-flex items-center gap-2 px-4 py-2 bg-red-50 text-red-700 rounded-full text-xs font-semibold">
+                          <XCircle className="h-4 w-4" />
+                          {incentivo.disponibilidade}
+                        </span>
+                      )
+                    }
+                    if (disp.includes('brevemente')) {
+                      return (
+                        <span className="inline-flex items-center gap-2 px-4 py-2 bg-yellow-50 text-yellow-700 rounded-full text-xs font-semibold">
+                          <Clock className="h-4 w-4" />
+                          {incentivo.disponibilidade}
+                        </span>
+                      )
+                    }
+                    if (disp.includes('dispon')) {
+                      return (
+                        <span className="inline-flex items-center gap-2 px-4 py-2 bg-green-50 text-green-700 rounded-full text-xs font-semibold">
+                          <CheckCircle className="h-4 w-4" />
+                          {incentivo.disponibilidade}
+                        </span>
+                      )
+                    }
+                    return (
+                      <span className="inline-flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-700 rounded-full text-xs font-semibold">
+                        <FileText className="h-4 w-4" />
+                        Informação
+                      </span>
+                    )
+                  })()}
                 </div>
               </Link>
             ))}
