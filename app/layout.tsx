@@ -5,6 +5,7 @@ import { RecaptchaProvider } from "@/components/providers/RecaptchaProvider"
 import { AuthProvider } from "@/contexts/AuthContext"
 import { CartProvider } from "@/contexts/CartContext"
 import { CookieConsent } from "@/components/ui/CookieConsent"
+import { WhatsAppButton } from "@/components/ui/WhatsAppButton"
 import Image from "next/image"
 import type { Metadata } from "next"
 import type { ReactNode } from "react"
@@ -133,6 +134,7 @@ export default function RootLayout({
             </div>
           </footer>
           <CookieConsent />
+          <WhatsAppButton />
             </SmoothScrollProvider>
           </CartProvider>
         </AuthProvider>
