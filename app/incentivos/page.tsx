@@ -1,6 +1,5 @@
-import Image from "next/image"
-import Link from "next/link"
-import { FileText, ArrowRight, CheckCircle, Clock, XCircle } from "lucide-react"
+import { FileText } from "lucide-react"
+import { IncentivosClient } from "@/components/incentivos/IncentivosClient"
 
 interface Incentivo {
   id: string
@@ -123,9 +122,8 @@ export default async function IncentivosPage() {
         </div>
       </div>
 
-      {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-        {incentivos.length === 0 ? (
+      {incentivos.length === 0 ? (
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
           <div className="text-center py-20">
             <FileText className="h-16 w-16 text-gray-400 mx-auto mb-4" />
             <h3 className="text-xl font-semibold text-gray-900 mb-2">
@@ -135,84 +133,10 @@ export default async function IncentivosPage() {
               Novos incentivos serão publicados em breve. Volte mais tarde!
             </p>
           </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {incentivos.map((incentivo) => (
-              <Link
-                key={incentivo.id}
-                href={incentivo.path}
-                className="group bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2"
-              >
-                {/* Image */}
-                {incentivo.image?.url && (
-                  <div className="relative h-48 overflow-hidden bg-gray-200">
-                    <Image
-                      src={incentivo.image.url}
-                      alt={incentivo.image.alt}
-                      fill
-                      className="object-cover group-hover:scale-110 transition-transform duration-500"
-                    />
-                  </div>
-                )}
-
-                {/* Content */}
-                <div className="p-6">
-                  <h2 className="text-xl font-bold text-gray-900 mb-3 group-hover:text-[#009999] transition-colors line-clamp-2">
-                    {incentivo.title}
-                  </h2>
-
-                  <div
-                    className="text-gray-600 text-sm mb-4 line-clamp-3"
-                    dangerouslySetInnerHTML={{ __html: incentivo.body }}
-                  />
-
-                  <div className="flex items-center gap-2 text-[#009999] font-semibold group-hover:gap-4 transition-all">
-                    <span>Ver detalhes</span>
-                    <ArrowRight className="h-5 w-5" />
-                  </div>
-                </div>
-
-                {/* Disponibilidade Badge */}
-                <div className="px-6 pb-6">
-                  {(() => {
-                    const disp = incentivo.disponibilidade?.toLowerCase() || ''
-                    if (disp.includes('indispon')) {
-                      return (
-                        <span className="inline-flex items-center gap-2 px-4 py-2 bg-red-50 text-red-700 rounded-full text-xs font-semibold">
-                          <XCircle className="h-4 w-4" />
-                          {incentivo.disponibilidade}
-                        </span>
-                      )
-                    }
-                    if (disp.includes('brevemente')) {
-                      return (
-                        <span className="inline-flex items-center gap-2 px-4 py-2 bg-yellow-50 text-yellow-700 rounded-full text-xs font-semibold">
-                          <Clock className="h-4 w-4" />
-                          {incentivo.disponibilidade}
-                        </span>
-                      )
-                    }
-                    if (disp.includes('dispon')) {
-                      return (
-                        <span className="inline-flex items-center gap-2 px-4 py-2 bg-green-50 text-green-700 rounded-full text-xs font-semibold">
-                          <CheckCircle className="h-4 w-4" />
-                          {incentivo.disponibilidade}
-                        </span>
-                      )
-                    }
-                    return (
-                      <span className="inline-flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-700 rounded-full text-xs font-semibold">
-                        <FileText className="h-4 w-4" />
-                        Informação
-                      </span>
-                    )
-                  })()}
-                </div>
-              </Link>
-            ))}
-          </div>
-        )}
-      </div>
+        </div>
+      ) : (
+        <IncentivosClient incentivos={incentivos} />
+      )}
     </div>
   )
 }
