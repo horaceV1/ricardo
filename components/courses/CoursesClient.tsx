@@ -143,7 +143,7 @@ export function CoursesClient({ initialCourses, categories = [], levels = [] }: 
         </FadeIn>
 
         {/* Courses Grid */}
-        <StaggerChildren staggerDelay={0.1}>
+        <StaggerChildren key={`${selectedCategory}-${selectedLevel}-${searchQuery}`} staggerDelay={0.1}>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {filteredCourses.length > 0 ? (
               filteredCourses.map((course) => (
