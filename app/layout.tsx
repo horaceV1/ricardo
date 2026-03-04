@@ -98,9 +98,26 @@ export default function RootLayout({
                 </div>
               </div>
               
-              {/* Copyright */}
-              <div className="border-t border-gray-700/50 mt-6 pt-6 text-center text-gray-300">
-                <p>&copy; 2026 Clínica do Empresário. Todos os direitos reservados.</p>
+              {/* Copyright & Livro de Reclamações */}
+              <div className="border-t border-gray-700/50 mt-6 pt-6">
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                  <p className="text-gray-300 text-sm">&copy; 2026 Clínica do Empresário. Todos os direitos reservados.</p>
+                  <a
+                    href="https://www.livroreclamacoes.pt/Pedido/Reclamacao"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="opacity-80 hover:opacity-100 transition-opacity"
+                    title="Livro de Reclamações Eletrónico"
+                  >
+                    <Image
+                      src="/LRE_Theme.Logo_White.png"
+                      alt="Livro de Reclamações Eletrónico"
+                      width={160}
+                      height={40}
+                      className="h-8 w-auto"
+                    />
+                  </a>
+                </div>
               </div>
             </div>
             {/* Institutional PRR / Açores Banner */}
