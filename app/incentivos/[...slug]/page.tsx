@@ -261,9 +261,21 @@ export default function IncentivoPostPage({ params }: { params: { slug: string[]
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {/* Article Body */}
         {post.body && (
-          <article className="bg-white rounded-2xl shadow-lg p-8 md:p-12">
+          <article className="bg-white rounded-2xl shadow-lg overflow-hidden">
+            {/* Article Image */}
+            {post.image.url && (
+              <div className="relative w-full h-64 md:h-96">
+                <Image
+                  src={post.image.url}
+                  alt={post.image.alt}
+                  fill
+                  className="object-cover"
+                  priority
+                />
+              </div>
+            )}
             <div
-              className="prose prose-lg max-w-none prose-headings:text-gray-900 prose-a:text-[#009999] prose-a:no-underline hover:prose-a:underline prose-strong:text-gray-900 prose-img:rounded-xl"
+              className="prose prose-lg max-w-none prose-headings:text-gray-900 prose-a:text-[#009999] prose-a:no-underline hover:prose-a:underline prose-strong:text-gray-900 prose-img:rounded-xl p-8 md:p-12"
               dangerouslySetInnerHTML={{ __html: post.body }}
             />
           </article>
