@@ -742,8 +742,8 @@ export default function SubmissionDetailPage() {
           {/* Sidebar */}
           <div className="space-y-6">
             {/* Assignment */}
-            <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-              <div className="px-5 py-4 border-b border-gray-100 bg-gray-50">
+            <div className="bg-white rounded-xl border border-gray-200 relative z-30">
+              <div className="px-5 py-4 border-b border-gray-100 bg-gray-50 rounded-t-xl">
                 <h3 className="text-sm font-bold text-gray-900 flex items-center gap-2">
                   <UserCheck className="h-4 w-4 text-[#009999]" />
                   Técnico Atribuído
@@ -786,8 +786,8 @@ export default function SubmissionDetailPage() {
 
                   {showWorkerDropdown && (
                     <>
-                      <div className="fixed inset-0 z-10" onClick={() => setShowWorkerDropdown(false)} />
-                      <div className="absolute left-0 right-0 mt-2 bg-white rounded-xl shadow-xl border border-gray-200 py-2 z-20 max-h-48 overflow-y-auto">
+                      <div className="fixed inset-0 z-40" onClick={() => setShowWorkerDropdown(false)} />
+                      <div className="absolute left-0 right-0 mt-2 bg-white rounded-xl shadow-xl border border-gray-200 py-2 z-50 max-h-48 overflow-y-auto">
                         {submission.assignment && (
                           <button
                             onClick={() => handleAssignWorker(null)}
