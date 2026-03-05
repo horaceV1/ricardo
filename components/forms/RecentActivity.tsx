@@ -1,7 +1,7 @@
 "use client"
 
-import { useEffect, useState } from 'react'
-import { Clock, CheckCircle, XCircle, AlertCircle, FileText, Calendar, Trash2, Loader2, ChevronDown, ChevronUp, MessageSquare } from 'lucide-react'
+import { useEffect, useState, useRef } from 'react'
+import { Clock, CheckCircle, XCircle, AlertCircle, FileText, Calendar, Trash2, Loader2, ChevronDown, ChevronUp, MessageSquare, Send, Paperclip, ExternalLink, X as XIcon } from 'lucide-react'
 
 interface FieldApproval {
   status: 'pending' | 'approved' | 'denied'
@@ -29,6 +29,16 @@ interface RecentActivityProps {
   showHeader?: boolean
 }
 
+interface Message {
+  id: number
+  sender_id: number
+  sender_name: string
+  message: string
+  file: { fid: number; filename: string; url: string } | null
+  created: number
+  is_current_user: boolean
+}
+
 export default function RecentActivity({ limit, showHeader = true }: RecentActivityProps) {
   const [activities, setActivities] = useState<Activity[]>([])
   const [loading, setLoading] = useState(true)
@@ -37,6 +47,85 @@ export default function RecentActivity({ limit, showHeader = true }: RecentActiv
   const [showClearAllConfirm, setShowClearAllConfirm] = useState(false)
   const [clearingAll, setClearingAll] = useState(false)
   const [expandedId, setExpandedId] = useState<number | null>(null)
+  const [messagesMap, setMessagesMap] = useState<Record<number, Message[]>>({})
+  const [loadingMessagesId, setLoadingMessagesId] = useState<number | null>(null)
+  const [newMessageMap, setNewMessageMap] = useState<Record<number, string>>({})
+  const [sendingMessageId, setSendingMessageId] = useState<number | null>(null)
+  const messagesEndRef = useRef<HTMLDivElement>(null)
+
+  const getAuthHeaders = (): HeadersInit => {
+    const tokensStr = localStorage.getItem('drupal_auth_tokens')
+    const headers: HeadersInit = { 'Content-Type': 'application/json' }
+    if (tokensStr) {
+      const tokens = JSON.parse(tokensStr)
+      if (tokens.access_token) {
+        headers['Authorization'] = `Bearer ${tokens.access_token}`
+      }
+    }
+    return headers
+  }
+
+  const fetchMessages = async (submissionId: number) => {
+    try {
+      setLoadingMessagesId(submissionId)
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_DRUPAL_BASE_URL}/api/submission/${submissionId}/messages`,
+        { headers: getAuthHeaders() }
+      )
+      if (res.ok) {
+        const data = await res.json()
+        setMessagesMap(prev => ({ ...prev, [submissionId]: data.messages || [] }))
+      }
+    } catch (err) {
+      console.error('Error fetching messages:', err)
+    } finally {
+      setLoadingMessagesId(null)
+    }
+  }
+
+  const handleSendMessage = async (submissionId: number) => {
+    const text = (newMessageMap[submissionId] || '').trim()
+    if (!text) return
+
+    try {
+      setSendingMessageId(submissionId)
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_DRUPAL_BASE_URL}/api/submission/${submissionId}/messages`,
+        {
+          method: 'POST',
+          headers: getAuthHeaders(),
+          body: JSON.stringify({ message: text }),
+        }
+      )
+      if (res.ok) {
+        setNewMessageMap(prev => ({ ...prev, [submissionId]: '' }))
+        await fetchMessages(submissionId)
+      } else {
+        console.error('Failed to send message')
+      }
+    } catch (err) {
+      console.error('Error sending message:', err)
+    } finally {
+      setSendingMessageId(null)
+    }
+  }
+
+  const handleExpandSubmission = (id: number) => {
+    if (expandedId === id) {
+      setExpandedId(null)
+    } else {
+      setExpandedId(id)
+      if (!messagesMap[id]) {
+        fetchMessages(id)
+      }
+    }
+  }
+
+  const formatMsgDate = (ts: number) => {
+    return new Date(ts * 1000).toLocaleDateString('pt-PT', {
+      day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit',
+    })
+  }
 
   useEffect(() => {
     fetchActivities()
@@ -389,7 +478,7 @@ export default function RecentActivity({ limit, showHeader = true }: RecentActiv
                   <div className="flex items-center gap-1 flex-shrink-0">
                     {hasFieldApprovals && (
                       <button
-                        onClick={() => setExpandedId(isExpanded ? null : activity.id)}
+                        onClick={() => handleExpandSubmission(activity.id)}
                         className="p-2 text-gray-500 hover:text-[#009999] hover:bg-[#009999]/10 rounded-lg transition-colors"
                         title="Ver detalhes"
                       >
@@ -398,6 +487,15 @@ export default function RecentActivity({ limit, showHeader = true }: RecentActiv
                         ) : (
                           <ChevronDown className="h-5 w-5" />
                         )}
+                      </button>
+                    )}
+                    {!hasFieldApprovals && (
+                      <button
+                        onClick={() => handleExpandSubmission(activity.id)}
+                        className="p-2 text-gray-500 hover:text-[#009999] hover:bg-[#009999]/10 rounded-lg transition-colors"
+                        title="Ver mensagens"
+                      >
+                        <MessageSquare className="h-5 w-5" />
                       </button>
                     )}
                     <button
@@ -417,8 +515,10 @@ export default function RecentActivity({ limit, showHeader = true }: RecentActiv
               </div>
 
               {/* Expanded per-field details */}
-              {isExpanded && hasFieldApprovals && (
-                <div className="px-5 sm:px-6 pb-5 sm:pb-6">
+              {isExpanded && (
+                <div className="px-5 sm:px-6 pb-5 sm:pb-6 space-y-4">
+                  {/* Field approvals */}
+                  {hasFieldApprovals && (
                   <div className="bg-gray-50 rounded-xl border border-gray-200 overflow-hidden">
                     <div className="px-4 py-3 bg-gray-100/80 border-b border-gray-200">
                       <h4 className="text-sm font-semibold text-gray-700">
@@ -466,6 +566,107 @@ export default function RecentActivity({ limit, showHeader = true }: RecentActiv
                           )}
                         </div>
                       ))}
+                    </div>
+                  </div>
+                  )}
+
+                  {/* Messages section */}
+                  <div className="bg-gray-50 rounded-xl border border-gray-200 overflow-hidden">
+                    <div className="px-4 py-3 bg-gray-100/80 border-b border-gray-200">
+                      <h4 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+                        <MessageSquare className="h-4 w-4 text-[#009999]" />
+                        Mensagens
+                        {(messagesMap[activity.id]?.length || 0) > 0 && (
+                          <span className="text-xs bg-[#009999]/10 text-[#009999] rounded-full px-2 py-0.5">
+                            {messagesMap[activity.id].length}
+                          </span>
+                        )}
+                      </h4>
+                    </div>
+
+                    {/* Message thread */}
+                    <div className="max-h-64 overflow-y-auto p-3 space-y-2">
+                      {loadingMessagesId === activity.id ? (
+                        <div className="flex items-center justify-center py-6">
+                          <Loader2 className="h-5 w-5 animate-spin text-[#009999]" />
+                        </div>
+                      ) : !messagesMap[activity.id] || messagesMap[activity.id].length === 0 ? (
+                        <div className="text-center py-6">
+                          <MessageSquare className="h-8 w-8 text-gray-200 mx-auto mb-1" />
+                          <p className="text-xs text-gray-400">Nenhuma mensagem</p>
+                        </div>
+                      ) : (
+                        messagesMap[activity.id].map((msg) => (
+                          <div
+                            key={msg.id}
+                            className={`flex ${msg.is_current_user ? 'justify-end' : 'justify-start'}`}
+                          >
+                            <div
+                              className={`max-w-[80%] rounded-xl px-3 py-2 ${
+                                msg.is_current_user
+                                  ? 'bg-[#009999] text-white'
+                                  : 'bg-white text-gray-900 border border-gray-200'
+                              }`}
+                            >
+                              {!msg.is_current_user && (
+                                <p className="text-xs font-semibold mb-0.5 opacity-70">{msg.sender_name}</p>
+                              )}
+                              {msg.message && (
+                                <p className="text-sm whitespace-pre-wrap">{msg.message}</p>
+                              )}
+                              {msg.file && (
+                                <a
+                                  href={msg.file.url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className={`inline-flex items-center gap-1 text-xs mt-1 ${
+                                    msg.is_current_user ? 'text-white/80 hover:text-white' : 'text-[#009999] hover:underline'
+                                  }`}
+                                >
+                                  <Paperclip className="h-3 w-3" />
+                                  {msg.file.filename}
+                                </a>
+                              )}
+                              <p className={`text-[10px] mt-1 ${msg.is_current_user ? 'text-white/50' : 'text-gray-400'}`}>
+                                {formatMsgDate(msg.created)}
+                              </p>
+                            </div>
+                          </div>
+                        ))
+                      )}
+                      <div ref={messagesEndRef} />
+                    </div>
+
+                    {/* Send message input */}
+                    <div className="border-t border-gray-200 p-3">
+                      <div className="flex items-end gap-2">
+                        <textarea
+                          value={newMessageMap[activity.id] || ''}
+                          onChange={(e) =>
+                            setNewMessageMap(prev => ({ ...prev, [activity.id]: e.target.value }))
+                          }
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' && !e.shiftKey) {
+                              e.preventDefault()
+                              handleSendMessage(activity.id)
+                            }
+                          }}
+                          placeholder="Escrever mensagem..."
+                          className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-[#009999] focus:border-[#009999] outline-none resize-none"
+                          rows={1}
+                        />
+                        <button
+                          onClick={() => handleSendMessage(activity.id)}
+                          disabled={sendingMessageId === activity.id || !(newMessageMap[activity.id] || '').trim()}
+                          className="p-2 bg-[#009999] text-white rounded-lg hover:bg-[#007a7a] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          {sendingMessageId === activity.id ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Send className="h-4 w-4" />
+                          )}
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>
