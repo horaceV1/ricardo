@@ -150,7 +150,7 @@ export default function SubmissionDetailPage() {
   const fetchSubmission = useCallback(async () => {
     try {
       setLoading(true)
-      const res = await fetch(`${baseUrl}/api/admin/submissions`, {
+      const res = await fetch(`${baseUrl}/api/management/submissions`, {
         headers: getAuthHeaders(),
       })
 
@@ -235,7 +235,7 @@ export default function SubmissionDetailPage() {
     try {
       setApprovingField(fieldLabel)
 
-      const res = await fetch(`${baseUrl}/api/admin/submission/${submissionId}/approve-field`, {
+      const res = await fetch(`${baseUrl}/api/management/submission/${submissionId}/approve-field`, {
         method: "POST",
         headers: getAuthHeaders(),
         body: JSON.stringify({

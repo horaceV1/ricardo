@@ -114,7 +114,7 @@ export default function GestaoSubmissoesPage() {
       const tokens = JSON.parse(tokensStr)
       const baseUrl = process.env.NEXT_PUBLIC_DRUPAL_BASE_URL
 
-      const res = await fetch(`${baseUrl}/api/admin/submissions`, {
+      const res = await fetch(`${baseUrl}/api/management/submissions`, {
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${tokens.access_token}`,
