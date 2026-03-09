@@ -55,7 +55,7 @@ export default function BlogPage() {
             const mediaData = await mediaResponse.json()
             const fileEntity = mediaData.included?.find((inc: any) => inc.type === 'file--file')
             if (fileEntity) {
-              imageUrl = baseUrl + fileEntity.attributes.uri.url
+              imageUrl = fileEntity.attributes.uri.url
               imageAlt = mediaData.data.attributes.name || imageAlt
             }
           } catch (e) {

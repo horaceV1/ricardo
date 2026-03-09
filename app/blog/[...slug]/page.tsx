@@ -67,7 +67,7 @@ export default function BlogPostPage({ params }: { params: { slug: string[] } })
             const mediaData = await mediaResponse.json()
             const fileEntity = mediaData.included?.find((inc: any) => inc.type === 'file--file')
             if (fileEntity) {
-              imageUrl = baseUrl + fileEntity.attributes.uri.url
+              imageUrl = fileEntity.attributes.uri.url
               imageAlt = mediaData.data.attributes.name || imageAlt
             }
           } catch (e) {
@@ -291,7 +291,7 @@ export default function BlogPostPage({ params }: { params: { slug: string[] } })
           {/* Content */}
           <div
             className="prose prose-lg max-w-none prose-headings:text-gray-900 prose-a:text-[#009999] prose-a:no-underline hover:prose-a:underline prose-strong:text-gray-900 prose-img:rounded-xl mb-12"
-            dangerouslySetInnerHTML={{ __html: post.body }}
+            dangerouslySetInnerHTML={{ __html: post.body.replace(/src="\/sites\//g, `src="${baseUrl}/sites/`).replace(/src='\/sites\//g, `src='${baseUrl}/sites/`) }}
           />
 
           {/* Dynamic Forms */}
