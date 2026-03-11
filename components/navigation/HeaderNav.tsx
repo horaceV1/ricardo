@@ -1,7 +1,7 @@
 "use client"
 
 import { Link } from "@/components/navigation/Link"
-import { Menu, X, User, LogOut, ShoppingBag } from "lucide-react"
+import { Menu, X, User, LogOut, ShoppingBag, FileText } from "lucide-react"
 import { useState } from "react"
 import Image from "next/image"
 import { useAuth } from "@/contexts/AuthContext"
@@ -100,6 +100,14 @@ export function HeaderNav() {
                       <ShoppingBag className="h-4 w-4" />
                       <span>Meus Pedidos</span>
                     </Link>
+                    <Link
+                      href="/conta/minhas-submissoes"
+                      className="flex items-center gap-3 px-4 py-2 hover:bg-gray-50 transition-colors text-gray-700 no-underline"
+                      onClick={() => setUserMenuOpen(false)}
+                    >
+                      <FileText className="h-4 w-4" />
+                      <span>Minhas Submissões</span>
+                    </Link>
                     {user.roles.includes('administrator') && (
                       <a
                         href={`${process.env.NEXT_PUBLIC_DRUPAL_BASE_URL}/admin`}
@@ -183,6 +191,13 @@ export function HeaderNav() {
                       onClick={() => setMobileMenuOpen(false)}
                     >
                       Minha Conta
+                    </Link>
+                    <Link
+                      href="/conta/minhas-submissoes"
+                      className="px-6 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-all font-semibold text-center no-underline"
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      Minhas Submissões
                     </Link>
                     <button
                       onClick={() => {

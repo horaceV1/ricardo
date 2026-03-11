@@ -499,6 +499,10 @@ export default function AccountPage() {
                   <Settings className="h-5 w-5 text-[#009999]" />
                   <span className="text-sm font-medium text-gray-700">Editar Perfil</span>
                 </Link>
+                <Link href="/conta/minhas-submissoes" className="w-full text-left px-4 py-3 rounded-lg hover:bg-gray-50 transition-colors flex items-center space-x-3">
+                  <FileText className="h-5 w-5 text-[#009999]" />
+                  <span className="text-sm font-medium text-gray-700">Minhas Submissões</span>
+                </Link>
                 <button className="w-full text-left px-4 py-3 rounded-lg hover:bg-gray-50 transition-colors flex items-center space-x-3">
                   <Shield className="h-5 w-5 text-[#009999]" />
                   <span className="text-sm font-medium text-gray-700">Alterar Senha</span>
