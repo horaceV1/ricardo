@@ -1,11 +1,12 @@
 "use client"
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import Image from 'next/image'
 import { useAuth } from '@/contexts/AuthContext'
 import RecentActivity from '@/components/forms/RecentActivity'
-import { User, Mail, Shield, Calendar, LogOut, Loader2, ShoppingBag, Settings, BookOpen, Download, FileText, Trash2, X, PlayCircle, ChevronRight } from 'lucide-react'
+import { User, Mail, Shield, Calendar, LogOut, Loader2, ShoppingBag, Settings, BookOpen, Download, FileText, Trash2, X, PlayCircle, ChevronRight, Camera } from 'lucide-react'
 
 interface PurchasedProduct {
   product_id: string
@@ -46,6 +47,8 @@ export default function AccountPage() {
   const [loadingPurchases, setLoadingPurchases] = useState(false)
   const [hiddenProducts, setHiddenProducts] = useState<Set<string>>(new Set())
   const [deletingProduct, setDeletingProduct] = useState<string | null>(null)
+  const [uploadingPicture, setUploadingPicture] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -125,6 +128,60 @@ export default function AccountPage() {
     router.push('/')
   }
 
+  const handlePictureUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+
+    // Validate file type
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
+    if (!allowedTypes.includes(file.type)) {
+      alert('Tipo de ficheiro inválido. Permitido: JPEG, PNG, GIF, WebP')
+      return
+    }
+
+    // Validate file size (5MB max)
+    if (file.size > 5 * 1024 * 1024) {
+      alert('Ficheiro demasiado grande. Máximo: 5MB')
+      return
+    }
+
+    setUploadingPicture(true)
+    try {
+      const baseUrl = process.env.NEXT_PUBLIC_DRUPAL_BASE_URL || 'https://darkcyan-stork-408379.hostingersite.com'
+      const tokensStr = localStorage.getItem('drupal_auth_tokens')
+      const tokens = tokensStr ? JSON.parse(tokensStr) : null
+      const token = tokens?.access_token
+
+      const formData = new FormData()
+      formData.append('picture', file)
+
+      const res = await fetch(`${baseUrl}/api/auth/upload-picture`, {
+        method: 'POST',
+        headers: {
+          ...(token && { 'Authorization': `Bearer ${token}` }),
+        },
+        body: formData,
+      })
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: 'Upload failed' }))
+        throw new Error(err.error || 'Upload failed')
+      }
+
+      // Refresh user data to get the new picture URL
+      await refreshUser()
+    } catch (err) {
+      console.error('Failed to upload picture:', err)
+      alert('Erro ao enviar a foto. Tente novamente.')
+    } finally {
+      setUploadingPicture(false)
+      // Reset file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = ''
+      }
+    }
+  }
+
   if (isLoading || !user) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100">
@@ -154,8 +211,43 @@ export default function AccountPage() {
         <div className="bg-gradient-to-br from-[#009999] to-[#007a7a] rounded-2xl p-8 mb-8 text-white shadow-lg">
           <div className="flex items-center justify-between flex-wrap gap-4">
             <div className="flex items-center space-x-4">
-              <div className="h-20 w-20 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center">
-                <User className="h-10 w-10" />
+              {/* Clickable Avatar with Upload */}
+              <div className="relative group">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/jpeg,image/png,image/gif,image/webp"
+                  className="hidden"
+                  onChange={handlePictureUpload}
+                />
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={uploadingPicture}
+                  className="h-20 w-20 rounded-full flex items-center justify-center overflow-hidden relative cursor-pointer transition-all focus:outline-none focus:ring-2 focus:ring-white/50"
+                  title="Clique para alterar a foto de perfil"
+                >
+                  {user.user_picture?.url ? (
+                    <Image
+                      src={user.user_picture.url}
+                      alt={user.user_picture.alt || 'Foto de perfil'}
+                      width={80}
+                      height={80}
+                      className="h-20 w-20 object-cover rounded-full"
+                    />
+                  ) : (
+                    <div className="h-20 w-20 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center">
+                      <User className="h-10 w-10" />
+                    </div>
+                  )}
+                  {/* Hover overlay */}
+                  <div className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                    {uploadingPicture ? (
+                      <Loader2 className="h-6 w-6 text-white animate-spin" />
+                    ) : (
+                      <Camera className="h-6 w-6 text-white" />
+                    )}
+                  </div>
+                </button>
               </div>
               <div>
                 <h1 className="text-3xl font-bold">

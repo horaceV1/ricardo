@@ -124,6 +124,7 @@ export async function getCurrentUser(token: string): Promise<DrupalUser> {
     field_city: data.field_city,
     field_postal_code: data.field_postal_code,
     field_country: data.field_country,
+    user_picture: data.user_picture || undefined,
   }
 }
 

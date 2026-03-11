@@ -17,6 +17,24 @@ export function HeaderNav() {
     setUserMenuOpen(false)
   }
 
+  const UserAvatar = ({ size = 'sm' }: { size?: 'sm' | 'md' }) => {
+    const dimensions = size === 'sm' ? 'h-8 w-8' : 'h-10 w-10'
+    if (user?.user_picture?.url) {
+      return (
+        <img
+          src={user.user_picture.url}
+          alt={user.user_picture.alt || 'Foto de perfil'}
+          className={`${dimensions} rounded-full object-cover`}
+        />
+      )
+    }
+    return (
+      <div className={`${dimensions} bg-gradient-to-br from-[#009999] to-[#007a7a] rounded-full flex items-center justify-center text-white font-semibold`}>
+        {user?.name?.charAt(0).toUpperCase() || 'U'}
+      </div>
+    )
+  }
+
   return (
     <header className="bg-white shadow-md sticky top-0 z-50 border-b border-gray-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -64,9 +82,7 @@ export function HeaderNav() {
                   onClick={() => setUserMenuOpen(!userMenuOpen)}
                   className="flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-gray-100 transition-colors"
                 >
-                  <div className="h-8 w-8 bg-gradient-to-br from-[#009999] to-[#007a7a] rounded-full flex items-center justify-center text-white font-semibold">
-                    {user.name.charAt(0).toUpperCase()}
-                  </div>
+                  <UserAvatar size="sm" />
                   <span className="text-gray-700 font-semibold">{user.name}</span>
                 </button>
                 
