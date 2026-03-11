@@ -161,14 +161,21 @@ export default function RootLayout({
             </div>
             {/* Institutional PRR / Açores Banner */}
             <div className="mt-10 mx-auto max-w-4xl px-6 sm:px-10 lg:px-16">
-              <Image
-                src="/BARRA_ACORES_PRR.png"
-                alt="Barra Açores - Plano de Recuperação e Resiliência"
-                width={6846}
-                height={711}
-                className="w-full h-auto object-contain opacity-90"
-                priority={false}
-              />
+              <a
+                href="/Ficha-de-website.pdf"
+                target="_blank"
+                rel="noopener noreferrer"
+                download
+              >
+                <Image
+                  src="/BARRA_ACORES_PRR.png"
+                  alt="Barra Açores - Plano de Recuperação e Resiliência"
+                  width={6846}
+                  height={711}
+                  className="w-full h-auto object-contain opacity-90 cursor-pointer hover:opacity-100 transition-opacity"
+                  priority={false}
+                />
+              </a>
             </div>
           </footer>
           <CookieConsent />
