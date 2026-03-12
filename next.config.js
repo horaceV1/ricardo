@@ -10,8 +10,19 @@ const nextConfig = {
             hostname: process.env.NEXT_IMAGE_DOMAIN,
             pathname: '/sites/default/files/**',
           },
+          {
+            protocol: 'https',
+            hostname: 'darkcyan-stork-408379.hostingersite.com',
+            pathname: '/sites/default/files/**',
+          },
         ]
-      : [],
+      : [
+          {
+            protocol: 'https',
+            hostname: 'darkcyan-stork-408379.hostingersite.com',
+            pathname: '/sites/default/files/**',
+          },
+        ],
     unoptimized: process.env.NODE_ENV === 'production',
   },
   eslint: {

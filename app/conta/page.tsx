@@ -3,7 +3,6 @@
 import { useEffect, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import Image from 'next/image'
 import { useAuth } from '@/contexts/AuthContext'
 import RecentActivity from '@/components/forms/RecentActivity'
 import { User, Mail, Shield, Calendar, LogOut, Loader2, ShoppingBag, Settings, BookOpen, Download, FileText, Trash2, X, PlayCircle, ChevronRight, Camera } from 'lucide-react'
@@ -165,14 +164,18 @@ export default function AccountPage() {
 
       if (!res.ok) {
         const err = await res.json().catch(() => ({ error: 'Upload failed' }))
+        console.error('Upload error response:', err)
         throw new Error(err.error || 'Upload failed')
       }
 
+      const result = await res.json()
+      console.log('Upload success:', result)
+
       // Refresh user data to get the new picture URL
       await refreshUser()
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to upload picture:', err)
-      alert('Erro ao enviar a foto. Tente novamente.')
+      alert(err?.message || 'Erro ao enviar a foto. Tente novamente.')
     } finally {
       setUploadingPicture(false)
       // Reset file input
@@ -227,11 +230,9 @@ export default function AccountPage() {
                   title="Clique para alterar a foto de perfil"
                 >
                   {user.user_picture?.url ? (
-                    <Image
+                    <img
                       src={user.user_picture.url}
                       alt={user.user_picture.alt || 'Foto de perfil'}
-                      width={80}
-                      height={80}
                       className="h-20 w-20 object-cover rounded-full"
                     />
                   ) : (
