@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useAuth } from '@/contexts/AuthContext'
 import RecentActivity from '@/components/forms/RecentActivity'
-import { User, Mail, Shield, Calendar, LogOut, Loader2, ShoppingBag, Settings, BookOpen, Download, FileText, Trash2, X, PlayCircle, ChevronRight, Camera } from 'lucide-react'
+import { User, Mail, Shield, Calendar, LogOut, Loader2, ShoppingBag, Settings, BookOpen, Download, FileText, Trash2, X, PlayCircle, ChevronRight, Camera, HelpCircle } from 'lucide-react'
 
 interface PurchasedProduct {
   product_id: string
@@ -638,6 +638,26 @@ export default function AccountPage() {
                 >
                   Acessar Painel
                 </a>
+              </div>
+            )}
+
+            {/* Help / Ajuda Button */}
+            {(user.roles.includes('administrator') || user.roles.includes('tecnico')) && (
+              <div className="bg-gradient-to-br from-[#6366f1] to-[#4f46e5] rounded-2xl shadow-lg p-6 text-white">
+                <div className="flex items-center gap-3 mb-2">
+                  <HelpCircle className="h-6 w-6" />
+                  <h3 className="text-lg font-bold">Ajuda</h3>
+                </div>
+                <p className="text-sm text-white/80 mb-4">
+                  Tutoriais em vídeo para aprender a utilizar a plataforma
+                </p>
+                <Link
+                  href="/conta/ajuda"
+                  className="inline-flex items-center justify-center w-full bg-white/20 hover:bg-white/30 backdrop-blur-sm px-4 py-2 rounded-lg transition-colors text-sm font-medium"
+                >
+                  <PlayCircle className="h-4 w-4 mr-2" />
+                  Ver Tutoriais
+                </Link>
               </div>
             )}
           </div>
