@@ -144,6 +144,7 @@ export default function SubmissionDetailPage() {
   const [uploadingFile, setUploadingFile] = useState(false)
 
   const isAllowed = user?.roles?.includes("administrator") || user?.roles?.includes("tecnico")
+  const isAdmin = user?.roles?.includes("administrator")
   const baseUrl = process.env.NEXT_PUBLIC_DRUPAL_BASE_URL
 
   // Fetch submission detail
@@ -222,9 +223,11 @@ export default function SubmissionDetailPage() {
     if (isAuthenticated && isAllowed) {
       fetchSubmission()
       fetchMessages()
-      fetchWorkers()
+      if (isAdmin) {
+        fetchWorkers()
+      }
     }
-  }, [authLoading, isAuthenticated, user, isAllowed, router, fetchSubmission, fetchMessages, fetchWorkers])
+  }, [authLoading, isAuthenticated, user, isAllowed, isAdmin, router, fetchSubmission, fetchMessages, fetchWorkers])
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
@@ -775,6 +778,8 @@ export default function SubmissionDetailPage() {
                 )}
 
                 <div className="relative mt-4">
+                  {isAdmin && (
+                  <>
                   <button
                     onClick={() => setShowWorkerDropdown(!showWorkerDropdown)}
                     disabled={assigningWorker || loadingWorkers}
@@ -820,6 +825,8 @@ export default function SubmissionDetailPage() {
                         )}
                       </div>
                     </>
+                  )}
+                  </>
                   )}
                 </div>
               </div>
