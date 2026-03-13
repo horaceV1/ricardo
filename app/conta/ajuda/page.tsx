@@ -67,6 +67,25 @@ export default function AjudaPage() {
   const isAllowed = user?.roles?.includes("administrator") || user?.roles?.includes("tecnico")
   const baseUrl = process.env.NEXT_PUBLIC_DRUPAL_BASE_URL
 
+  // Get the access token for video streaming URLs (video elements can't send Bearer headers)
+  const getAccessToken = (): string => {
+    try {
+      const tokensStr = localStorage.getItem("drupal_auth_tokens")
+      if (tokensStr) {
+        const tokens = JSON.parse(tokensStr)
+        return tokens.access_token || ""
+      }
+    } catch (e) {
+      // ignore
+    }
+    return ""
+  }
+
+  const getVideoUrl = (streamUrl: string): string => {
+    const token = getAccessToken()
+    return `${baseUrl}${streamUrl}${token ? `?token=${encodeURIComponent(token)}` : ""}`
+  }
+
   // Load watched state from localStorage
   useEffect(() => {
     const saved = localStorage.getItem("tutorial_watched_videos")
@@ -336,7 +355,7 @@ export default function AjudaPage() {
                     }}
                   >
                     <source
-                      src={`${baseUrl}${activeVideo.stream_url}`}
+                      src={getVideoUrl(activeVideo.stream_url)}
                       type="video/mp4"
                     />
                     O seu browser não suporta a reprodução de vídeos.
