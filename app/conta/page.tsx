@@ -658,6 +658,21 @@ export default function AccountPage() {
                   <PlayCircle className="h-4 w-4 mr-2" />
                   Ver Tutoriais
                 </Link>
+                {user.roles.includes('administrator') && (
+                  <button
+                    onClick={() => {
+                      try {
+                        const t = localStorage.getItem('drupal_auth_tokens')
+                        const token = t ? JSON.parse(t).access_token : ''
+                        window.open(`${process.env.NEXT_PUBLIC_DRUPAL_BASE_URL}/api/tutorial-manual/download?token=${encodeURIComponent(token)}`, '_blank')
+                      } catch {}
+                    }}
+                    className="inline-flex items-center justify-center w-full bg-white/10 hover:bg-white/20 backdrop-blur-sm px-4 py-2 rounded-lg transition-colors text-sm font-medium mt-2 border border-white/20"
+                  >
+                    <Download className="h-4 w-4 mr-2" />
+                    Download Manual
+                  </button>
+                )}
               </div>
             )}
           </div>
