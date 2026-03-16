@@ -107,7 +107,7 @@ export default function UnirPDFsPage() {
       const url = URL.createObjectURL(blob)
       const a = document.createElement("a")
       a.href = url
-      a.download = "documento_unido.pdf"
+      a.download = "CDE Une.pdf"
       a.click()
       URL.revokeObjectURL(url)
       setSuccess(true)
