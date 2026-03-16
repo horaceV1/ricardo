@@ -1,7 +1,7 @@
 "use client"
 
 import { Link } from "@/components/navigation/Link"
-import { Menu, X, User, LogOut, ShoppingBag, FileText } from "lucide-react"
+import { Menu, X, User, LogOut, ShoppingBag, FileText, FilePlus2 } from "lucide-react"
 import { useState } from "react"
 import Image from "next/image"
 import { useAuth } from "@/contexts/AuthContext"
@@ -75,6 +75,15 @@ export function HeaderNav() {
 
           {/* Actions */}
           <div className="hidden md:flex items-center gap-4">
+            {/* Unir PDFs — standout accent button */}
+            <Link
+              href="/unir-pdfs"
+              className="flex items-center gap-1.5 px-4 py-2 bg-[#ff8c00] hover:bg-[#cc7000] text-white font-semibold rounded-lg shadow-md hover:shadow-lg transition-all text-sm no-underline"
+              title="Unir ficheiros PDF"
+            >
+              <FilePlus2 className="h-4 w-4" />
+              Unir PDFs
+            </Link>
             <CartIcon />
             {isAuthenticated && user ? (
               <div className="relative">
@@ -193,6 +202,14 @@ export function HeaderNav() {
               </Link>
               <Link href="/contact" className="text-gray-700 hover:text-[#009999] font-semibold no-underline transition-colors" onClick={() => setMobileMenuOpen(false)}>
                 Contato
+              </Link>
+              <Link
+                href="/unir-pdfs"
+                className="flex items-center gap-2 px-4 py-2.5 bg-[#ff8c00] hover:bg-[#cc7000] text-white font-semibold rounded-lg no-underline transition-colors"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                <FilePlus2 className="h-4 w-4" />
+                Unir PDFs
               </Link>
               <div className="flex flex-col gap-2 pt-4 border-t border-gray-200">
                 {isAuthenticated && user ? (
