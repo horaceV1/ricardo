@@ -59,9 +59,5 @@
 .drupal-content .text-small { font-size: 0.85em; }
 .drupal-content .text-big { font-size: 1.4em; }
 
-/* reCAPTCHA v3 badge — keep at bottom-right, below the WhatsApp button */
-.grecaptcha-badge {
-  bottom: 14px !important;
-  right: 14px !important;
-}
+
 .drupal-content .text-huge { font-size: 1.8em; }
