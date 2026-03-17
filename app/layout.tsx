@@ -108,8 +108,7 @@ export default function RootLayout({
                 <div>
                   <h4 className="font-bold mb-4 text-lg">Legal</h4>
                   <ul className="space-y-2 text-gray-300">
-                    <li><a href="/terms" className="hover:text-[#80d4d4] transition-colors">Termos de Serviço</a></li>
-                    <li><a href="/privacy" className="hover:text-[#80d4d4] transition-colors">Política de Privacidade</a></li>
+                    <li><a href="/termos-utilizacao" className="hover:text-[#80d4d4] transition-colors">Termos de Utilização e Política de Privacidade</a></li>
                   </ul>
                 </div>
               </div>
