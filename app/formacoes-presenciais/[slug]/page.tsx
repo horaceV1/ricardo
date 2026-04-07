@@ -29,15 +29,17 @@ export async function generateMetadata({
 }
 
 async function fetchTraining(slug: string): Promise<DrupalNode | null> {
+  const apiParams = {
+    include: "variations,images,default_variation",
+    "fields[commerce_product--formacao_presencial]":
+      "title,path,body,images,variations,default_variation,field_training_date,field_training_end_date,field_location,field_location_address,field_max_participants,field_current_participants,field_instructor,field_included_items,status",
+  }
+
   try {
     // Try to fetch by path alias first
     const training = await drupal.getResourceByPath<DrupalNode>(
       `/formacoes-presenciais/${slug}`,
-      {
-        params: {
-          include: "variations,images,default_variation",
-        },
-      }
+      { params: apiParams }
     )
     return training
   } catch {
@@ -46,11 +48,7 @@ async function fetchTraining(slug: string): Promise<DrupalNode | null> {
       const training = await drupal.getResource<DrupalNode>(
         "commerce_product--formacao_presencial",
         slug,
-        {
-          params: {
-            include: "variations,images,default_variation",
-          },
-        }
+        { params: apiParams }
       )
       return training
     } catch {

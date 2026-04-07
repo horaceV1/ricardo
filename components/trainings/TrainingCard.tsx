@@ -11,7 +11,7 @@ import { ScaleIn } from "@/components/animations/ScaleIn"
 import { ImageWithFallback } from "@/components/ui/ImageWithFallback"
 import { absoluteUrl, formatPrice } from "@/lib/utils"
 import { useCart } from "@/contexts/CartContext"
-import { useState } from "react"
+import { useState, useMemo } from "react"
 
 interface TrainingCardProps {
   training: DrupalNode
@@ -40,9 +40,28 @@ export function TrainingCard({ training }: TrainingCardProps) {
   const [adding, setAdding] = useState(false)
   const [showSuccess, setShowSuccess] = useState(false)
 
-  const variation = training.default_variation || training.variations?.[0]
-  const price = variation?.price?.number || 0
+  const allVariations = useMemo(() => {
+    const vars = training.variations || []
+    return vars.filter((v: any) => v.status !== false && v.status !== 0)
+  }, [training.variations])
+
+  const hasMultipleVariations = allVariations.length > 1
+  const variation = training.default_variation || allVariations[0]
+  const price = parseFloat(variation?.price?.number || "0")
   const variationId = variation?.id
+
+  // Price range for multiple ticket types
+  const priceRange = useMemo(() => {
+    if (allVariations.length <= 1) return null
+    const prices = allVariations
+      .map((v: any) => parseFloat(v.price?.number || "0"))
+      .filter((p: number) => p > 0)
+    if (prices.length === 0) return null
+    const min = Math.min(...prices)
+    const max = Math.max(...prices)
+    if (min === max) return null
+    return { min, max }
+  }, [allVariations])
 
   const trainingDate = training.field_training_date
   const endDate = training.field_training_end_date
@@ -195,29 +214,49 @@ export function TrainingCard({ training }: TrainingCardProps) {
                   </div>
                 )}
               </div>
-              <div className="text-2xl font-black text-[#009999]">
-                {price > 0 ? formatPrice(price) : "Gratuito"}
+              <div className="text-right">
+                {priceRange ? (
+                  <>
+                    <div className="text-xs text-gray-500 font-medium">desde</div>
+                    <div className="text-2xl font-black text-[#009999]">
+                      {formatPrice(priceRange.min)}
+                    </div>
+                  </>
+                ) : (
+                  <div className="text-2xl font-black text-[#009999]">
+                    {price > 0 ? formatPrice(price) : "Gratuito"}
+                  </div>
+                )}
               </div>
             </div>
 
             {/* Buy Button */}
             {!isPast && !isSoldOut && variationId && price > 0 && (
-              <button
-                onClick={handleAddToCart}
-                disabled={adding || loading}
-                className={`mt-4 w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg hover:shadow-lg transition-all font-semibold disabled:opacity-50 disabled:cursor-not-allowed ${
-                  showSuccess
-                    ? "bg-green-600 text-white"
-                    : "bg-gradient-to-r from-[#ff8c00] to-[#e67a00] text-white"
-                }`}
-              >
-                <ShoppingCart className="w-5 h-5" />
-                {showSuccess
-                  ? "✓ Bilhete Adicionado!"
-                  : adding
-                  ? "A adicionar..."
-                  : "Comprar Bilhete"}
-              </button>
+              hasMultipleVariations ? (
+                <div
+                  className="mt-4 w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg bg-gradient-to-r from-[#ff8c00] to-[#e67a00] text-white font-semibold hover:shadow-lg transition-all"
+                >
+                  <ShoppingCart className="w-5 h-5" />
+                  Ver Bilhetes
+                </div>
+              ) : (
+                <button
+                  onClick={handleAddToCart}
+                  disabled={adding || loading}
+                  className={`mt-4 w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg hover:shadow-lg transition-all font-semibold disabled:opacity-50 disabled:cursor-not-allowed ${
+                    showSuccess
+                      ? "bg-green-600 text-white"
+                      : "bg-gradient-to-r from-[#ff8c00] to-[#e67a00] text-white"
+                  }`}
+                >
+                  <ShoppingCart className="w-5 h-5" />
+                  {showSuccess
+                    ? "✓ Bilhete Adicionado!"
+                    : adding
+                    ? "A adicionar..."
+                    : "Comprar Bilhete"}
+                </button>
+              )
             )}
 
             {isPast && (

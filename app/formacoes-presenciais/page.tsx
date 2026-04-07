@@ -17,6 +17,8 @@ export default async function FormacoePresenciaisPage() {
         include:
           "variations,images,default_variation",
         sort: "field_training_date",
+        "fields[commerce_product--formacao_presencial]":
+          "title,path,body,images,variations,default_variation,field_training_date,field_training_end_date,field_location,field_location_address,field_max_participants,field_current_participants,field_instructor,field_included_items,status",
       },
       next: {
         revalidate: 60,

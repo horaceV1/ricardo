@@ -6,18 +6,17 @@ import {
   MapPin,
   Users,
   User,
-  ShoppingCart,
   Share2,
   CheckCircle,
   AlertCircle,
   ArrowLeft,
   Mail,
-  Phone,
   Ticket,
+  Tag,
 } from "lucide-react"
 import { DrupalNode } from "next-drupal"
 import Link from "next/link"
-import { useState } from "react"
+import { useState, useMemo } from "react"
 import { FadeIn } from "@/components/animations/FadeIn"
 import { ScaleIn } from "@/components/animations/ScaleIn"
 import { StaggerChildren, StaggerItem } from "@/components/animations/StaggerChildren"
@@ -53,9 +52,42 @@ export function TrainingDetail({ training }: TrainingDetailProps) {
   const [showSuccess, setShowSuccess] = useState(false)
   const [quantity, setQuantity] = useState(1)
 
-  const variation = training.default_variation || training.variations?.[0]
-  const price = variation?.price?.number || 0
-  const variationId = variation?.id
+  // All variations (ticket types)
+  const allVariations = useMemo(() => {
+    const vars = training.variations || []
+    return vars.filter((v: any) => v.status !== false && v.status !== 0)
+  }, [training.variations])
+
+  const hasMultipleVariations = allVariations.length > 1
+
+  // Selected variation (default to default_variation or first)
+  const defaultVar = training.default_variation || allVariations[0]
+  const [selectedVariationId, setSelectedVariationId] = useState<string>(
+    defaultVar?.id || ""
+  )
+
+  const selectedVariation = useMemo(
+    () => allVariations.find((v: any) => v.id === selectedVariationId) || defaultVar,
+    [allVariations, selectedVariationId, defaultVar]
+  )
+
+  const price = parseFloat(selectedVariation?.price?.number || "0")
+  const listPrice = parseFloat(selectedVariation?.list_price?.number || "0")
+  const variationId = selectedVariation?.id
+  const variationTitle = selectedVariation?.title || ""
+
+  // Price range for display
+  const priceRange = useMemo(() => {
+    if (allVariations.length <= 1) return null
+    const prices = allVariations
+      .map((v: any) => parseFloat(v.price?.number || "0"))
+      .filter((p: number) => p > 0)
+    if (prices.length === 0) return null
+    const min = Math.min(...prices)
+    const max = Math.max(...prices)
+    if (min === max) return null
+    return { min, max }
+  }, [allVariations])
 
   const trainingDate = training.field_training_date
   const endDate = training.field_training_end_date
@@ -65,6 +97,25 @@ export function TrainingDetail({ training }: TrainingDetailProps) {
   const currentParticipants = training.field_current_participants || 0
   const instructor = training.field_instructor || ""
   const image = training.images?.[0]
+
+  // Included items from backend (dynamic)
+  const includedItems: string[] = useMemo(() => {
+    const items = training.field_included_items
+    if (Array.isArray(items) && items.length > 0) {
+      return items.map((item: any) =>
+        typeof item === "string" ? item : item?.value || item
+      )
+    }
+    // Fallback defaults if none configured in backend
+    return [
+      "Acesso à formação presencial",
+      "Material de apoio",
+      "Certificado de participação",
+      "Coffee break incluído",
+      "Networking com outros participantes",
+      "Acompanhamento pós-formação",
+    ]
+  }, [training.field_included_items])
 
   const availableSlots = maxParticipants - currentParticipants
   const isSoldOut = maxParticipants > 0 && availableSlots <= 0
@@ -82,7 +133,6 @@ export function TrainingDetail({ training }: TrainingDetailProps) {
 
     setAdding(true)
     try {
-      // Add tickets one by one (quantity handling)
       let allSuccess = true
       for (let i = 0; i < quantity; i++) {
         const success = await addToCart(variationId)
@@ -163,6 +213,11 @@ export function TrainingDetail({ training }: TrainingDetailProps) {
                   <span className="bg-white/20 text-white px-3 py-1 rounded-full text-sm font-bold">
                     Presencial
                   </span>
+                  {hasMultipleVariations && (
+                    <span className="bg-white/20 text-white px-3 py-1 rounded-full text-sm font-bold">
+                      {allVariations.length} tipos de bilhete
+                    </span>
+                  )}
                 </div>
 
                 <h1 className="text-3xl md:text-5xl font-black mb-4 leading-tight">
@@ -225,8 +280,83 @@ export function TrainingDetail({ training }: TrainingDetailProps) {
                     </div>
                   )}
 
-                  {/* Price */}
+                  {/* Ticket Type Selector (multiple variations) */}
+                  {hasMultipleVariations && !isPast && (
+                    <div className="mb-5">
+                      <label className="block text-sm font-bold text-gray-700 mb-2">
+                        <Tag className="w-4 h-4 inline-block mr-1.5 text-[#009999]" />
+                        Tipo de Bilhete
+                      </label>
+                      <div className="space-y-2">
+                        {allVariations.map((v: any) => {
+                          const vPrice = parseFloat(v.price?.number || "0")
+                          const vListPrice = parseFloat(v.list_price?.number || "0")
+                          const isSelected = v.id === selectedVariationId
+                          return (
+                            <button
+                              key={v.id}
+                              onClick={() => {
+                                setSelectedVariationId(v.id)
+                                setQuantity(1)
+                              }}
+                              className={`w-full text-left p-3 rounded-xl border-2 transition-all ${
+                                isSelected
+                                  ? "border-[#009999] bg-[#009999]/5 shadow-md"
+                                  : "border-gray-200 hover:border-gray-300 hover:bg-gray-50"
+                              }`}
+                            >
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                  <div
+                                    className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
+                                      isSelected
+                                        ? "border-[#009999] bg-[#009999]"
+                                        : "border-gray-300"
+                                    }`}
+                                  >
+                                    {isSelected && (
+                                      <div className="w-2 h-2 rounded-full bg-white" />
+                                    )}
+                                  </div>
+                                  <div>
+                                    <p
+                                      className={`font-bold text-sm ${
+                                        isSelected ? "text-[#009999]" : "text-gray-900"
+                                      }`}
+                                    >
+                                      {v.title || "Bilhete"}
+                                    </p>
+                                  </div>
+                                </div>
+                                <div className="text-right">
+                                  {vListPrice > 0 && vListPrice > vPrice && (
+                                    <p className="text-xs text-gray-400 line-through">
+                                      {formatPrice(vListPrice)}
+                                    </p>
+                                  )}
+                                  <p
+                                    className={`font-black ${
+                                      isSelected ? "text-[#009999]" : "text-gray-900"
+                                    }`}
+                                  >
+                                    {vPrice > 0 ? formatPrice(vPrice) : "Gratuito"}
+                                  </p>
+                                </div>
+                              </div>
+                            </button>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Price display */}
                   <div className="flex items-baseline gap-2 mb-2">
+                    {listPrice > 0 && listPrice > price && (
+                      <span className="text-lg text-gray-400 line-through">
+                        {formatPrice(listPrice)}
+                      </span>
+                    )}
                     <span className="text-4xl font-black text-[#009999]">
                       {price > 0 ? formatPrice(price) : "Gratuito"}
                     </span>
@@ -273,7 +403,7 @@ export function TrainingDetail({ training }: TrainingDetailProps) {
                     </div>
                   )}
 
-                  {/* Quantity Selector (if not sold out and not past) */}
+                  {/* Quantity Selector */}
                   {!isPast && !isSoldOut && variationId && price > 0 && (
                     <div className="mb-4">
                       <label className="block text-sm font-semibold text-gray-700 mb-1.5">
@@ -338,7 +468,11 @@ export function TrainingDetail({ training }: TrainingDetailProps) {
                       ) : (
                         <>
                           <Ticket className="w-6 h-6" />
-                          {quantity === 1
+                          {hasMultipleVariations && variationTitle
+                            ? quantity === 1
+                              ? `Comprar ${variationTitle}`
+                              : `Comprar ${quantity}x ${variationTitle}`
+                            : quantity === 1
                             ? "Comprar Bilhete"
                             : `Comprar ${quantity} Bilhetes`}
                         </>
@@ -379,14 +513,12 @@ export function TrainingDetail({ training }: TrainingDetailProps) {
                       <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0" />
                       <span>Pagamento seguro</span>
                     </div>
-                    <div className="flex items-center gap-3 text-sm text-gray-600">
-                      <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0" />
-                      <span>Material incluído</span>
-                    </div>
-                    <div className="flex items-center gap-3 text-sm text-gray-600">
-                      <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0" />
-                      <span>Certificado de participação</span>
-                    </div>
+                    {includedItems.length > 0 && (
+                      <div className="flex items-center gap-3 text-sm text-gray-600">
+                        <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0" />
+                        <span>{includedItems.length} itens incluídos</span>
+                      </div>
+                    )}
                   </div>
                 </div>
               </ScaleIn>
@@ -412,31 +544,87 @@ export function TrainingDetail({ training }: TrainingDetailProps) {
               </FadeIn>
             )}
 
-            {/* What's Included */}
-            <FadeIn direction="up" delay={0.4}>
-              <div className="bg-white rounded-2xl shadow-md p-8">
-                <h2 className="text-3xl font-black mb-6">O que está incluído</h2>
-                <StaggerChildren staggerDelay={0.05}>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {[
-                      "Acesso à formação presencial",
-                      "Material de apoio",
-                      "Certificado de participação",
-                      "Coffee break incluído",
-                      "Networking com outros participantes",
-                      "Acompanhamento pós-formação",
-                    ].map((item, index) => (
-                      <StaggerItem key={index}>
-                        <div className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
-                          <CheckCircle className="w-5 h-5 text-[#009999] mt-0.5 flex-shrink-0" />
-                          <span className="font-medium">{item}</span>
+            {/* What's Included (dynamic from backend) */}
+            {includedItems.length > 0 && (
+              <FadeIn direction="up" delay={0.4}>
+                <div className="bg-white rounded-2xl shadow-md p-8">
+                  <h2 className="text-3xl font-black mb-6">O que está incluído</h2>
+                  <StaggerChildren staggerDelay={0.05}>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {includedItems.map((item, index) => (
+                        <StaggerItem key={index}>
+                          <div className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
+                            <CheckCircle className="w-5 h-5 text-[#009999] mt-0.5 flex-shrink-0" />
+                            <span className="font-medium">{item}</span>
+                          </div>
+                        </StaggerItem>
+                      ))}
+                    </div>
+                  </StaggerChildren>
+                </div>
+              </FadeIn>
+            )}
+
+            {/* Ticket Types Overview (when multiple variations) */}
+            {hasMultipleVariations && !isPast && (
+              <FadeIn direction="up" delay={0.45}>
+                <div className="bg-white rounded-2xl shadow-md p-8">
+                  <h2 className="text-3xl font-black mb-6">Tipos de Bilhete</h2>
+                  <div className="space-y-4">
+                    {allVariations.map((v: any, index: number) => {
+                      const vPrice = parseFloat(v.price?.number || "0")
+                      const vListPrice = parseFloat(v.list_price?.number || "0")
+                      const isSelected = v.id === selectedVariationId
+                      return (
+                        <div
+                          key={v.id}
+                          className={`p-5 rounded-xl border-2 transition-all cursor-pointer ${
+                            isSelected
+                              ? "border-[#009999] bg-[#009999]/5 shadow-md"
+                              : "border-gray-200 hover:border-[#009999]/30"
+                          }`}
+                          onClick={() => {
+                            setSelectedVariationId(v.id)
+                            setQuantity(1)
+                            window.scrollTo({ top: 0, behavior: "smooth" })
+                          }}
+                        >
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <div className="flex items-center gap-2">
+                                <Ticket
+                                  className={`w-5 h-5 ${
+                                    isSelected ? "text-[#009999]" : "text-gray-400"
+                                  }`}
+                                />
+                                <h3 className="text-lg font-bold">
+                                  {v.title || `Bilhete ${index + 1}`}
+                                </h3>
+                                {isSelected && (
+                                  <span className="bg-[#009999] text-white text-xs font-bold px-2 py-0.5 rounded-full">
+                                    Selecionado
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                            <div className="text-right">
+                              {vListPrice > 0 && vListPrice > vPrice && (
+                                <p className="text-sm text-gray-400 line-through">
+                                  {formatPrice(vListPrice)}
+                                </p>
+                              )}
+                              <p className="text-2xl font-black text-[#009999]">
+                                {vPrice > 0 ? formatPrice(vPrice) : "Gratuito"}
+                              </p>
+                            </div>
+                          </div>
                         </div>
-                      </StaggerItem>
-                    ))}
+                      )
+                    })}
                   </div>
-                </StaggerChildren>
-              </div>
-            </FadeIn>
+                </div>
+              </FadeIn>
+            )}
           </div>
 
           {/* Sidebar Info */}
@@ -529,9 +717,16 @@ export function TrainingDetail({ training }: TrainingDetailProps) {
                       </div>
                       <div>
                         <p className="text-sm text-gray-500 font-medium">Preço</p>
-                        <p className="font-bold text-[#009999]">
-                          {formatPrice(price)} / bilhete
-                        </p>
+                        {priceRange ? (
+                          <p className="font-bold text-[#009999]">
+                            Desde {formatPrice(priceRange.min)} até{" "}
+                            {formatPrice(priceRange.max)}
+                          </p>
+                        ) : (
+                          <p className="font-bold text-[#009999]">
+                            {formatPrice(price)} / bilhete
+                          </p>
+                        )}
                       </div>
                     </div>
                   )}
