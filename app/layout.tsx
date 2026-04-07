@@ -94,6 +94,7 @@ export default function RootLayout({
                   <ul className="space-y-2 text-gray-300">
                     <li><a href="/" className="hover:text-[#80d4d4] transition-colors">Início</a></li>
                     <li><a href="/courses" className="hover:text-[#80d4d4] transition-colors">Formações</a></li>
+                    <li><a href="/formacoes-presenciais" className="hover:text-[#80d4d4] transition-colors">Formações Presenciais</a></li>
                     <li><a href="/about" className="hover:text-[#80d4d4] transition-colors">Sobre Nós</a></li>
                   </ul>
                 </div>

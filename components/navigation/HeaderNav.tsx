@@ -59,6 +59,9 @@ export function HeaderNav() {
             <Link href="/courses" className="text-gray-700 hover:text-[#009999] font-semibold no-underline transition-colors">
               Formações
             </Link>
+            <Link href="/formacoes-presenciais" className="text-gray-700 hover:text-[#009999] font-semibold no-underline transition-colors">
+              Presenciais
+            </Link>
             <Link href="/blog" className="text-gray-700 hover:text-[#009999] font-semibold no-underline transition-colors">
               Blog
             </Link>
@@ -190,6 +193,9 @@ export function HeaderNav() {
               </Link>
               <Link href="/courses" className="text-gray-700 hover:text-[#009999] font-semibold no-underline transition-colors" onClick={() => setMobileMenuOpen(false)}>
                 Formações
+              </Link>
+              <Link href="/formacoes-presenciais" className="text-gray-700 hover:text-[#009999] font-semibold no-underline transition-colors" onClick={() => setMobileMenuOpen(false)}>
+                Formações Presenciais
               </Link>
               <Link href="/blog" className="text-gray-700 hover:text-[#009999] font-semibold no-underline transition-colors" onClick={() => setMobileMenuOpen(false)}>
                 Blog
