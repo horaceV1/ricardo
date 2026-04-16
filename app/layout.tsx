@@ -7,6 +7,7 @@ import { CartProvider } from "@/contexts/CartContext"
 import { CookieConsent } from "@/components/ui/CookieConsent"
 import { WhatsAppButton } from "@/components/ui/WhatsAppButton"
 import Image from "next/image"
+import Script from "next/script"
 import type { Metadata } from "next"
 import type { ReactNode } from "react"
 
@@ -184,6 +185,12 @@ export default function RootLayout({
           </CartProvider>
         </AuthProvider>
         </RecaptchaProvider>
+        {/* Mailchimp Connected Sites */}
+        <Script
+          id="mcjs"
+          strategy="lazyOnload"
+          src="https://chimpstatic.com/mcjs-connected/js/users/e0a7bc7769d6ab15c59d53f5e/9ccb812cd7e73802ff9c39e7f.js"
+        />
       </body>
     </html>
   )
