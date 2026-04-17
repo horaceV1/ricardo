@@ -5,6 +5,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { Calendar, User, Tag, ArrowLeft, Share2 } from 'lucide-react'
 import { DynamicForm } from '@/components/forms/DynamicForm'
+import { AuthGate } from '@/components/ui/AuthGate'
 
 interface BlogPost {
   id: string
@@ -20,6 +21,7 @@ interface BlogPost {
   author: string
   tags: string[]
   dynamicFormId: string | null
+  requiresAuth: boolean
 }
 
 export default function BlogPostPage({ params }: { params: { slug: string[] } }) {
@@ -38,7 +40,7 @@ export default function BlogPostPage({ params }: { params: { slug: string[] } })
       
       // Simplified: fetch without nested includes to avoid timeouts
       const response = await fetch(
-        `${baseUrl}/jsonapi/node/curso?fields[node--curso]=drupal_internal__nid,title,corpo,created,path,imagem,field_dynamic_form`
+        `${baseUrl}/jsonapi/node/curso?fields[node--curso]=drupal_internal__nid,title,corpo,created,path,imagem,field_dynamic_form,field_requires_auth`
       )
       const data = await response.json()
 
@@ -92,6 +94,7 @@ export default function BlogPostPage({ params }: { params: { slug: string[] } })
           author: 'Admin',
           tags: [],
           dynamicFormId: dynamicFormId,
+          requiresAuth: postData.attributes.field_requires_auth || false,
         })
 
         // Fetch related posts
@@ -221,6 +224,7 @@ export default function BlogPostPage({ params }: { params: { slug: string[] } })
   const baseUrl = process.env.NEXT_PUBLIC_DRUPAL_BASE_URL || 'https://darkcyan-stork-408379.hostingersite.com'
 
   return (
+    <AuthGate requiresAuth={post.requiresAuth}>
     <div className="min-h-screen bg-gray-50">
       {/* Back Button */}
       <div className="bg-white border-b border-gray-200">
@@ -343,5 +347,6 @@ export default function BlogPostPage({ params }: { params: { slug: string[] } })
         </section>
       )}
     </div>
+    </AuthGate>
   )
 }

@@ -3,6 +3,7 @@ import { notFound } from "next/navigation"
 import type { DrupalNode } from "next-drupal"
 import type { Metadata } from "next"
 import { TrainingDetail } from "@/components/trainings/TrainingDetail"
+import { AuthGateWrapper } from "@/components/ui/AuthGateWrapper"
 
 interface TrainingPageProps {
   params: { slug: string }
@@ -32,7 +33,7 @@ async function fetchTraining(slug: string): Promise<DrupalNode | null> {
   const apiParams = {
     include: "variations,images,default_variation",
     "fields[commerce_product--formacao_presencial]":
-      "title,path,body,images,variations,default_variation,field_training_date,field_training_end_date,field_location,field_location_address,field_max_participants,field_current_participants,field_instructor,field_included_items,field_price_on_request,status",
+      "title,path,body,images,variations,default_variation,field_training_date,field_training_end_date,field_location,field_location_address,field_max_participants,field_current_participants,field_instructor,field_included_items,field_price_on_request,field_requires_auth,status",
   }
 
   try {
@@ -61,5 +62,11 @@ export default async function TrainingPage({ params }: TrainingPageProps) {
   const training = await fetchTraining(params.slug)
   if (!training) notFound()
 
-  return <TrainingDetail training={training} />
+  const requiresAuth = training.field_requires_auth === true || training.field_requires_auth === 1
+
+  return (
+    <AuthGateWrapper requiresAuth={requiresAuth}>
+      <TrainingDetail training={training} />
+    </AuthGateWrapper>
+  )
 }

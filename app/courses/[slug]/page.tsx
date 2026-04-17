@@ -19,6 +19,7 @@ import { ImageWithFallback } from "@/components/ui/ImageWithFallback"
 import { absoluteUrl, formatPrice } from "@/lib/utils"
 import type { DrupalNode } from "next-drupal"
 import type { Metadata } from "next"
+import { AuthGateWrapper } from "@/components/ui/AuthGateWrapper"
 
 interface CoursePageProps {
   params: {
@@ -73,7 +74,10 @@ export default async function CoursePage({ params }: CoursePageProps) {
   const category = course.field_category?.name || "Uncategorized"
   const instructor = course.uid?.display_name || "Anonymous"
 
+  const requiresAuth = course.field_requires_auth === true || course.field_requires_auth === 1
+
   return (
+    <AuthGateWrapper requiresAuth={requiresAuth}>
     <div className="min-h-screen bg-gray-50">
       {/* Hero Section */}
       <div className="bg-gradient-to-r from-blue-900 to-purple-900 text-white">
@@ -250,5 +254,6 @@ export default async function CoursePage({ params }: CoursePageProps) {
         </div>
       </div>
     </div>
+    </AuthGateWrapper>
   )
 }
