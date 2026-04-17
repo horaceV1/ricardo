@@ -49,6 +49,7 @@ export function TrainingCard({ training }: TrainingCardProps) {
   const variation = training.default_variation || allVariations[0]
   const price = parseFloat(variation?.price?.number || "0")
   const variationId = variation?.id
+  const isPriceOnRequest = training.field_price_on_request === true || training.field_price_on_request === 1
 
   // Price range for multiple ticket types
   const priceRange = useMemo(() => {
@@ -215,7 +216,9 @@ export function TrainingCard({ training }: TrainingCardProps) {
                 )}
               </div>
               <div className="text-right">
-                {priceRange ? (
+                {isPriceOnRequest ? (
+                  <div className="text-xl font-black text-[#009999]">Sob consulta</div>
+                ) : priceRange ? (
                   <>
                     <div className="text-xs text-gray-500 font-medium">desde</div>
                     <div className="text-2xl font-black text-[#009999]">
@@ -231,7 +234,13 @@ export function TrainingCard({ training }: TrainingCardProps) {
             </div>
 
             {/* Buy Button */}
-            {!isPast && !isSoldOut && variationId && price > 0 && (
+            {!isPast && !isSoldOut && isPriceOnRequest && (
+              <div className="mt-4 w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg bg-gradient-to-r from-[#ff8c00] to-[#e67a00] text-white font-semibold hover:shadow-lg transition-all">
+                Saber Mais
+              </div>
+            )}
+
+            {!isPast && !isSoldOut && !isPriceOnRequest && variationId && price > 0 && (
               hasMultipleVariations ? (
                 <div
                   className="mt-4 w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg bg-gradient-to-r from-[#ff8c00] to-[#e67a00] text-white font-semibold hover:shadow-lg transition-all"

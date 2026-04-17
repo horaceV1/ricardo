@@ -75,6 +75,7 @@ export function TrainingDetail({ training }: TrainingDetailProps) {
   const listPrice = parseFloat(selectedVariation?.list_price?.number || "0")
   const variationId = selectedVariation?.id
   const variationTitle = selectedVariation?.title || ""
+  const isPriceOnRequest = training.field_price_on_request === true || training.field_price_on_request === 1
 
   // Price range for display
   const priceRange = useMemo(() => {
@@ -329,18 +330,24 @@ export function TrainingDetail({ training }: TrainingDetailProps) {
                                   </div>
                                 </div>
                                 <div className="text-right">
-                                  {vListPrice > 0 && vListPrice > vPrice && (
-                                    <p className="text-xs text-gray-400 line-through">
-                                      {formatPrice(vListPrice)}
-                                    </p>
+                                  {isPriceOnRequest ? (
+                                    <p className={`font-black ${isSelected ? "text-[#009999]" : "text-gray-900"}`}>Sob consulta</p>
+                                  ) : (
+                                    <>
+                                      {vListPrice > 0 && vListPrice > vPrice && (
+                                        <p className="text-xs text-gray-400 line-through">
+                                          {formatPrice(vListPrice)}
+                                        </p>
+                                      )}
+                                      <p
+                                        className={`font-black ${
+                                          isSelected ? "text-[#009999]" : "text-gray-900"
+                                        }`}
+                                      >
+                                        {vPrice > 0 ? formatPrice(vPrice) : "Gratuito"}
+                                      </p>
+                                    </>
                                   )}
-                                  <p
-                                    className={`font-black ${
-                                      isSelected ? "text-[#009999]" : "text-gray-900"
-                                    }`}
-                                  >
-                                    {vPrice > 0 ? formatPrice(vPrice) : "Gratuito"}
-                                  </p>
                                 </div>
                               </div>
                             </button>
@@ -352,16 +359,22 @@ export function TrainingDetail({ training }: TrainingDetailProps) {
 
                   {/* Price display */}
                   <div className="flex items-baseline gap-2 mb-2">
-                    {listPrice > 0 && listPrice > price && (
-                      <span className="text-lg text-gray-400 line-through">
-                        {formatPrice(listPrice)}
-                      </span>
-                    )}
-                    <span className="text-4xl font-black text-[#009999]">
-                      {price > 0 ? formatPrice(price) : "Gratuito"}
-                    </span>
-                    {price > 0 && (
-                      <span className="text-sm text-gray-500">/ bilhete</span>
+                    {isPriceOnRequest ? (
+                      <span className="text-4xl font-black text-[#009999]">Sob consulta</span>
+                    ) : (
+                      <>
+                        {listPrice > 0 && listPrice > price && (
+                          <span className="text-lg text-gray-400 line-through">
+                            {formatPrice(listPrice)}
+                          </span>
+                        )}
+                        <span className="text-4xl font-black text-[#009999]">
+                          {price > 0 ? formatPrice(price) : "Gratuito"}
+                        </span>
+                        {price > 0 && (
+                          <span className="text-sm text-gray-500">/ bilhete</span>
+                        )}
+                      </>
                     )}
                   </div>
 
@@ -404,7 +417,7 @@ export function TrainingDetail({ training }: TrainingDetailProps) {
                   )}
 
                   {/* Quantity Selector */}
-                  {!isPast && !isSoldOut && variationId && price > 0 && (
+                  {!isPast && !isSoldOut && variationId && price > 0 && !isPriceOnRequest && (
                     <div className="mb-4">
                       <label className="block text-sm font-semibold text-gray-700 mb-1.5">
                         Quantidade de Bilhetes
@@ -442,8 +455,19 @@ export function TrainingDetail({ training }: TrainingDetailProps) {
                     </div>
                   )}
 
+                  {/* Contact button for price on request */}
+                  {!isPast && !isSoldOut && isPriceOnRequest && (
+                    <a
+                      href="/contacto"
+                      className="w-full flex items-center justify-center gap-2 px-4 py-4 rounded-xl font-bold text-lg bg-gradient-to-r from-[#ff8c00] to-[#e67a00] text-white hover:from-[#e67a00] hover:to-[#cc6600] shadow-lg hover:shadow-xl transition-all"
+                    >
+                      <Mail className="w-6 h-6" />
+                      Solicitar Informações
+                    </a>
+                  )}
+
                   {/* Buy Button */}
-                  {!isPast && !isSoldOut && variationId && price > 0 && (
+                  {!isPast && !isSoldOut && variationId && price > 0 && !isPriceOnRequest && (
                     <button
                       onClick={handleAddToCart}
                       disabled={adding || loading}
