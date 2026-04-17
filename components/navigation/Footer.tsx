@@ -51,11 +51,7 @@ const defaultFooter: FooterData = {
     {
       title: "Legal",
       links: [
-        { text: "Termos e Condições", url: "/termos-condicoes", external: false },
-        { text: "Política de Privacidade", url: "/politica-privacidade", external: false },
-        { text: "Política de Cookies", url: "/politica-cookies", external: false },
-        { text: "Política de Cancelamento", url: "/politica-cancelamento", external: false },
-        { text: "Condições da Plataforma", url: "/condicoes-plataforma", external: false },
+        { text: "Termos de Utilização e Política de Privacidade", url: "/termos-utilizacao", external: false },
       ],
     },
   ],
