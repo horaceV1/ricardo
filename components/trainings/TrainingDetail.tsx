@@ -75,7 +75,8 @@ export function TrainingDetail({ training }: TrainingDetailProps) {
   const listPrice = parseFloat(selectedVariation?.list_price?.number || "0")
   const variationId = selectedVariation?.id
   const variationTitle = selectedVariation?.title || ""
-  const isPriceOnRequest = training.field_price_on_request === true || training.field_price_on_request === 1
+  const isProductPriceOnRequest = training.field_price_on_request === true || training.field_price_on_request === 1
+  const isPriceOnRequest = selectedVariation?.field_price_on_request === true || selectedVariation?.field_price_on_request === 1 || isProductPriceOnRequest
 
   // Price range for display
   const priceRange = useMemo(() => {
@@ -330,7 +331,7 @@ export function TrainingDetail({ training }: TrainingDetailProps) {
                                   </div>
                                 </div>
                                 <div className="text-right">
-                                  {isPriceOnRequest ? (
+                                  {(v.field_price_on_request === true || v.field_price_on_request === 1 || isProductPriceOnRequest) ? (
                                     <p className={`font-black ${isSelected ? "text-[#009999]" : "text-gray-900"}`}>Sob consulta</p>
                                   ) : (
                                     <>

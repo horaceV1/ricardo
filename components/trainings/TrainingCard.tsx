@@ -49,7 +49,7 @@ export function TrainingCard({ training }: TrainingCardProps) {
   const variation = training.default_variation || allVariations[0]
   const price = parseFloat(variation?.price?.number || "0")
   const variationId = variation?.id
-  const isPriceOnRequest = training.field_price_on_request === true || training.field_price_on_request === 1
+  const isPriceOnRequest = variation?.field_price_on_request === true || variation?.field_price_on_request === 1 || training.field_price_on_request === true || training.field_price_on_request === 1
 
   // Price range for multiple ticket types
   const priceRange = useMemo(() => {
