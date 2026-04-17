@@ -1,7 +1,7 @@
 "use client"
 
 import { Link } from "@/components/navigation/Link"
-import { Menu, X, User, LogOut, ShoppingBag, FileText, FilePlus2 } from "lucide-react"
+import { Menu, X, User, LogOut, ShoppingBag, FileText, FilePlus2, ChevronDown } from "lucide-react"
 import { useState } from "react"
 import Image from "next/image"
 import { useAuth } from "@/contexts/AuthContext"
@@ -56,12 +56,22 @@ export function HeaderNav() {
             <Link href="/" className="text-gray-700 hover:text-[#009999] font-semibold no-underline transition-colors">
               Início
             </Link>
-            <Link href="/courses" className="text-gray-700 hover:text-[#009999] font-semibold no-underline transition-colors">
-              Formações
-            </Link>
-            <Link href="/formacoes-presenciais" className="text-gray-700 hover:text-[#009999] font-semibold no-underline transition-colors">
-              Presenciais
-            </Link>
+            <div className="relative group">
+              <button className="flex items-center gap-1 text-gray-700 hover:text-[#009999] font-semibold transition-colors">
+                Formações
+                <ChevronDown className="w-4 h-4 transition-transform group-hover:rotate-180" />
+              </button>
+              <div className="absolute top-full left-0 pt-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                <div className="bg-white rounded-xl shadow-xl border border-gray-100 py-2 min-w-[180px]">
+                  <Link href="/courses" className="block px-4 py-2.5 text-gray-700 hover:text-[#009999] hover:bg-[#009999]/5 font-semibold no-underline transition-colors">
+                    Online
+                  </Link>
+                  <Link href="/formacoes-presenciais" className="block px-4 py-2.5 text-gray-700 hover:text-[#009999] hover:bg-[#009999]/5 font-semibold no-underline transition-colors">
+                    Presenciais
+                  </Link>
+                </div>
+              </div>
+            </div>
             <Link href="/blog" className="text-gray-700 hover:text-[#009999] font-semibold no-underline transition-colors">
               Blog
             </Link>
@@ -191,12 +201,17 @@ export function HeaderNav() {
               <Link href="/" className="text-gray-700 hover:text-[#009999] font-semibold no-underline transition-colors" onClick={() => setMobileMenuOpen(false)}>
                 Início
               </Link>
-              <Link href="/courses" className="text-gray-700 hover:text-[#009999] font-semibold no-underline transition-colors" onClick={() => setMobileMenuOpen(false)}>
-                Formações
-              </Link>
-              <Link href="/formacoes-presenciais" className="text-gray-700 hover:text-[#009999] font-semibold no-underline transition-colors" onClick={() => setMobileMenuOpen(false)}>
-                Formações Presenciais
-              </Link>
+              <div>
+                <span className="text-gray-700 font-semibold">Formações</span>
+                <div className="ml-4 mt-2 flex flex-col gap-2">
+                  <Link href="/courses" className="text-gray-600 hover:text-[#009999] font-medium no-underline transition-colors" onClick={() => setMobileMenuOpen(false)}>
+                    Online
+                  </Link>
+                  <Link href="/formacoes-presenciais" className="text-gray-600 hover:text-[#009999] font-medium no-underline transition-colors" onClick={() => setMobileMenuOpen(false)}>
+                    Presenciais
+                  </Link>
+                </div>
+              </div>
               <Link href="/blog" className="text-gray-700 hover:text-[#009999] font-semibold no-underline transition-colors" onClick={() => setMobileMenuOpen(false)}>
                 Blog
               </Link>
