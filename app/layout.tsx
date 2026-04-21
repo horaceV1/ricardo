@@ -88,10 +88,10 @@ export default function RootLayout({
           </CartProvider>
         </AuthProvider>
         </RecaptchaProvider>
-        {/* Mailchimp Connected Sites */}
+        {/* Mailchimp Connected Sites - must run on every page so Mailchimp can detect the site */}
         <Script
           id="mcjs"
-          strategy="lazyOnload"
+          strategy="afterInteractive"
           dangerouslySetInnerHTML={{
             __html: `!function(c,h,i,m,p){m=c.createElement(h),p=c.getElementsByTagName(h)[0],m.async=1,m.src=i,p.parentNode.insertBefore(m,p)}(document,"script","https://chimpstatic.com/mcjs-connected/js/users/e0a7bc7769d6ab15c59d53f5e/1bec2970d4307ddbe9230a2bf.js");`,
           }}
