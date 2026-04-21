@@ -93,7 +93,7 @@ export default function RootLayout({
           id="mcjs"
           strategy="afterInteractive"
           dangerouslySetInnerHTML={{
-            __html: `!function(c,h,i,m,p){m=c.createElement(h),p=c.getElementsByTagName(h)[0],m.async=1,m.src=i,p.parentNode.insertBefore(m,p)}(document,"script","https://chimpstatic.com/mcjs-connected/js/users/e0a7bc7769d6ab15c59d53f5e/1bec2970d4307ddbe9230a2bf.js");`,
+            __html: `!function(c,h,i,m,p){m=c.createElement(h),p=c.getElementsByTagName(h)[0],m.async=1,m.src=i,p.parentNode.insertBefore(m,p)}(document,"script","https://chimpstatic.com/mcjs-connected/js/users/e0a7bc7769d6ab15c59d53f5e/427c0d0292e43ff088a087409.js");`,
           }}
         />
         {/* Meta Pixel */}
