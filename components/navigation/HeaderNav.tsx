@@ -58,7 +58,7 @@ export function HeaderNav() {
             </Link>
             <div className="relative group">
               <button className="flex items-center gap-1 text-gray-700 hover:text-[#009999] font-semibold transition-colors">
-                Formações
+                Formações/Eventos
                 <ChevronDown className="w-4 h-4 transition-transform group-hover:rotate-180" />
               </button>
               <div className="absolute top-full left-0 pt-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
@@ -202,7 +202,7 @@ export function HeaderNav() {
                 Início
               </Link>
               <div>
-                <span className="text-gray-700 font-semibold">Formações</span>
+                <span className="text-gray-700 font-semibold">Formações/Eventos</span>
                 <div className="ml-4 mt-2 flex flex-col gap-2">
                   <Link href="/courses" className="text-gray-600 hover:text-[#009999] font-medium no-underline transition-colors" onClick={() => setMobileMenuOpen(false)}>
                     Online
