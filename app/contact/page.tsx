@@ -283,7 +283,7 @@ export default function ContactPage() {
           ].map((item) => (
             <AnimatedSection key={item.title} animation="slideUp" delay={item.delay} className="h-full">
               <div className="h-full flex flex-col bg-white rounded-xl shadow-lg p-6 text-center hover:shadow-xl transition-shadow border border-gray-100">
-                <div className="inline-flex items-center justify-center w-12 h-12 bg-gradient-to-br from-[#009999] to-[#007a7a] rounded-lg mb-4">
+                <div className="mx-auto flex items-center justify-center w-12 h-12 bg-gradient-to-br from-[#009999] to-[#007a7a] rounded-lg mb-4">
                   <item.icon className="w-6 h-6 text-white" />
                 </div>
                 <h3 className="font-bold text-gray-900 mb-1">{item.title}</h3>
