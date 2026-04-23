@@ -71,6 +71,15 @@ export default function RootLayout({
 }) {
   return (
     <html lang="pt">
+      <head>
+        {/* Mailchimp Connected Sites - must be in <head> so Mailchimp's site detector can find it */}
+        <script
+          id="mcjs"
+          dangerouslySetInnerHTML={{
+            __html: `!function(c,h,i,m,p){m=c.createElement(h),p=c.getElementsByTagName(h)[0],m.async=1,m.src=i,p.parentNode.insertBefore(m,p)}(document,"script","https://chimpstatic.com/mcjs-connected/js/users/e0a7bc7769d6ab15c59d53f5e/427c0d0292e43ff088a087409.js");`,
+          }}
+        />
+      </head>
       <body className="bg-gray-50">
         <RecaptchaProvider>
           <AuthProvider>
@@ -88,14 +97,6 @@ export default function RootLayout({
           </CartProvider>
         </AuthProvider>
         </RecaptchaProvider>
-        {/* Mailchimp Connected Sites - must run on every page so Mailchimp can detect the site */}
-        <Script
-          id="mcjs"
-          strategy="afterInteractive"
-          dangerouslySetInnerHTML={{
-            __html: `!function(c,h,i,m,p){m=c.createElement(h),p=c.getElementsByTagName(h)[0],m.async=1,m.src=i,p.parentNode.insertBefore(m,p)}(document,"script","https://chimpstatic.com/mcjs-connected/js/users/e0a7bc7769d6ab15c59d53f5e/427c0d0292e43ff088a087409.js");`,
-          }}
-        />
         {/* Meta Pixel */}
         <Script
           id="meta-pixel"
