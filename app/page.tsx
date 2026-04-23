@@ -329,13 +329,13 @@ export default async function Home() {
             </div>
           </AnimatedSection>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 items-stretch">
             {hp.features.items.map((feature, i) => {
               const Icon = featureIcons[i % featureIcons.length]
               const color = featureColors[i % featureColors.length]
               return (
-                <AnimatedSection key={i} animation="slideUp" delay={0.1 * (i + 1)}>
-                  <div className={`text-center p-6 rounded-xl hover:shadow-xl transition-all group cursor-pointer bg-gradient-to-br ${color.card} border-2 border-transparent ${color.border}`}>
+                <AnimatedSection key={i} animation="slideUp" delay={0.1 * (i + 1)} className="h-full">
+                  <div className={`h-full flex flex-col text-center p-6 rounded-xl hover:shadow-xl transition-all group cursor-pointer bg-gradient-to-br ${color.card} border-2 border-transparent ${color.border}`}>
                     <div className={`${color.bg} w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform shadow-lg`}>
                       <Icon className="w-8 h-8 text-white" />
                     </div>

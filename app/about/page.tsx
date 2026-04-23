@@ -217,11 +217,11 @@ export default function AboutPage() {
             </div>
           </AnimatedSection>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4 items-stretch">
             {partnerships.map((partnership, index) => (
-              <AnimatedSection key={partnership} animation="scale" delay={0.05 * index}>
+              <AnimatedSection key={partnership} animation="scale" delay={0.05 * index} className="h-full">
                 <div className={`
-                  p-6 rounded-xl text-center font-semibold text-gray-800 transition-all hover:scale-105 border-2
+                  h-full flex items-center justify-center p-6 rounded-xl text-center font-semibold text-gray-800 transition-all hover:scale-105 border-2
                   ${partnership === "O seu negócio" 
                     ? "bg-[#80d4d4] border-[#009999] shadow-lg" 
                     : "bg-white border-gray-200 hover:border-[#009999] hover:shadow-md"

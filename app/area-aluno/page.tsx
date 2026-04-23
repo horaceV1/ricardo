@@ -291,8 +291,8 @@ export default function StudentAreaPage() {
         </div>
 
         {/* Stats Overview */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <div className="bg-white rounded-2xl shadow-lg p-6 border-l-4 border-[#009999]">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8 items-stretch">
+          <div className="h-full bg-white rounded-2xl shadow-lg p-6 border-l-4 border-[#009999]">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600 mb-1">Cursos Ativos</p>
@@ -304,7 +304,7 @@ export default function StudentAreaPage() {
             </div>
           </div>
 
-          <div className="bg-white rounded-2xl shadow-lg p-6 border-l-4 border-green-500">
+          <div className="h-full bg-white rounded-2xl shadow-lg p-6 border-l-4 border-green-500">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600 mb-1">Concluídos</p>
@@ -316,7 +316,7 @@ export default function StudentAreaPage() {
             </div>
           </div>
 
-          <div className="bg-white rounded-2xl shadow-lg p-6 border-l-4 border-blue-500">
+          <div className="h-full bg-white rounded-2xl shadow-lg p-6 border-l-4 border-blue-500">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600 mb-1">Em Progresso</p>
@@ -328,7 +328,7 @@ export default function StudentAreaPage() {
             </div>
           </div>
 
-          <div className="bg-white rounded-2xl shadow-lg p-6 border-l-4 border-yellow-500">
+          <div className="h-full bg-white rounded-2xl shadow-lg p-6 border-l-4 border-yellow-500">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600 mb-1">Progresso Geral</p>
@@ -483,10 +483,10 @@ export default function StudentAreaPage() {
         </div>
 
         {/* Quick Links */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8 items-stretch">
           <Link
             href="/conta"
-            className="bg-white rounded-2xl shadow-lg p-6 hover:shadow-xl transition-all group"
+            className="h-full flex flex-col bg-white rounded-2xl shadow-lg p-6 hover:shadow-xl transition-all group"
           >
             <div className="h-12 w-12 bg-[#009999]/10 rounded-lg flex items-center justify-center mb-4 group-hover:bg-[#009999] transition-colors">
               <BookOpen className="h-6 w-6 text-[#009999] group-hover:text-white transition-colors" />
@@ -499,7 +499,7 @@ export default function StudentAreaPage() {
 
           <Link
             href="/courses"
-            className="bg-white rounded-2xl shadow-lg p-6 hover:shadow-xl transition-all group"
+            className="h-full flex flex-col bg-white rounded-2xl shadow-lg p-6 hover:shadow-xl transition-all group"
           >
             <div className="h-12 w-12 bg-blue-500/10 rounded-lg flex items-center justify-center mb-4 group-hover:bg-blue-500 transition-colors">
               <Target className="h-6 w-6 text-blue-500 group-hover:text-white transition-colors" />
@@ -512,7 +512,7 @@ export default function StudentAreaPage() {
 
           <Link
             href="#certificados"
-            className="bg-white rounded-2xl shadow-lg p-6 hover:shadow-xl transition-all group"
+            className="h-full flex flex-col bg-white rounded-2xl shadow-lg p-6 hover:shadow-xl transition-all group"
           >
             <div className="h-12 w-12 bg-yellow-500/10 rounded-lg flex items-center justify-center mb-4 group-hover:bg-yellow-500 transition-colors">
               <Award className="h-6 w-6 text-yellow-500 group-hover:text-white transition-colors" />

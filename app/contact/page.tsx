@@ -252,7 +252,7 @@ export default function ContactPage() {
 
       {/* Contact Info Cards */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-12 relative z-10">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 items-stretch">
           {[
             {
               icon: MapPin,
@@ -281,8 +281,8 @@ export default function ContactPage() {
               delay: 0.3,
             },
           ].map((item) => (
-            <AnimatedSection key={item.title} animation="slideUp" delay={item.delay}>
-              <div className="bg-white rounded-xl shadow-lg p-6 text-center hover:shadow-xl transition-shadow border border-gray-100">
+            <AnimatedSection key={item.title} animation="slideUp" delay={item.delay} className="h-full">
+              <div className="h-full flex flex-col bg-white rounded-xl shadow-lg p-6 text-center hover:shadow-xl transition-shadow border border-gray-100">
                 <div className="inline-flex items-center justify-center w-12 h-12 bg-gradient-to-br from-[#009999] to-[#007a7a] rounded-lg mb-4">
                   <item.icon className="w-6 h-6 text-white" />
                 </div>
