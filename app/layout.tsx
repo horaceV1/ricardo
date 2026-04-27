@@ -69,31 +69,35 @@ export default function RootLayout({
 }: {
   children: ReactNode
 }) {
+  // Mailchimp Connected Sites: each registered URL has its own unique script hash.
+  // We inject ALL hashes on every page so Mailchimp's detector finds the matching
+  // one regardless of which domain it crawls. The www hash carries id="mcjs".
+  // When you register a new Connected Site in Mailchimp, append its hash here.
+  const MC_USER_ID = "e0a7bc7769d6ab15c59d53f5e"
+  const MC_PRIMARY_HASH = "1bec2970d4307ddbe9230a2bf" // www.clinicadoempresario.pt
+  const MC_OTHER_HASHES = [
+    "9ccb812cd7e73802ff9c39e7f", // clinicadoempresario.pt (apex)
+    "427c0d0292e43ff088a087409", // darkcyan-stork-408379.hostingersite.com (backend)
+  ]
+  const mcSnippet = (hash: string) =>
+    `!function(c,h,i,m,p){m=c.createElement(h),p=c.getElementsByTagName(h)[0],m.async=1,m.src=i,p.parentNode.insertBefore(m,p)}(document,"script","https://chimpstatic.com/mcjs-connected/js/users/${MC_USER_ID}/${hash}.js");`
+
   return (
     <html lang="pt">
       <head>
-        {/* Mailchimp Connected Sites - inject every known site-script hash so each
-            "Connected Site" entry in Mailchimp (one per registered URL) can be detected.
-            Add new hashes to the array below when you create another Connected Site. */}
-        {[
-          "427c0d0292e43ff088a087409", // www.clinicadoempresario.pt (current)
-          "1bec2970d4307ddbe9230a2bf", // legacy / additional connected-site entry
-        ].map((hash) => (
+        {/* Mailchimp Connected Sites - canonical id="mcjs" for the www domain. */}
+        <script
+          id="mcjs"
+          dangerouslySetInnerHTML={{ __html: mcSnippet(MC_PRIMARY_HASH) }}
+        />
+        {/* Backup hashes for the other registered Connected Sites. */}
+        {MC_OTHER_HASHES.map((hash) => (
           <script
             key={hash}
             id={`mcjs-${hash}`}
-            dangerouslySetInnerHTML={{
-              __html: `!function(c,h,i,m,p){m=c.createElement(h),p=c.getElementsByTagName(h)[0],m.async=1,m.src=i,p.parentNode.insertBefore(m,p)}(document,"script","https://chimpstatic.com/mcjs-connected/js/users/e0a7bc7769d6ab15c59d53f5e/${hash}.js");`,
-            }}
+            dangerouslySetInnerHTML={{ __html: mcSnippet(hash) }}
           />
         ))}
-        {/* Required by Mailchimp: at least one element with id="mcjs" must exist for some detector versions. */}
-        <script
-          id="mcjs"
-          dangerouslySetInnerHTML={{
-            __html: `!function(c,h,i,m,p){m=c.createElement(h),p=c.getElementsByTagName(h)[0],m.async=1,m.src=i,p.parentNode.insertBefore(m,p)}(document,"script","https://chimpstatic.com/mcjs-connected/js/users/e0a7bc7769d6ab15c59d53f5e/427c0d0292e43ff088a087409.js");`,
-          }}
-        />
       </head>
       <body className="bg-gray-50">
         <RecaptchaProvider>
