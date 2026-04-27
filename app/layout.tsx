@@ -72,7 +72,22 @@ export default function RootLayout({
   return (
     <html lang="pt">
       <head>
-        {/* Mailchimp Connected Sites - must be in <head> so Mailchimp's site detector can find it */}
+        {/* Mailchimp Connected Sites - inject every known site-script hash so each
+            "Connected Site" entry in Mailchimp (one per registered URL) can be detected.
+            Add new hashes to the array below when you create another Connected Site. */}
+        {[
+          "427c0d0292e43ff088a087409", // www.clinicadoempresario.pt (current)
+          "1bec2970d4307ddbe9230a2bf", // legacy / additional connected-site entry
+        ].map((hash) => (
+          <script
+            key={hash}
+            id={`mcjs-${hash}`}
+            dangerouslySetInnerHTML={{
+              __html: `!function(c,h,i,m,p){m=c.createElement(h),p=c.getElementsByTagName(h)[0],m.async=1,m.src=i,p.parentNode.insertBefore(m,p)}(document,"script","https://chimpstatic.com/mcjs-connected/js/users/e0a7bc7769d6ab15c59d53f5e/${hash}.js");`,
+            }}
+          />
+        ))}
+        {/* Required by Mailchimp: at least one element with id="mcjs" must exist for some detector versions. */}
         <script
           id="mcjs"
           dangerouslySetInnerHTML={{
