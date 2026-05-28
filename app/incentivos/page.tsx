@@ -14,6 +14,8 @@ interface Incentivo {
   }
   dynamicFormIds: string[]
   disponibilidade?: string
+  /** True if ANY linked dynamic form has require_auth enabled. */
+  requireAuth: boolean
 }
 
 export const metadata = {
@@ -24,6 +26,15 @@ export const metadata = {
 async function getIncentivos(): Promise<Incentivo[]> {
   try {
     const baseUrl = process.env.NEXT_PUBLIC_DRUPAL_BASE_URL || 'https://darkcyan-stork-408379.hostingersite.com'
+
+    // Fetch lightweight form metadata once so we know which forms require auth.
+    let formsMeta: Record<string, { require_auth: boolean }> = {}
+    try {
+      const metaResp = await fetch(`${baseUrl}/api/dynamic-forms-meta`, { next: { revalidate: 60 } })
+      if (metaResp.ok) formsMeta = await metaResp.json()
+    } catch (e) {
+      console.error('Failed to fetch dynamic forms meta:', e)
+    }
     
     // Simplified: fetch without nested includes to avoid timeouts
     const response = await fetch(
@@ -92,6 +103,7 @@ async function getIncentivos(): Promise<Incentivo[]> {
           image,
           dynamicFormIds,
           disponibilidade,
+          requireAuth: dynamicFormIds.some((fid) => formsMeta[fid]?.require_auth === true),
         }
       })
     )

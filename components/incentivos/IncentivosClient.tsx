@@ -3,7 +3,8 @@
 import { useState } from "react"
 import Image from "next/image"
 import Link from "next/link"
-import { FileText, ArrowRight, CheckCircle, Clock, XCircle, ChevronDown, Filter } from "lucide-react"
+import { FileText, ArrowRight, CheckCircle, Clock, XCircle, ChevronDown, Filter, Lock } from "lucide-react"
+import { useAuth } from "@/contexts/AuthContext"
 
 interface Incentivo {
   id: string
@@ -18,6 +19,7 @@ interface Incentivo {
   }
   dynamicFormIds: string[]
   disponibilidade?: string
+  requireAuth?: boolean
 }
 
 interface IncentivosClientProps {
@@ -42,8 +44,16 @@ function getDisponibilidadeKey(disp?: string): string {
 export function IncentivosClient({ incentivos }: IncentivosClientProps) {
   const [selectedFilter, setSelectedFilter] = useState("all")
   const [dropdownOpen, setDropdownOpen] = useState(false)
+  const { isAuthenticated, isLoading: authLoading } = useAuth()
 
-  const filteredIncentivos = incentivos.filter((item) => {
+  // Hide restricted incentivos completely from unauthenticated users.
+  // While auth is still loading we hide them too to avoid a flash of restricted content.
+  const visibleIncentivos = incentivos.filter((item) =>
+    isAuthenticated ? true : !item.requireAuth
+  )
+  const hiddenCount = incentivos.length - visibleIncentivos.length
+
+  const filteredIncentivos = visibleIncentivos.filter((item) => {
     if (selectedFilter === "all") return true
     return getDisponibilidadeKey(item.disponibilidade) === selectedFilter
   })
@@ -109,6 +119,31 @@ export function IncentivosClient({ incentivos }: IncentivosClientProps) {
 
       {/* Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+        {/* Members-only notice for anonymous users when restricted incentivos exist */}
+        {!isAuthenticated && !authLoading && hiddenCount > 0 && (
+          <div className="mb-8 bg-gradient-to-r from-[#009999]/10 to-[#007a7a]/10 border border-[#009999]/20 rounded-2xl p-6 flex flex-col sm:flex-row items-start sm:items-center gap-4">
+            <div className="w-12 h-12 bg-[#009999]/10 rounded-full flex items-center justify-center flex-shrink-0">
+              <Lock className="w-6 h-6 text-[#009999]" />
+            </div>
+            <div className="flex-1">
+              <h3 className="font-bold text-gray-900 mb-1">
+                {hiddenCount === 1
+                  ? "Existe 1 incentivo exclusivo para membros"
+                  : `Existem ${hiddenCount} incentivos exclusivos para membros`}
+              </h3>
+              <p className="text-sm text-gray-600">
+                Inicie sessão ou crie uma conta gratuita para aceder a todos os incentivos disponíveis.
+              </p>
+            </div>
+            <Link
+              href="/conta"
+              className="px-5 py-2.5 bg-gradient-to-r from-[#009999] to-[#007a7a] text-white font-semibold rounded-lg hover:shadow-lg transition-all whitespace-nowrap"
+            >
+              Iniciar Sessão
+            </Link>
+          </div>
+        )}
+
         {filteredIncentivos.length === 0 ? (
           <div className="text-center py-20">
             <FileText className="h-16 w-16 text-gray-400 mx-auto mb-4" />

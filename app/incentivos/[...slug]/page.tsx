@@ -2,9 +2,10 @@
 
 import { useEffect, useState } from 'react'
 import Image from 'next/image'
-import { User, ArrowLeft, FileText, CheckCircle } from 'lucide-react'
+import { User, ArrowLeft, FileText, CheckCircle, Lock } from 'lucide-react'
 import Link from 'next/link'
 import { DynamicForm } from '@/components/forms/DynamicForm'
+import { useAuth } from '@/contexts/AuthContext'
 
 interface FormField {
   label: string
@@ -39,6 +40,7 @@ export default function IncentivoPostPage({ params }: { params: { slug: string[]
   const [post, setPost] = useState<IncentivoPost | null>(null)
   const [loading, setLoading] = useState(true)
   const [dynamicForms, setDynamicForms] = useState<DynamicFormData[]>([])
+  const { isAuthenticated, isLoading: authLoading } = useAuth()
 
   useEffect(() => {
     fetchPostAndFind()
@@ -200,6 +202,63 @@ export default function IncentivoPostPage({ params }: { params: { slug: string[]
             Voltar para Incentivos
           </Link>
         </div>
+      </div>
+    )
+  }
+
+  // If ANY linked form requires authentication and the user is anonymous,
+  // hide the entire incentivo (title, body, image, forms, CTA) and show only
+  // an access gate. Wait for auth to finish loading to avoid a content flash.
+  const requiresAuth = dynamicForms.some((f) => f.requireAuth)
+  if (requiresAuth && !authLoading && !isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <div className="bg-white border-b">
+          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+            <Link
+              href="/incentivos"
+              className="inline-flex items-center gap-2 text-[#009999] hover:text-[#007a7a] font-semibold transition-colors"
+            >
+              <ArrowLeft className="w-5 h-5" />
+              Voltar para Incentivos
+            </Link>
+          </div>
+        </div>
+        <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+          <div className="bg-white rounded-2xl shadow-xl p-10 text-center">
+            <div className="w-20 h-20 bg-[#009999]/10 rounded-full flex items-center justify-center mx-auto mb-6">
+              <Lock className="w-10 h-10 text-[#009999]" />
+            </div>
+            <h1 className="text-3xl font-black text-gray-900 mb-3">Conteúdo exclusivo</h1>
+            <p className="text-gray-600 mb-8">
+              Este incentivo está reservado a membros. Inicie sessão ou crie uma conta gratuita para aceder a todos os detalhes e ao formulário de candidatura.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+              <Link
+                href="/conta"
+                className="px-6 py-3 bg-gradient-to-r from-[#009999] to-[#007a7a] text-white font-semibold rounded-lg hover:shadow-lg transition-all"
+              >
+                Iniciar Sessão
+              </Link>
+              <Link
+                href="/conta"
+                className="px-6 py-3 border-2 border-[#009999] text-[#009999] font-semibold rounded-lg hover:bg-[#009999]/5 transition-all"
+              >
+                Criar Conta
+              </Link>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // While auth state is still loading and the post has forms, render a minimal
+  // placeholder to avoid briefly showing restricted content.
+  if (requiresAuth && authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-[#009999]"></div>
       </div>
     )
   }
