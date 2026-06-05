@@ -66,7 +66,7 @@ export async function POST(request: Request) {
     const drupalBaseUrl = process.env.NEXT_PUBLIC_DRUPAL_BASE_URL || 'https://darkcyan-stork-408379.hostingersite.com'
     
     try {
-      await fetch(`${drupalBaseUrl}/api/dynamic-form/submit`, {
+      const drupalResponse = await fetch(`${drupalBaseUrl}/api/dynamic-form/submit`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -74,6 +74,7 @@ export async function POST(request: Request) {
         body: JSON.stringify({
           form_id: 'contact_form',
           email: email,
+          form_label: 'Formulário de Contacto',
           data: {
             'Nome': { type: 'text', value: name },
             'Email': { type: 'text', value: email },
@@ -83,6 +84,11 @@ export async function POST(request: Request) {
           },
         }),
       })
+
+      if (!drupalResponse.ok) {
+        const txt = await drupalResponse.text().catch(() => '')
+        console.error('Drupal submission returned non-OK status:', drupalResponse.status, txt)
+      }
     } catch (drupalErr) {
       console.error('Drupal submission error:', drupalErr)
       // Don't fail — the Mailchimp subscription is the priority
